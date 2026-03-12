@@ -1,4 +1,4 @@
-# GeoForge
+# Waystones
 
 **Design, model, and deploy geospatial data services — no backend expertise required.**
 
@@ -10,7 +10,7 @@
 
 ---
 
-GeoForge is a browser-based tool for designing geospatial data models and generating production-ready [pygeoapi](https://pygeoapi.io) deployments. Go from a raw GeoPackage file or a blank canvas to a standards-compliant OGC API in minutes.
+Waystones is a browser-based tool for designing geospatial data models and generating production-ready [pygeoapi](https://pygeoapi.io) deployments. Go from a raw GeoPackage file or a blank canvas to a standards-compliant OGC API in minutes.
 
 ## Features
 
@@ -23,7 +23,7 @@ Build data models with layers, fields, and constraints through a visual editor:
 
 ### Quick Publish
 The fastest path from data to a live service:
-1. Drop a GeoPackage file — GeoForge auto-infers the data structure
+1. Drop a GeoPackage file — Waystones auto-infers the data structure
 2. Select which tables to publish and configure symbology (colors, icons, line styles)
 3. Fill in dataset metadata (title, description, contact, license, spatial/temporal extent)
 4. Publish directly to GitHub — deployment is automatic
@@ -83,11 +83,11 @@ npx tsc --noEmit
 
 ## GitHub Integration
 
-GeoForge can read and write model definitions directly to GitHub repositories for version-controlled collaboration. Authenticate with a Personal Access Token (PAT) or via OAuth from the app's settings panel.
+Waystones can read and write model definitions directly to GitHub repositories for version-controlled collaboration. Authenticate with a Personal Access Token (PAT) or via OAuth from the app's settings panel.
 
 ## Deployment Output
 
-A completed GeoForge model generates:
+A completed Waystones model generates:
 
 - **pygeoapi config** — OGC API – Features (REST) endpoints
 - **QGIS Server config** — WMS endpoints for styled map rendering
@@ -104,3 +104,11 @@ A completed GeoForge model generates:
 ## Language Support
 
 The UI is available in **English** and **Norwegian**.
+
+## License
+
+Waystones is dual-licensed:
+
+- **Open Source — AGPL v3**: Free to use, modify, and distribute under the terms of the [GNU Affero General Public License v3](LICENSE). If you use Waystones as part of a network service, you must make your modifications available under the same license.
+
+- **Commercial License**: If you want to use Waystones in a proprietary product or service without the AGPL's copyleft requirements, a commercial license is available. [Open an issue](../../issues) to start the conversation.

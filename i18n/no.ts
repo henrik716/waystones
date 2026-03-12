@@ -1,5 +1,5 @@
 export const no = {
-  appTitle: "GeoForge",
+  appTitle: "Waystones",
   appSubtitle: "Fra data til tjeneste",
   newModel: "Ny modell", models: "Modeller", noModels: "Ingen modeller ennå",
   noModelsHint: "Opprett en ny modell for å komme i gang",
@@ -170,7 +170,7 @@ export const no = {
   },
   manual: {
     title: "Brukerveiledning",
-    subtitle: "Lær hvordan du bruker GeoForge steg for steg.",
+    subtitle: "Lær hvordan du bruker Waystones steg for steg.",
     step1Title: "1. Design og arkitektur",
     step1Desc: "Begynn med å definere lagene dine. Hvert lag tilsvarer en tabell. Legg til egenskaper og velg riktig datatype. Bruk «Kodeliste» for felt som skal ha forhåndsdefinerte valg – dette sikrer maskinlesbare og konsistente data.",
     step2Title: "2. Kvalitetssikring (restriksjoner)",
@@ -549,7 +549,7 @@ export const no = {
     }
   },
   guide: {
-    title: "Velkommen til GeoForge",
+    title: "Velkommen til Waystones",
     subtitle: "Alt du trenger for å designe, kvalitetssikre og dele geodata.",
     close: "Kom i gang",
     sections: {
@@ -640,7 +640,7 @@ export const no = {
       title: "Karttjeneste (QGIS Server)",
       usage: "Passer for: Avansert kartografi der du vil beholde nøyaktig samme utseende som i QGIS Desktop.",
       step1: "Hva er QGIS Server?",
-      step1Desc: "En kraftfull kartserver som bruker QGIS-prosjektet (.qgs) direkte som konfigurasjon. Alle farger, stiler og regler du setter opp i GeoForge, vil se nøyaktig like ut når de publiseres.\n\nDen støtter klassiske tjenester som WMS (bilder) og WFS (vektor), samt de nyeste OGC API-standardene. For stabil drift i skyen anbefales en VPS (se seksjonen om skyinstanser).",
+      step1Desc: "En kraftfull kartserver som bruker QGIS-prosjektet (.qgs) direkte som konfigurasjon. Alle farger, stiler og regler du setter opp i Waystones, vil se nøyaktig like ut når de publiseres.\n\nDen støtter klassiske tjenester som WMS (bilder) og WFS (vektor), samt de nyeste OGC API-standardene. For stabil drift i skyen anbefales en VPS (se seksjonen om skyinstanser).",
       step2: "Sjekkliste før publisering",
       step2Desc: "Åpne prosjektet i QGIS Desktop og gå gjennom disse punktene for å sikre stabil drift:\n\n• Aktiver WMS og WFS under Prosjektegenskaper → QGIS Server.\n• Sørg for at alle lag bruker relative filstier (Prosjektegenskaper → Generelt).\n• Aktiver «OGC API – Features» for moderne JSON-tilgang.\n• Definer tittel og beskrivelse under «Service Capabilities» for korrekte metadata.",
       commandLabel: "Docker-kommando:"
@@ -651,7 +651,7 @@ export const no = {
       step1: "Opprett instans",
       step1Desc: "Opprett en PostgreSQL-instans hos Google Cloud, Azure eller AWS. Dette er kjernen i dataarkitekturen din, der all informasjon lagres trygt og sentralt.\n\nEn administrert database i skyen tar seg av sikkerhetskopi, tilgangskontroll og ytelsesoptimalisering automatisk, slik at du kan fokusere på dataene.",
       step2: "Bygg tabellstruktur",
-      step2Desc: "Last ned Cloud SQL-skriptet herfra. Det inneholder all logikk for å bygge tabellene og relasjonene du har designet i GeoForge.\n\nKjør først «CREATE EXTENSION postgis;» i databasen, og deretter hele skriptet for å opprette tabellene med riktige restriksjoner og indekser.",
+      step2Desc: "Last ned Cloud SQL-skriptet herfra. Det inneholder all logikk for å bygge tabellene og relasjonene du har designet i Waystones.\n\nKjør først «CREATE EXTENSION postgis;» i databasen, og deretter hele skriptet for å opprette tabellene med riktige restriksjoner og indekser.",
       commandLabel: "Importkommando (psql):"
     },
     env: {

@@ -1,6 +1,6 @@
 {
   "id": "modellfabrikken-v1",
-  "name": "GeoForge",
+  "name": "Waystones",
   "version": "1.0.0",
   "description": "Et verktøy for å forme, kvalitetssikre og publisere geodata. Gå fra fil til ferdig karttjeneste på sekunder, eller bruk den innebygde editoren for full kontroll over datamodellen.",
   "requestFramePermissions": []

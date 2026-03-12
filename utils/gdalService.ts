@@ -374,7 +374,7 @@ const parseOgrinfoText = (text: string, basicInfo: any): GdalLayerInfo[] => {
 };
 
 // ============================================================
-// Mapping GDAL types to GeoForge PropertyType
+// Mapping GDAL types to Waystones PropertyType
 // ============================================================
 
 const gdalTypeToPropertyType = (gdalType: string): PropertyType => {
@@ -411,7 +411,7 @@ const extractEpsgFromSrs = (srs?: GdalGeometryFieldInfo['srs']): number | null =
 };
 
 // ============================================================
-// Convert GDAL inspection results to GeoForge DataModel
+// Convert GDAL inspection results to Waystones DataModel
 // ============================================================
 
 /**
@@ -443,8 +443,8 @@ const splitGeoJsonByGeometryType = (geojson: any): Record<string, any> => {
 };
 
 /**
- * Convert GdalDatasetInfo to a GeoForge DataModel + InferredDataSummary.
- * This is the main bridge between GDAL output and the existing GeoForge types.
+ * Convert GdalDatasetInfo to a Waystones DataModel + InferredDataSummary.
+ * This is the main bridge between GDAL output and the existing Waystones types.
  */
 export const gdalInfoToModel = (
   info: GdalDatasetInfo,
@@ -481,7 +481,7 @@ export const gdalInfoToModel = (
       }
     }
 
-    // Map fields to GeoForge properties
+    // Map fields to Waystones properties
     const properties: ModelProperty[] = layerInfo.fields
       .filter(f => f.name.toLowerCase() !== 'fid' && sanitizeTechnicalName(f.name).toLowerCase() !== geometryColumnName.toLowerCase())
       .map(f => {

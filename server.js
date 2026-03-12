@@ -93,4 +93,4 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => console.log(`GeoForge server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Waystones server running on port ${PORT}`));

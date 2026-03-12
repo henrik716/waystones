@@ -10,9 +10,9 @@ export interface AiConstraintSuggestion {
   enumeration?: string[];
 }
 
-const PROVIDER_KEY = 'geoforge-ai-provider';
-const API_KEY_PREFIX = 'geoforge-ai-key-';
-const TRIAL_USES_KEY = 'geoforge-ai-trial-uses';
+const PROVIDER_KEY = 'waystones-ai-provider';
+const API_KEY_PREFIX = 'waystones-ai-key-';
+const TRIAL_USES_KEY = 'waystones-ai-trial-uses';
 export const MAX_TRIAL_USES = 10;
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
 const GEMINI_MODEL = 'gemini-2.5-flash';

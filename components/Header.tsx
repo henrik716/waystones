@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { HelpCircle, Hammer, Sparkles, X, Activity, Check, AlertTriangle } from 'lucide-react';
+import { HelpCircle, Sparkles, X, Activity, Check, AlertTriangle } from 'lucide-react';
 import { Language } from '../types';
 import { AiProvider, getProvider, setProvider, getApiKey, saveApiKey, clearApiKey, getTrialUsesLeft } from '../utils/aiService';
 import { useAiStatus } from '../hooks/useAiStatus';
@@ -69,8 +69,13 @@ const Header: React.FC<{
 
       {/* Added 'text-left' here to fix the button's default center alignment */}
       <button onClick={onHome} className="flex items-center gap-2 md:gap-4 overflow-hidden min-w-0 hover:opacity-80 transition-opacity text-left">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 bg-indigo-600 shrink-0">
-          <Hammer size={18} className="md:w-[22px] md:h-[22px]" />
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-2xl flex items-center justify-center bg-indigo-950 shrink-0">
+          <svg width="18" height="18" viewBox="0 0 32 32" className="md:w-[22px] md:h-[22px]">
+            <polygon points="16,1 25,5 29,12 27,21 20,30 12,30 5,21 3,12 7,5" fill="#6b7a8d"/>
+            <polygon points="16,1 25,5 29,12 21,9 11,9 7,5" fill="#8a9bb0" opacity="0.5"/>
+            <polygon points="16,1 25,5 29,12 27,21 20,30 12,30 5,21 3,12 7,5" fill="none" stroke="#22d3ee" strokeWidth="1.2" opacity="0.9"/>
+            <path d="M21 10 C26 14 25 22 19 25 C13 28 7 23 8 16 C8 10 14 6 19 9 C24 11 26 17 23 21 C21 24 16 25 13 22 C10 19 11 15 14 14" stroke="#22d3ee" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
         <div className="overflow-hidden min-w-0">
           <h1 className="text-xs md:text-base font-black leading-tight truncate tracking-tight text-slate-800">{t.appTitle}</h1>

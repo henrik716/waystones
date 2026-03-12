@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#4f46e5" />
-  
-  <svg x="6" y="6" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/>
-    <path d="M17.64 15 22 10.64"/>
-    <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H11.2l-2.5 2.5"/>
-    <path d="m12.44 9.15 4.41 4.41"/>
-  </svg>
+  <rect width="32" height="32" rx="8" fill="#1e1b4b" />
+  <!-- Stone body: rough polygon, scaled to fill -->
+  <polygon points="16,1 25,5 29,12 27,21 20,30 12,30 5,21 3,12 7,5" fill="#6b7a8d"/>
+  <!-- Stone upper highlight -->
+  <polygon points="16,1 25,5 29,12 21,9 11,9 7,5" fill="#8a9bb0" opacity="0.5"/>
+  <!-- Cyan glow outline -->
+  <polygon points="16,1 25,5 29,12 27,21 20,30 12,30 5,21 3,12 7,5" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.9"/>
+  <!-- Rune: nautilus spiral -->
+  <path d="M21 10 C26 14 25 22 19 25 C13 28 7 23 8 16 C8 10 14 6 19 9 C24 11 26 17 23 21 C21 24 16 25 13 22 C10 19 11 15 14 14" stroke="#22d3ee" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

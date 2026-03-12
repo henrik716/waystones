@@ -1,7 +1,8 @@
 {
-  "name": "geoforge",
+  "name": "waystones",
   "private": true,
   "version": "0.0.0",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

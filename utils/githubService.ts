@@ -222,7 +222,7 @@ export const pushDeployKit = async (
           title: prTitle || commitMessage,
           head: prBranch,
           base: branch,
-          body: `Autogenerert deploy-konfigurasjon fra GeoForge.\n\nMerge denne PR-en for å trigge deployment.`,
+          body: `Autogenerert deploy-konfigurasjon fra Waystones.\n\nMerge denne PR-en for å trigge deployment.`,
         }),
       });
       if (!prRes.ok) throw new Error('Failed to create pull request');

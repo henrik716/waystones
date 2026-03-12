@@ -1,5 +1,5 @@
 export const en = {
-  appTitle: "GeoForge",
+  appTitle: "Waystones",
   appSubtitle: "From data to service",
   newModel: "New model", models: "Models", noModels: "No models yet",
   noModelsHint: "Create a new model to get started",
@@ -170,7 +170,7 @@ export const en = {
   },
   manual: {
     title: "User Guide",
-    subtitle: "Learn how to use GeoForge step by step.",
+    subtitle: "Learn how to use Waystones step by step.",
     step1Title: "1. Design & Architecture",
     step1Desc: "Start by defining your layers. Each layer represents a table. Add properties and choose the correct data type. Use 'Codelist' for fields that should have predefined choices – this ensures machine-readable and consistent data.",
     step2Title: "2. Quality Assurance (Constraints)",
@@ -549,7 +549,7 @@ export const en = {
     }
   },
   guide: {
-    title: "Welcome to GeoForge",
+    title: "Welcome to Waystones",
     subtitle: "Everything you need to design, validate, and share geodata.",
     close: "Get started",
     sections: {
@@ -640,7 +640,7 @@ export const en = {
       title: "Map Service (QGIS Server)",
       usage: "Best for: Advanced cartography where you need to maintain the exact look and feel of QGIS Desktop.",
       step1: "What is QGIS Server?",
-      step1Desc: "A high-performance map server that uses your QGIS project (.qgs) directly as configuration. All colors, styles, and rules you set up in GeoForge will look exactly the same when published.\n\nIt supports classic services like WMS (images) and WFS (vector), as well as the latest OGC API standards. For stable cloud operation, a VPS is highly recommended (see Cloud Instance section).",
+      step1Desc: "A high-performance map server that uses your QGIS project (.qgs) directly as configuration. All colors, styles, and rules you set up in Waystones will look exactly the same when published.\n\nIt supports classic services like WMS (images) and WFS (vector), as well as the latest OGC API standards. For stable cloud operation, a VPS is highly recommended (see Cloud Instance section).",
       step2: "Pre-publishing checklist",
       step2Desc: "Open your project in QGIS Desktop and go through these points to ensure stable operation:\n\n• Enable WMS and WFS in Project Properties → QGIS Server.\n• Ensure all layers use relative file paths (Project Properties → General).\n• Enable 'OGC API – Features' for modern JSON access.\n• Define title and abstract under 'Service Capabilities' for correct metadata.",
       commandLabel: "Docker command:"
@@ -651,7 +651,7 @@ export const en = {
       step1: "Create instance",
       step1Desc: "Provision a PostgreSQL instance on Google Cloud, Azure, or AWS. This is the core of your data architecture, where all information is stored safely and centrally.\n\nA managed cloud database handles backups, access control, and performance optimization automatically, letting you focus on the data itself.",
       step2: "Build table structure",
-      step2Desc: "Download the Cloud SQL script from here. It contains all the logic to build the tables and relationships you designed in GeoForge.\n\nFirst, run 'CREATE EXTENSION postgis;' in your database, then execute the full script to create tables with the correct constraints and indexes.",
+      step2Desc: "Download the Cloud SQL script from here. It contains all the logic to build the tables and relationships you designed in Waystones.\n\nFirst, run 'CREATE EXTENSION postgis;' in your database, then execute the full script to create tables with the correct constraints and indexes.",
       commandLabel: "Import command (psql):"
     },
     env: {
