@@ -1,11 +1,143 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#1e1b4b" />
-  <!-- Stone body: rough polygon, scaled to fill -->
-  <polygon points="16,1 25,5 29,12 27,21 20,30 12,30 5,21 3,12 7,5" fill="#6b7a8d"/>
-  <!-- Stone upper highlight -->
-  <polygon points="16,1 25,5 29,12 21,9 11,9 7,5" fill="#8a9bb0" opacity="0.5"/>
-  <!-- Cyan glow outline -->
-  <polygon points="16,1 25,5 29,12 27,21 20,30 12,30 5,21 3,12 7,5" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.9"/>
-  <!-- Rune: nautilus spiral -->
-  <path d="M21 10 C26 14 25 22 19 25 C13 28 7 23 8 16 C8 10 14 6 19 9 C24 11 26 17 23 21 C21 24 16 25 13 22 C10 19 11 15 14 14" stroke="#22d3ee" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+
+    <!-- Stone surface gradient: dark edges, lighter centre face -->
+    <linearGradient id="stoneFace" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#232330"/>
+      <stop offset="28%"  stop-color="#484862"/>
+      <stop offset="55%"  stop-color="#56566e"/>
+      <stop offset="78%"  stop-color="#484862"/>
+      <stop offset="100%" stop-color="#232330"/>
+    </linearGradient>
+
+    <!-- Subtle top-to-bottom darkening for volume -->
+    <linearGradient id="stoneShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.25"/>
+    </linearGradient>
+
+    <!-- Rune glow: soft outer bloom -->
+    <filter id="bloom" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4" result="b1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b2"/>
+      <feMerge>
+        <feMergeNode in="b1"/>
+        <feMergeNode in="b2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Tighter crisp glow for rune lines -->
+    <filter id="crisp" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Clipping to stone silhouette so nothing spills out -->
+    <clipPath id="stoneClip">
+      <path d="M 58,177 L 50,150 L 46,96 L 50,54 L 60,30 L 74,18 L 100,14 L 126,18 L 140,30 L 150,54 L 154,96 L 150,150 L 142,177 Z"/>
+    </clipPath>
+
+  </defs>
+
+  <!-- Stone silhouette (back/edge, darkest) -->
+  <path d="M 55,178 L 46,148 L 42,95 L 46,52 L 57,27 L 72,15 L 100,11 L 128,15 L 143,27 L 154,52 L 158,95 L 154,148 L 145,178 Z"
+        fill="#1a1a28"/>
+
+  <!-- Stone face -->
+  <path d="M 58,177 L 50,150 L 46,96 L 50,54 L 60,30 L 74,18 L 100,14 L 126,18 L 140,30 L 150,54 L 154,96 L 150,150 L 142,177 Z"
+        fill="url(#stoneFace)"/>
+
+  <!-- Top-to-bottom shade layer for volume -->
+  <path d="M 58,177 L 50,150 L 46,96 L 50,54 L 60,30 L 74,18 L 100,14 L 126,18 L 140,30 L 150,54 L 154,96 L 150,150 L 142,177 Z"
+        fill="url(#stoneShade)"/>
+
+  <!-- Stone texture cracks -->
+  <g clip-path="url(#stoneClip)" fill="none" stroke="#2a2a3e" stroke-linecap="round">
+    <path d="M 70,42 Q 66,54 70,68"    stroke-width="1"   opacity="0.7"/>
+    <path d="M 132,58 Q 136,74 131,90"  stroke-width="0.9" opacity="0.6"/>
+    <path d="M 80,138 Q 78,150 83,162"  stroke-width="0.8" opacity="0.5"/>
+    <path d="M 118,145 Q 122,157 118,168" stroke-width="0.8" opacity="0.45"/>
+    <path d="M 96,28 Q 100,35 98,44"   stroke-width="0.7" opacity="0.5"/>
+  </g>
+
+  <!-- Faint moss patches near base -->
+  <g clip-path="url(#stoneClip)" opacity="0.45">
+    <circle cx="64"  cy="158" r="3"   fill="#2e5030"/>
+    <circle cx="68"  cy="165" r="2"   fill="#2e5030"/>
+    <circle cx="73"  cy="160" r="1.5" fill="#2e5030"/>
+    <circle cx="132" cy="162" r="2.5" fill="#2e5030"/>
+    <circle cx="128" cy="170" r="2"   fill="#2e5030"/>
+    <circle cx="136" cy="156" r="1.5" fill="#2e5030"/>
+  </g>
+
+  <!-- Rune carved recess (subtle dark channel) -->
+  <g clip-path="url(#stoneClip)">
+    <path d="M 100,90
+             C 103,83 110,80 116,84
+             C 123,89 123,100 115,107
+             C 105,114 91,110 86,99
+             C 80,87 86,72 99,69
+             C 115,66 130,77 131,94
+             C 133,114 119,128 100,130
+             C 79,132 63,118 61,97
+             C 59,75 74,59 96,58"
+          fill="none" stroke="#131320" stroke-width="7" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- Rune ambient wide bloom -->
+  <path d="M 100,90
+           C 103,83 110,80 116,84
+           C 123,89 123,100 115,107
+           C 105,114 91,110 86,99
+           C 80,87 86,72 99,69
+           C 115,66 130,77 131,94
+           C 133,114 119,128 100,130
+           C 79,132 63,118 61,97
+           C 59,75 74,59 96,58"
+        fill="none" stroke="#00d8f0" stroke-width="9" stroke-linecap="round"
+        opacity="0.12" filter="url(#bloom)"/>
+
+  <!-- Rune crisp lines -->
+  <g filter="url(#crisp)" stroke="#40ecff" stroke-linecap="round" fill="none">
+    <path d="M 100,90
+             C 103,83 110,80 116,84
+             C 123,89 123,100 115,107
+             C 105,114 91,110 86,99
+             C 80,87 86,72 99,69
+             C 115,66 130,77 131,94
+             C 133,114 119,128 100,130
+             C 79,132 63,118 61,97
+             C 59,75 74,59 96,58"
+          stroke-width="2.4"/>
+  </g>
+
+  <!-- Rune sparkle motes -->
+  <g fill="#70f4ff">
+    <circle cx="72"  cy="74"  r="1.5" opacity="0.75"/>
+    <circle cx="130" cy="81"  r="1.5" opacity="0.65"/>
+    <circle cx="60"  cy="102" r="1.2" opacity="0.55"/>
+    <circle cx="140" cy="115" r="1.2" opacity="0.60"/>
+    <circle cx="88"  cy="138" r="1.2" opacity="0.55"/>
+    <circle cx="113" cy="136" r="1"   opacity="0.50"/>
+  </g>
+
+  <!-- Pulsing glow animation -->
+  <style>
+    @keyframes pulse {
+      0%,100% { opacity: 0.10; }
+      50%      { opacity: 0.22; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      #runeBloom  { animation: pulse   3s ease-in-out infinite; }
+    }
+  </style>
+
+  <!-- Animated large ambient bloom (sits on top, low opacity) -->
+  <ellipse id="runeBloom" cx="100" cy="97" rx="45" ry="48"
+           fill="#00d8f0" opacity="0.10"/>
+
 </svg>
