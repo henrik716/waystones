@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub OAuth Callback</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f6f8fa;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e1e4e8;
+            border-top: 2px solid #0969da;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #cf222e;
+            background: #ffebe9;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        .success {
+            color: #1a7f37;
+            background: #dcffe4;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Processing authentication...</h2>
+        <p id="status">Completing GitHub authentication...</p>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        function showError(msg) {
+            document.querySelector('.spinner').style.display = 'none';
+            document.getElementById('status').textContent = 'Authentication failed';
+            document.getElementById('message').innerHTML = '<div class="error">' + msg + '</div>';
+        }
+
+        function isPopup() {
+            try {
+                return window.opener && window.opener !== window;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function showSuccess(msg) {
+            document.querySelector('.spinner').style.display = 'none';
+            document.getElementById('status').textContent = msg;
+            const hint = isPopup() ? 'You can close this tab.' : 'Redirecting you back to the app...';
+            document.getElementById('message').innerHTML = '<div class="success">' + hint + '</div>';
+        }
+
+        async function handleCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+
+            if (error) {
+                localStorage.setItem('github_oauth_error', errorDescription || error);
+                showError(errorDescription || error);
+                setTimeout(() => isPopup() ? window.close() : (window.location.href = '/'), 2000);
+                return;
+            }
+
+            if (!code) {
+                localStorage.setItem('github_oauth_error', 'No authorization code received');
+                showError('No authorization code received');
+                setTimeout(() => isPopup() ? window.close() : (window.location.href = '/'), 2000);
+                return;
+            }
+
+            const codeVerifier = localStorage.getItem('github_code_verifier');
+            const redirectUri = window.location.origin + window.location.pathname;
+
+            try {
+                const res = await fetch('/api/github-oauth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, code_verifier: codeVerifier, redirect_uri: redirectUri })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({ error: 'Token exchange failed' }));
+                    throw new Error(errData.error || 'Token exchange failed');
+                }
+
+                const tokenData = await res.json();
+
+                // Store token in the same format as oauthService.storeToken()
+                const tokenInfo = {
+                    ...tokenData,
+                    stored_at: Date.now(),
+                    expires_at: tokenData.expires_in ? Date.now() + tokenData.expires_in * 1000 : null
+                };
+                localStorage.setItem('github_oauth_token', JSON.stringify(tokenInfo));
+                localStorage.removeItem('github_code_verifier');
+
+                // Fetch and store user data so the original tab has everything it needs
+                const userRes = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': 'Bearer ' + tokenData.access_token,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+                    localStorage.setItem('github_user', JSON.stringify(userData));
+                }
+
+                // In popup flow the storage event notifies the original tab; close this window.
+                // In full-page redirect flow there is no opener, so navigate back to the app root.
+                showSuccess('Authentication successful!');
+                setTimeout(() => isPopup() ? window.close() : (window.location.href = '/'), 1500);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Authentication failed';
+                localStorage.setItem('github_oauth_error', message);
+                showError(message);
+                setTimeout(() => isPopup() ? window.close() : (window.location.href = '/'), 3000);
+            }
+        }
+
+        handleCallback();
+    </script>
+</body>
+</html>
