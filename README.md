@@ -1,5 +1,4 @@
 # Waystones
-https://waystones.up.railway.app/
 
 **Design, model, and deploy geospatial data services — no backend expertise required.**
 
