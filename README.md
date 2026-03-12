@@ -10,7 +10,7 @@
 
 ---
 
-Waystones is a browser-based tool for designing geospatial data models and generating production-ready [pygeoapi](https://pygeoapi.io) deployments. Go from a raw GeoPackage file or a blank canvas to a standards-compliant OGC API in minutes.
+Waystones is a browser-based tool for designing geospatial data models and generating production-ready [pygeoapi](https://pygeoapi.io) and QGIS Server deployments. Go from a raw GeoPackage file or a blank canvas to a standards-compliant OGC API and WMS in minutes.
 
 ## Features
 
@@ -39,7 +39,7 @@ Configure and export production deployments:
 - Connect to PostGIS, Supabase, Databricks, or local GeoPackage data sources
 - Map model layers to source tables
 - Export deployment kits with Docker Compose, Fly.io, Railway, or GitHub Container Registry configurations
-- Auto-generate complete pygeoapi configuration with OGC API – Features, WMS, and WFS support
+- Auto-generate complete pygeoapi and QGIS Server configurations with OGC API – Features and WMS support
 - Push to GitHub with pull request support for collaborative review workflows
 
 ### AI Assistant
