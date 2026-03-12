@@ -17,6 +17,7 @@ import { useHistory } from './hooks/useHistory';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePanelResize } from './hooks/usePanelResize';
 import { usePersistedState } from './hooks/usePersistedState';
+import { getEffectiveProperties } from './utils/modelUtils';
 import { useWindowWidth } from './hooks/useWindowWidth';
 import {
   processGeoJsonToModel,
@@ -232,11 +233,12 @@ const App: React.FC = () => {
       // Create a simple validation based on model layers
       const warnings: ImportWarning[] = [];
       
-      model.layers.forEach(layer => {
-        const hasIdField = layer.properties.some(p => 
+      model.layers.filter(layer => !layer.isAbstract).forEach(layer => {
+        const effectiveProps = getEffectiveProperties(layer, model.layers);
+        const hasIdField = effectiveProps.some(p =>
           p.name.toLowerCase() === 'id' || p.name.toLowerCase() === 'fid'
         );
-        
+
         if (!hasIdField) {
           warnings.push({
             type: 'no_primary_key',

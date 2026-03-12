@@ -27,7 +27,8 @@ interface PropertyEditorProps {
   isLast: boolean;
   t: any;
   allLayers: { id: string, name: string }[];
-  sharedTypes?: SharedType[]; // <--- NEW: Passed down from ModelEditor
+  sharedTypes?: SharedType[];
+  sharedEnums?: import('../types').SharedEnum[];
   change?: ModelChange;
   isGhost?: boolean;
   reviewMode?: boolean;
@@ -82,7 +83,7 @@ const PropDiffField: React.FC<{
 };
 
 const PropertyEditor: React.FC<PropertyEditorProps> = ({
-  prop, baselineProp, onUpdate, onDelete, onMove, isFirst, isLast, t, allLayers, sharedTypes = [], change, isGhost, reviewMode, depth = 0, layerName = '', lang = 'no'
+  prop, baselineProp, onUpdate, onDelete, onMove, isFirst, isLast, t, allLayers, sharedTypes = [], sharedEnums = [], change, isGhost, reviewMode, depth = 0, layerName = '', lang = 'no'
 }) => {
   const [isOpen, setIsOpen] = useState(prop.name === "" || depth > 0);
   const config = TYPE_CONFIG[prop.type] || TYPE_CONFIG.string;
@@ -457,6 +458,24 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 </PropDiffField>
               </div>
 
+              {/* Multiplicity */}
+              <div className="pt-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">
+                  {lang === 'no' ? 'Multiplisitet' : 'Multiplicity'}
+                </label>
+                <div className="flex gap-2">
+                  {(['1..1', '0..1', '1..*', '0..*'] as const).map(m => (
+                    <button
+                      key={m}
+                      onClick={() => handleUpdate({ relationConfig: { ...(prop.relationConfig || { targetLayerId: '', relationType: 'foreign_key' }), multiplicity: prop.relationConfig?.multiplicity === m ? undefined : m } as any })}
+                      className={`px-3 py-2 rounded-xl text-[10px] font-black font-mono border transition-all ${prop.relationConfig?.multiplicity === m ? 'bg-rose-500 border-rose-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500 hover:border-rose-300'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {prop.relationConfig?.relationType === 'foreign_key' && (
                 <div className="pt-2">
                   <PropDiffField label="" currentValue={prop.relationConfig?.cascadeDelete} baselineValue={baselineProp?.relationConfig?.cascadeDelete} reviewMode={!!reviewMode}>
@@ -476,7 +495,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           )}
 
           {prop.type === 'codelist' && (
-            <CodelistEditor prop={prop} baselineProp={baselineProp} onUpdate={onUpdate} isGhost={isGhost} reviewMode={reviewMode} t={t} />
+            <CodelistEditor prop={prop} baselineProp={baselineProp} onUpdate={onUpdate} isGhost={isGhost} reviewMode={reviewMode} sharedEnums={sharedEnums} t={t} lang={lang} />
           )}
 
           <PropDiffField label={t.propDescription} currentValue={prop.description} baselineValue={baselineProp?.description} reviewMode={!!reviewMode}>

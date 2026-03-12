@@ -88,6 +88,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
             visuals.relations.push({
                 targetLayerId: prop.relationConfig.targetLayerId,
                 relationType: prop.relationConfig.relationType,
+                multiplicity: prop.relationConfig.multiplicity,
                 sourceY
             });
         }
@@ -104,7 +105,18 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
     return visuals;
   });
 
-  const relationPaths = layerVisuals.flatMap(vis => 
+  // Inheritance paths — curves to the left, hollow triangle arrowhead
+  const inheritancePaths = layerVisuals.flatMap(vis => {
+    if (!vis.layer.extends) return [];
+    const parentVis = layerVisuals.find(v => v.layer.id === vis.layer.extends);
+    if (!parentVis) return [];
+    const x = startX - 40;
+    const sY = vis.y + mainBoxHeaderH / 2;
+    const tY = parentVis.y + mainBoxHeaderH / 2;
+    return [{ path: `M${startX},${sY} C${x},${sY} ${x},${tY} ${startX},${tY}`, id: `${vis.layer.id}-inherits` }];
+  });
+
+  const relationPaths = layerVisuals.flatMap(vis =>
     vis.relations.map(rel => {
       const targetVis = layerVisuals.find(v => v.layer.id === rel.targetLayerId);
       if (!targetVis) return null;
@@ -120,12 +132,16 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
       return {
         path: `M${sX},${sY} C${cp1X},${sY} ${cp2X},${tY} ${tX},${tY}`,
         type: rel.relationType,
+        multiplicity: rel.multiplicity,
+        sX, sY,
         id: `${vis.layer.id}-${rel.targetLayerId}-${rel.sourceY}`
       };
     })
   ).filter(Boolean);
 
-  const svgW = startX + mainBoxW + gapX + codelistBoxW + 40;
+  const hasInheritance = model.layers.some(l => l.extends);
+  const leftPad = hasInheritance ? 50 : 0;
+  const svgW = leftPad + startX + mainBoxW + gapX + codelistBoxW + 40;
   const svgH = currentY + 40;
 
   const downloadSVG = () => {
@@ -154,7 +170,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
       </div>
 
       <div className="w-full overflow-x-auto bg-slate-50/50 rounded-2xl border border-slate-200 p-8 shadow-inner custom-scrollbar">
-        <svg ref={svgRef} viewBox={`0 0 ${svgW} ${svgH}`} className="w-full min-w-[700px] drop-shadow-sm" style={{ height: 'auto', maxWidth: '100%' }}>
+        <svg ref={svgRef} viewBox={`${-leftPad} 0 ${svgW} ${svgH}`} className="w-full min-w-[700px] drop-shadow-sm" style={{ height: 'auto', maxWidth: '100%' }}>
           <defs>
             <linearGradient id="mainHeaderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={COLORS.primary} />
@@ -166,20 +182,44 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
             <marker id="relationArrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1" />
             </marker>
+            <marker id="inheritanceArrow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 12 6 L 0 12 Z" fill="white" stroke="#7c3aed" strokeWidth="1.5"/>
+            </marker>
           </defs>
 
           <g>
-            {relationPaths.map((rel: any) => (
-              <path 
-                key={rel.id} 
-                d={rel.path} 
-                fill="none" 
-                stroke="#6366f1" 
-                strokeWidth="2.5" 
-                strokeOpacity="0.6"
-                markerEnd="url(#relationArrow)" 
-                className="transition-all hover:stroke-opacity-100"
+            {inheritancePaths.map((inh: any) => (
+              <path
+                key={inh.id}
+                d={inh.path}
+                fill="none"
+                stroke="#7c3aed"
+                strokeWidth="2"
+                strokeDasharray="6 3"
+                strokeOpacity="0.8"
+                markerEnd="url(#inheritanceArrow)"
               />
+            ))}
+          </g>
+
+          <g>
+            {relationPaths.map((rel: any) => (
+              <g key={rel.id}>
+                <path
+                  d={rel.path}
+                  fill="none"
+                  stroke="#6366f1"
+                  strokeWidth="2.5"
+                  strokeOpacity="0.6"
+                  markerEnd="url(#relationArrow)"
+                  className="transition-all hover:stroke-opacity-100"
+                />
+                {rel.multiplicity && (
+                  <text x={rel.sX + 8} y={rel.sY - 5} fontSize="9" fontWeight="700" fill="#6366f1" opacity="0.85">
+                    {rel.multiplicity}
+                  </text>
+                )}
+              </g>
             ))}
           </g>
 
@@ -189,7 +229,10 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
               <g key={vis.layer.id}>
                 <rect x={startX} y={vis.y} width={mainBoxW} height={vis.h} rx="16" fill="white" stroke="#e2e8f0" strokeWidth="1.5"/>
                 <path d={`M${startX},${vis.y+16} Q${startX},${vis.y} ${startX+16},${vis.y} H${startX+mainBoxW-16} Q${startX+mainBoxW},${vis.y} ${startX+mainBoxW},${vis.y+16} V${vis.y+mainBoxHeaderH} H${startX} Z`} fill="url(#mainHeaderGrad)" />
-                <text x={startX + 16} y={vis.y + 30} fill="white" fontSize="14" fontWeight="900">{vis.layer.name}</text>
+                <text x={startX + 16} y={vis.layer.isAbstract ? vis.y + 24 : vis.y + 30} fill="white" fontSize="14" fontWeight="900">{vis.layer.name}</text>
+                {vis.layer.isAbstract && (
+                  <text x={startX + 16} y={vis.y + 42} fill="white" fontSize="9" fontWeight="700" opacity="0.65">«abstract»</text>
+                )}
 
                 {/* Tegn Geometrirad kun hvis den eksisterer */}
                 {vis.hasGeom && (

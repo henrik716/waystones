@@ -5,8 +5,10 @@ import {
   ChevronDown, ChevronUp, Edit3, Eye, Box,
   Database, GripVertical, RotateCcw, Sparkles
 } from 'lucide-react';
-import { DataModel, Layer, ModelProperty, GeometryType, SharedType } from '../types';
-import { createEmptyProperty, createEmptyLayer, COLORS } from '../constants';
+import { DataModel, Layer, ModelProperty, GeometryType, SharedType, SharedEnum, CodeValue } from '../types';
+import { getEffectiveProperties } from '../utils/modelUtils';
+import { createEmptyProperty, createEmptyLayer, createEmptyCodeValue, COLORS } from '../constants';
+import { createEmptySharedEnum } from '../utils/factories';
 import { compareModels, getStructuredChanges } from '../utils/diffUtils';
 import { fetchModelHistory, fetchModelAtCommit, CommitInfo } from '../utils/githubService';
 import { useDragAndDropReorder } from '../hooks/useDragAndDropReorder';
@@ -91,6 +93,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   const [activeLayerId, setActiveLayerId] = useState<string>(model.layers[0]?.id || "");
   const [activeSharedTypeId, setActiveSharedTypeId] = useState<string>("");
   const [isStylingOpen, setIsStylingOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isRenderingOrderOpen, setIsRenderingOrderOpen] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
@@ -286,6 +289,45 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
       return;
     }
     handleUpdateSharedType({ properties: newProps });
+  };
+
+  // --- SHARED ENUMS LOGIC ---
+  const sharedEnums = model.sharedEnums || [];
+  const [activeSharedEnumId, setActiveSharedEnumId] = useState<string>('');
+  const activeSharedEnum = sharedEnums.find(e => e.id === activeSharedEnumId) || sharedEnums[0];
+
+  const handleAddSharedEnum = () => {
+    const newEnum = createEmptySharedEnum();
+    onUpdate({ ...model, sharedEnums: [...sharedEnums, newEnum] });
+    setActiveSharedEnumId(newEnum.id);
+  };
+
+  const handleDeleteSharedEnum = (id: string) => {
+    const remaining = sharedEnums.filter(e => e.id !== id);
+    onUpdate({ ...model, sharedEnums: remaining });
+    if (activeSharedEnumId === id) setActiveSharedEnumId(remaining[0]?.id || '');
+  };
+
+  const handleUpdateSharedEnum = (update: Partial<SharedEnum>) => {
+    onUpdate({
+      ...model,
+      sharedEnums: sharedEnums.map(e => e.id === (activeSharedEnum?.id || activeSharedEnumId) ? { ...e, ...update } : e)
+    });
+  };
+
+  const handleAddEnumValue = () => {
+    if (!activeSharedEnum) return;
+    handleUpdateSharedEnum({ values: [...activeSharedEnum.values, createEmptyCodeValue()] });
+  };
+
+  const handleUpdateEnumValue = (value: CodeValue) => {
+    if (!activeSharedEnum) return;
+    handleUpdateSharedEnum({ values: activeSharedEnum.values.map(v => v.id === value.id ? value : v) });
+  };
+
+  const handleDeleteEnumValue = (id: string) => {
+    if (!activeSharedEnum) return;
+    handleUpdateSharedEnum({ values: activeSharedEnum.values.filter(v => v.id !== id) });
   };
 
   // Use custom hooks for rendering order and drag-and-drop
@@ -740,6 +782,77 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                     />
                   </div>
                 </div>
+
+                {/* Advanced / OO section — collapsed by default */}
+                {!isGhostLayer && (
+                  <div className="mt-4 border border-slate-200 rounded-[20px] md:rounded-[24px] overflow-hidden">
+                    <button
+                      onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+                      className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50 transition-all"
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 flex items-center gap-2">
+                        <Box size={13} />
+                        {lang === 'no' ? 'Avansert / Arv' : 'Advanced / Inheritance'}
+                        {(activeLayer.extends || activeLayer.isAbstract) && (
+                          <span className="bg-violet-100 text-violet-600 text-[9px] font-black px-2 py-0.5 rounded-full">
+                            {lang === 'no' ? 'Aktiv' : 'Active'}
+                          </span>
+                        )}
+                      </span>
+                      {isAdvancedOpen ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                    </button>
+
+                    {isAdvancedOpen && (
+                      <div className="px-5 pb-5 pt-2 space-y-4 animate-in slide-in-from-top-2 duration-200 border-t border-slate-100">
+                        {/* Extends dropdown */}
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 block mb-2">
+                            {lang === 'no' ? 'Arver fra' : 'Extends'}
+                          </label>
+                          <select
+                            value={activeLayer.extends ?? ''}
+                            onChange={e => handleUpdateLayer({ extends: e.target.value || undefined })}
+                            className="w-full bg-white border border-slate-200 rounded-[14px] px-4 py-2.5 text-xs font-mono text-slate-700 outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-400 transition-all"
+                          >
+                            <option value="">{lang === 'no' ? '— Ingen arv —' : '— No parent —'}</option>
+                            {model.layers
+                              .filter(l => l.id !== activeLayer.id && l.extends !== activeLayer.id)
+                              .map(l => (
+                                <option key={l.id} value={l.id}>{l.name}</option>
+                              ))}
+                          </select>
+                          {activeLayer.extends && (
+                            <p className="text-[9px] text-violet-500 font-bold mt-1.5 flex items-center gap-1">
+                              ↑ {lang === 'no' ? 'Egenskaper arves fra' : 'Properties inherited from'} <span className="font-black">{model.layers.find(l => l.id === activeLayer.extends)?.name}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Abstract toggle */}
+                        <div>
+                          <label className="flex items-center gap-3 cursor-pointer select-none">
+                            <div
+                              onClick={() => handleUpdateLayer({ isAbstract: !activeLayer.isAbstract })}
+                              className={`w-10 h-5 rounded-full transition-all relative shrink-0 ${activeLayer.isAbstract ? 'bg-violet-500' : 'bg-slate-200'}`}
+                            >
+                              <div className={`w-4 h-4 rounded-full bg-white shadow absolute top-0.5 transition-all ${activeLayer.isAbstract ? 'left-5' : 'left-0.5'}`} />
+                            </div>
+                            <div>
+                              <span className="text-xs font-black text-slate-700">
+                                {lang === 'no' ? 'Abstrakt lag' : 'Abstract layer'}
+                              </span>
+                              <p className="text-[9px] text-slate-400 mt-0.5">
+                                {lang === 'no'
+                                  ? 'Abstrakte lag eksporteres ikke som tabeller — de fungerer kun som maler.'
+                                  : 'Abstract layers are not exported as tables — they serve as templates only.'}
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4 md:space-y-6">
@@ -750,6 +863,29 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                   </div>
                   <button onClick={handleAddProperty} className="text-xs font-black text-indigo-600 hover:underline flex items-center gap-1.5 shrink-0"><Plus size={14} /> {t.addProperty}</button>
                 </div>
+
+                {/* Inherited properties — shown read-only when layer has a parent */}
+                {activeLayer.extends && (() => {
+                  const parentLayer = model.layers.find(l => l.id === activeLayer.extends);
+                  if (!parentLayer) return null;
+                  const inheritedProps = getEffectiveProperties(parentLayer, model.layers);
+                  if (inheritedProps.length === 0) return null;
+                  return (
+                    <div className="mb-4 opacity-60 pointer-events-none select-none">
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-500 mb-2 flex items-center gap-1.5 px-1">
+                        ↑ {lang === 'no' ? `Arvet fra ${parentLayer.name}` : `Inherited from ${parentLayer.name}`}
+                      </p>
+                      <div className="space-y-2 border-l-2 border-violet-200 pl-3">
+                        {inheritedProps.map(p => (
+                          <div key={p.id} className="bg-violet-50/60 border border-violet-100 rounded-[14px] px-4 py-2.5 flex items-center justify-between gap-2">
+                            <span className="text-xs font-mono font-bold text-slate-600">{p.name}</span>
+                            <span className="text-[9px] font-black uppercase tracking-wide text-violet-400">{t.types?.[p.type] || p.type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {activeLayer.properties.length === 0 && !reviewMode ? (
                   <div className="bg-white border-2 border-dashed border-slate-200 rounded-[24px] md:rounded-[40px] p-10 sm:p-16 md:p-24 text-center">
@@ -787,6 +923,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                             t={t}
                             allLayers={model.layers.map(l => ({ id: l.id, name: l.name }))}
                             sharedTypes={sharedTypes}
+                            sharedEnums={sharedEnums}
                             change={isGhost ? { type: 'deleted', itemType: 'property', itemName: prop.name } : propChange}
                             isGhost={isGhost}
                             reviewMode={reviewMode}
@@ -819,7 +956,17 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
           onUpdateProperty={handleUpdateSharedProperty}
           onDeleteProperty={handleDeleteSharedProperty}
           onMoveProperty={handleMoveSharedProperty}
+          sharedEnums={sharedEnums}
+          activeSharedEnumId={activeSharedEnumId}
+          onSelectSharedEnum={setActiveSharedEnumId}
+          onAddSharedEnum={handleAddSharedEnum}
+          onDeleteSharedEnum={handleDeleteSharedEnum}
+          onUpdateSharedEnum={handleUpdateSharedEnum}
+          onAddEnumValue={handleAddEnumValue}
+          onUpdateEnumValue={handleUpdateEnumValue}
+          onDeleteEnumValue={handleDeleteEnumValue}
           t={t}
+          lang={lang}
         />
       )}
     </div>

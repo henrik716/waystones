@@ -31,14 +31,16 @@ export interface ModelProperty {
   description: string;
   defaultValue?: string;
   geometryType?: GeometryType;
-  codelistMode?: 'inline' | 'external';
+  codelistMode?: 'inline' | 'external' | 'shared';
   codelistUrl?: string;
   codelistValues: CodeValue[];
+  sharedEnumId?: string;        // reference to a SharedEnum (when codelistMode = 'shared')
   constraints?: PropertyConstraints;
   relationConfig?: {
     targetLayerId: string;
     relationType: 'foreign_key' | 'intersects' | 'contains' | 'within' | 'touches' | 'crosses';
     cascadeDelete?: boolean;
+    multiplicity?: '1..1' | '0..1' | '1..*' | '0..*';
   };
   subProperties?: ModelProperty[];
   sharedTypeId?: string;
@@ -78,6 +80,8 @@ export interface Layer {
   geometryColumnName: string;
   style: LayerStyle;
   layerConstraints?: LayerConstraint[];
+  extends?: string;      // ID of parent Layer (optional inheritance)
+  isAbstract?: boolean;  // If true, excluded from SQL/GeoPackage/Deploy output
 }
 
 export interface ModelMetadata {
@@ -116,6 +120,7 @@ export interface DataModel {
   githubMeta?: { repo: string; path: string; branch: string; };
   sourceConnection?: SourceConnection;
   sharedTypes?: SharedType[];
+  sharedEnums?: SharedEnum[];
   renderingOrder?: string[]; // Layer IDs in desired rendering order
 }
 
@@ -124,6 +129,13 @@ export interface SharedType {
   name: string;
   description: string;
   properties: ModelProperty[];
+}
+
+export interface SharedEnum {
+  id: string;
+  name: string;
+  description: string;
+  values: CodeValue[];
 }
 
 export type ViewTab = 'landing' | 'models' | 'editor' | 'preview' | 'mapper' | 'github' | 'deploy' | 'quick-publish';

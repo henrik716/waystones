@@ -86,6 +86,9 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
               <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 w-fit">
                 <Link size={10} />
                 <span>{t.relationTypes?.[prop.relationConfig!.relationType] || prop.relationConfig!.relationType}</span>
+                {prop.relationConfig!.multiplicity && (
+                  <span className="bg-indigo-100 text-indigo-700 px-1.5 rounded font-black">[{prop.relationConfig!.multiplicity}]</span>
+                )}
                 <ChevronRight size={10} className="text-indigo-300" />
                 <span className="text-indigo-800">{relationTargetLayer}</span>
               </div>
@@ -165,8 +168,11 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
         const findCodelists = (props: ModelProperty[]): ModelProperty[] => {
             let lists: ModelProperty[] = [];
             props.forEach(p => {
-                if (p.type === 'codelist' && p.codelistMode === 'inline' && p.codelistValues.length > 0) {
-                    lists.push(p);
+                if (p.type === 'codelist') {
+                    const vals = p.codelistMode === 'shared' && p.sharedEnumId
+                        ? model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values
+                        : p.codelistValues;
+                    if (vals && vals.length > 0) lists.push(p);
                 }
                 // Sjekk både vanlige subprops og delte typer
                 if (p.subProperties && p.subProperties.length > 0) {
@@ -187,10 +193,17 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
           <div key={layer.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                <h3 className="text-sm font-black text-slate-800 flex items-center gap-2 flex-wrap">
                    <div className="w-4 h-4 rounded-md border border-slate-200 shadow-sm shrink-0" style={{ backgroundColor: layer.style.simpleColor }} />
                    <Layers size={16} className="text-indigo-600" />
                    {layer.name}
+                   {layer.isAbstract && (
+                     <span className="text-[8px] font-black text-violet-500 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded-full">«abstract»</span>
+                   )}
+                   {layer.extends && (() => {
+                     const parent = model.layers.find(l => l.id === layer.extends);
+                     return parent ? <span className="text-[9px] text-violet-400 font-bold">↑ {parent.name}</span> : null;
+                   })()}
                 </h3>
                 {layer.description && <p className="text-[10px] text-slate-400 mt-1">{layer.description}</p>}
               </div>
@@ -244,7 +257,10 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
                            {isStyleAttribute && <Palette size={12} />}
                          </div>
                          <div className="divide-y divide-slate-50">
-                            {prop.codelistValues.map(v => (
+                            {(prop.codelistMode === 'shared' && prop.sharedEnumId
+                              ? (model.sharedEnums?.find(e => e.id === prop.sharedEnumId)?.values ?? prop.codelistValues)
+                              : prop.codelistValues
+                            ).map(v => (
                               <div key={v.id} className="px-4 py-2 hover:bg-slate-50 transition-colors">
                                 <div className="flex items-center gap-2">
                                    {isStyleAttribute && (

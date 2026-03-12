@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { DataModel } from '../../types';
-import { 
-  BookOpen, FileText, Globe2, Database, Download, Cloud, FileCode, DatabaseZap, Zap
+import {
+  BookOpen, FileText, Globe2, Database, Download, Cloud, FileCode, DatabaseZap, Zap, Braces
 } from 'lucide-react';
-import { 
-  exportGeoPackage, exportSQL, exportDatabricks, 
-  exportDocumentation, exportDocumentationHTML 
+import {
+  exportGeoPackage, exportSQL, exportDatabricks,
+  exportDocumentation, exportDocumentationHTML
 } from '../../utils/exportUtils';
+import { exportTypeScript } from '../../utils/exportTypeScript';
 
 interface ExportTabProps {
   model: DataModel;
@@ -78,6 +79,24 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
           </div>
           <button onClick={() => exportDatabricks(model, modelFilename)} className="bg-[#ff3621] hover:bg-[#e02f1d] text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
             <Zap size={16} /> {t.export.download}
+          </button>
+        </div>
+
+        {/* 5. TYPESCRIPT INTERFACES */}
+        <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
+          <div>
+            <Braces className="text-violet-600 mb-3 md:mb-4" size={32}/>
+            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
+              {lang === 'no' ? 'TypeScript' : 'TypeScript Interfaces'}
+            </h3>
+            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
+              {lang === 'no'
+                ? 'Generer .ts-fil med typede grensesnitt for alle lag. Lag med arv bruker extends.'
+                : 'Generate .ts file with typed interfaces for all layers. Inherited layers use extends.'}
+            </p>
+          </div>
+          <button onClick={() => exportTypeScript(model, modelFilename)} className="bg-violet-600 hover:bg-violet-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+            <Download size={16} /> .ts
           </button>
         </div>
 

@@ -1,4 +1,4 @@
-import { DataModel, Layer, ModelProperty, CodeValue, SharedType } from '../types';
+import { DataModel, Layer, ModelProperty, CodeValue, SharedType, SharedEnum } from '../types';
 import { COLORS } from '../constants';
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
@@ -54,6 +54,13 @@ export const createEmptySharedType = (name = ""): SharedType => ({
   properties: []
 });
 
+export const createEmptySharedEnum = (): SharedEnum => ({
+  id: uid(),
+  name: '',
+  description: '',
+  values: []
+});
+
 export const createEmptyModel = (): DataModel => ({
   id: uid(),
   name: "",
@@ -62,6 +69,7 @@ export const createEmptyModel = (): DataModel => ({
   version: "1.0.0",
   layers: [createEmptyLayer("Lag 1")],
   sharedTypes: [],
+  sharedEnums: [],
   crs: "EPSG:4326",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

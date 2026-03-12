@@ -1,4 +1,5 @@
 import { DataModel, GeometryType, PropertyType, ModelProperty, SharedType } from '../types';
+import { getEffectiveProperties } from './modelUtils';
 import { COLORS } from '../constants';
 import { hexToRgb } from './colorUtils';
 import { getSqlType, getSqliteType } from './typeMapUtils';
@@ -75,17 +76,22 @@ const buildPropertySchema = (p: ModelProperty, model: DataModel): any => {
         propSchema['x-relation'] = {
           targetLayer: targetLayerName,
           relationType: p.relationConfig.relationType,
-          cascadeDelete: p.relationConfig.cascadeDelete
+          cascadeDelete: p.relationConfig.cascadeDelete,
+          multiplicity: p.relationConfig.multiplicity
         };
       }
       break;
-    case 'codelist':
+    case 'codelist': {
       propSchema.type = 'string';
-      if (p.codelistValues && p.codelistValues.length > 0) {
-        propSchema.enum = p.codelistValues.map(v => v.code);
-        propSchema['x-codelist-labels'] = p.codelistValues.map(v => ({ code: v.code, label: v.label }));
+      const resolvedValues = p.codelistMode === 'shared' && p.sharedEnumId
+        ? (model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values ?? p.codelistValues)
+        : p.codelistValues;
+      if (resolvedValues && resolvedValues.length > 0) {
+        propSchema.enum = resolvedValues.map(v => v.code);
+        propSchema['x-codelist-labels'] = resolvedValues.map(v => ({ code: v.code, label: v.label }));
       }
       break;
+    }
     default: propSchema.type = 'string';
   }
 
@@ -126,10 +132,10 @@ const geoJsonGeometrySchema = (geometryType: GeometryType): any => {
 export const generateGeoJSONSchema = (model: DataModel): Record<string, any> => {
   const result: Record<string, any> = {};
 
-  model.layers.forEach(l => {
+  model.layers.filter(l => !l.isAbstract).forEach(l => {
     const props: any = {};
     const required: string[] = [];
-    l.properties.forEach(p => {
+    getEffectiveProperties(l, model.layers).forEach(p => {
       props[p.name || 'felt'] = buildPropertySchema(p, model);
       if (p.required) required.push(p.name);
     });
@@ -179,10 +185,10 @@ export const generateGeoJSONSchema = (model: DataModel): Record<string, any> => 
 export const generateJSONFGSchema = (model: DataModel): Record<string, any> => {
   const result: Record<string, any> = {};
 
-  model.layers.forEach(l => {
+  model.layers.filter(l => !l.isAbstract).forEach(l => {
     const props: any = {};
     const required: string[] = [];
-    l.properties.forEach(p => {
+    getEffectiveProperties(l, model.layers).forEach(p => {
       props[p.name || 'felt'] = buildPropertySchema(p, model);
       if (p.required) required.push(p.name);
     });
@@ -247,10 +253,11 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
   db.run("CREATE TABLE gpkg_contents (table_name TEXT PRIMARY KEY, data_type TEXT);");
   
   for (const layer of model.layers) {
+    if (layer.isAbstract) continue;
     const tbl = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     let sql = `CREATE TABLE ${tbl} (fid INTEGER PRIMARY KEY AUTOINCREMENT`;
-    
-    layer.properties.forEach(p => {
+    const effectiveProperties = getEffectiveProperties(layer, model.layers);
+    effectiveProperties.forEach(p => {
       if (p.type === 'relation' && p.relationConfig?.relationType !== 'foreign_key') return;
       const type = getSqliteType(p.type);
       let colDef = `, "${p.name}" ${type}`;
@@ -307,13 +314,13 @@ export const exportSQL = (model: DataModel, filename: string) => {
   let sql = `-- SQL Schema for ${model.name}\n-- Generated: ${new Date().toISOString()}\n\n`;
   sql += `CREATE EXTENSION IF NOT EXISTS postgis;\n\n`;
   
-  model.layers.forEach(l => {
+  model.layers.filter(l => !l.isAbstract).forEach(l => {
     const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     const hasGeom = l.geometryType !== 'None';
 
     sql += `CREATE TABLE ${tbl} (\n  fid SERIAL PRIMARY KEY`;
-    
-    l.properties.forEach(p => {
+    const effectiveProperties = getEffectiveProperties(l, model.layers);
+    effectiveProperties.forEach(p => {
       if (p.type === 'relation' && p.relationConfig?.relationType !== 'foreign_key') return;
       const type = getSqlType(p.type);
       const c = p.constraints; 
@@ -375,11 +382,11 @@ export const exportSQL = (model: DataModel, filename: string) => {
 
 export const exportDatabricks = (model: DataModel, filename: string) => {
   let sql = `-- Databricks SQL for ${model.name}\n\n`;
-  model.layers.forEach(l => {
+  model.layers.filter(l => !l.isAbstract).forEach(l => {
     const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     sql += `CREATE TABLE ${tbl} (\n  fid BIGINT GENERATED ALWAYS AS IDENTITY`;
-    
-    l.properties.forEach(p => {
+    const effectiveProperties = getEffectiveProperties(l, model.layers);
+    effectiveProperties.forEach(p => {
       if (p.type === 'relation' && p.relationConfig?.relationType !== 'foreign_key') return;
       let type = 'STRING';
       if (p.type === 'integer') type = 'INT';
@@ -414,7 +421,12 @@ export const getConstraintsString = (p: ModelProperty, model: DataModel) => {
   if (p.type === 'relation' && p.relationConfig) {
     const target = model.layers.find(l => l.id === p.relationConfig.targetLayerId)?.name || p.relationConfig.targetLayerId;
     parts.push(`Relation: ${p.relationConfig.relationType} -> ${target}`);
+    if (p.relationConfig.multiplicity) parts.push(`[${p.relationConfig.multiplicity}]`);
     if (p.relationConfig.cascadeDelete) parts.push('Cascade Delete');
+  }
+  if (p.type === 'codelist' && p.codelistMode === 'shared' && p.sharedEnumId) {
+    const se = model.sharedEnums?.find(e => e.id === p.sharedEnumId);
+    if (se) parts.push(`Enum: ${se.name}`);
   }
 
   return parts.join(', ') || '-';
@@ -462,8 +474,8 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
         <p>${model.description || ''}</p>
     </div>
 
-    ${model.layers.map(l => {
-      const flatProps = flattenPropertiesRecursive(l.properties, model);
+    ${model.layers.filter(l => !l.isAbstract).map(l => {
+      const flatProps = flattenPropertiesRecursive(getEffectiveProperties(l, model.layers), model);
       return `
         <div class="layer-box">
             <h2>📂 ${isNo ? 'Lag' : 'Layer'}: ${l.name}</h2>
@@ -492,7 +504,17 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
                 </tbody>
             </table>
             
-            ${flatProps.filter(p => p.type === 'codelist' && p.codelistValues && p.codelistValues.length > 0).map(p => `
+            ${flatProps.filter(p => {
+              if (p.type !== 'codelist') return false;
+              const vals = p.codelistMode === 'shared' && p.sharedEnumId
+                ? model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values
+                : p.codelistValues;
+              return vals && vals.length > 0;
+            }).map(p => {
+              const vals = p.codelistMode === 'shared' && p.sharedEnumId
+                ? (model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values ?? p.codelistValues)
+                : p.codelistValues;
+              return `
                 <h4>🔢 ${isNo ? 'Kodeliste' : 'Codelist'}: ${p.title || p.name}</h4>
                 <table>
                     <thead>
@@ -503,7 +525,7 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
                         </tr>
                     </thead>
                     <tbody>
-                        ${p.codelistValues.map(v => `
+                        ${vals.map(v => `
                             <tr>
                                 <td><code>${v.code}</code></td>
                                 <td>${v.label}</td>
@@ -512,7 +534,8 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
                         `).join('')}
                     </tbody>
                 </table>
-            `).join('')}
+              `;
+            }).join('')}
         </div>`;
     }).join('')}
     </body></html>`;
@@ -526,28 +549,37 @@ export const exportDocumentation = (model: DataModel, filename: string, lang: st
     let md = `# ${model.name}\n\nNamespace: \`${model.namespace}\` | Versjon: ${model.version}\n\n`;
     if (model.description) md += `${model.description}\n\n`;
     
-    model.layers.forEach(l => {
+    model.layers.filter(l => !l.isAbstract).forEach(l => {
         md += `## Lag: ${l.name}\n`;
         if (l.description) md += `${l.description}\n\n`;
-        
+
         if (l.geometryType === 'None') md += `_Dette er en ren atributtabell uten geometri._\n\n`;
         else md += `- Geometri: ${t.geometryTypes[l.geometryType]} (\`${l.geometryColumnName}\`)\n\n`;
-        
+
         md += `| Feltnavn | Type | Påkrevd | Restriksjoner | Beskrivelse |\n| :--- | :--- | :--- | :--- | :--- |\n`;
-        const flatProps = flattenPropertiesRecursive(l.properties, model);
+        const flatProps = flattenPropertiesRecursive(getEffectiveProperties(l, model.layers), model);
         flatProps.forEach(p => {
             md += `| \`${p.displayName}\` | ${t.types[p.type] || p.type} | ${p.required ? 'Ja' : 'Nei'} | ${getConstraintsString(p, model)} | ${p.description || '-'} |\n`;
         });
         md += `\n`;
-        
-        const codelistProps = flatProps.filter(p => p.type === 'codelist' && p.codelistValues && p.codelistValues.length > 0);
+
+        const codelistProps = flatProps.filter(p => {
+            if (p.type !== 'codelist') return false;
+            const vals = p.codelistMode === 'shared' && p.sharedEnumId
+                ? model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values
+                : p.codelistValues;
+            return vals && vals.length > 0;
+        });
         if (codelistProps.length > 0) {
             md += `### Kodelister\n\n`;
             codelistProps.forEach(p => {
+                const vals = p.codelistMode === 'shared' && p.sharedEnumId
+                    ? (model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values ?? p.codelistValues)
+                    : p.codelistValues;
                 md += `#### Verdi-valg for: ${p.title || p.name}\n\n`;
                 md += `| Kode | Navn | Beskrivelse |\n`;
                 md += `| :--- | :--- | :--- |\n`;
-                p.codelistValues.forEach(v => {
+                vals.forEach(v => {
                     md += `| \`${v.code}\` | ${v.label} | ${v.description || '-'} |\n`;
                 });
                 md += `\n`;
