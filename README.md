@@ -36,7 +36,7 @@ Migrate and transform existing GIS data:
 
 ### Deploy Panel
 Configure and export production deployments:
-- Connect to PostGIS, Supabase, Databricks, or local GeoPackage data sources
+- Connect to PostGIS, Supabase, or local GeoPackage data sources
 - Map model layers to source tables
 - Export deployment kits with Docker Compose, Fly.io, Railway, or GitHub Container Registry configurations
 - Auto-generate complete pygeoapi and QGIS Server configurations with OGC API – Features and WMS support
