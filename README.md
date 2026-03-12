@@ -1,4 +1,5 @@
 # Waystones
+https://waystones.up.railway.app/
 
 **Design, model, and deploy geospatial data services — no backend expertise required.**
 
@@ -11,8 +12,6 @@
 ---
 
 Waystones is a browser-based tool for designing geospatial data models and generating production-ready [pygeoapi](https://pygeoapi.io) and QGIS Server deployments. Go from a raw GeoPackage file or a blank canvas to a standards-compliant OGC API and WMS in minutes.
-
-https://waystones.up.railway.app/
 
 ## Features
 
