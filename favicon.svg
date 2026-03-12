@@ -53,6 +53,9 @@
 
   </defs>
 
+  <!-- Background -->
+  <rect width="200" height="200" rx="44" ry="44" fill="#1e1b4b"/>
+
   <!-- Hex stone shadow -->
   <polygon points="100,11 174,53 174,139 100,181 26,139 26,53" fill="#04040c"/>
   <!-- Hex stone face -->
