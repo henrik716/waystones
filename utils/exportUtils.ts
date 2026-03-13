@@ -1,4 +1,4 @@
-import { DataModel, GeometryType, PropertyType, ModelProperty, SharedType } from '../types';
+import { DataModel, GeometryType, Field, FieldType, SharedType } from '../types';
 import { getEffectiveProperties } from './modelUtils';
 import { COLORS } from '../constants';
 import { hexToRgb } from './colorUtils';
@@ -11,98 +11,114 @@ export { normalizeGeometryType } from './geomUtils';
 
 declare var initSqlJs: any;
 
+/** Helper: is the multiplicity "required" (lower bound ≥ 1) */
+const isRequired = (f: Field): boolean => f.multiplicity === '1..1' || f.multiplicity === '1..*';
+
 // --- Recursive helper to build JSON Schema property definitions ---
-const buildPropertySchema = (p: ModelProperty, model: DataModel): any => {
+const buildPropertySchema = (f: Field, model: DataModel): any => {
   const propSchema: any = {
-    title: p.title || p.name,
+    title: f.title || f.name,
   };
 
-  if (p.description) propSchema.description = p.description;
+  if (f.description) propSchema.description = f.description;
 
-  switch (p.type) {
-    case 'integer': propSchema.type = 'integer'; break;
-    case 'number': propSchema.type = 'number'; break;
-    case 'boolean': propSchema.type = 'boolean'; break;
-    case 'date': propSchema.type = 'string'; propSchema.format = 'date'; break;
-    case 'json': propSchema.type = 'object'; break;
-    case 'shared_type': {
-        const shared = model.sharedTypes?.find(st => st.id === p.sharedTypeId);
+  const ft = f.fieldType;
+  switch (ft.kind) {
+    case 'primitive':
+      switch (ft.baseType) {
+        case 'integer': propSchema.type = 'integer'; break;
+        case 'number':  propSchema.type = 'number'; break;
+        case 'boolean': propSchema.type = 'boolean'; break;
+        case 'date':    propSchema.type = 'string'; propSchema.format = 'date'; break;
+        case 'json':    propSchema.type = 'object'; break;
+        default:        propSchema.type = 'string'; break;
+      }
+      break;
+    case 'datatype-ref': {
+        const shared = model.sharedTypes?.find(st => st.id === ft.typeId);
         propSchema.type = 'object';
         if (shared) {
-            propSchema.description = (p.description || '') + ` (Type: ${shared.name})`;
+            propSchema.description = (f.description || '') + ` (Type: ${shared.name})`;
             const subProps: any = {};
             const subRequired: string[] = [];
             shared.properties.forEach(sp => {
                 subProps[sp.name || 'felt'] = buildPropertySchema(sp, model);
-                if (sp.required) subRequired.push(sp.name);
+                if (isRequired(sp)) subRequired.push(sp.name);
             });
             propSchema.properties = subProps;
             if (subRequired.length > 0) propSchema.required = subRequired;
         }
         break;
     }
-    case 'object': {
-      propSchema.type = 'object';
-      if (p.subProperties && p.subProperties.length > 0) {
-        const subProps: any = {};
-        const subRequired: string[] = [];
-        p.subProperties.forEach(sp => {
-          subProps[sp.name || 'felt'] = buildPropertySchema(sp, model);
-          if (sp.required) subRequired.push(sp.name);
-        });
-        propSchema.properties = subProps;
-        if (subRequired.length > 0) propSchema.required = subRequired;
+    case 'datatype-inline': {
+      const isArray = f.multiplicity === '0..*' || f.multiplicity === '1..*';
+      if (isArray) {
+        propSchema.type = 'array';
+        if (ft.properties && ft.properties.length > 0) {
+          const itemProps: any = {};
+          const itemRequired: string[] = [];
+          ft.properties.forEach(sp => {
+            itemProps[sp.name || 'felt'] = buildPropertySchema(sp, model);
+            if (isRequired(sp)) itemRequired.push(sp.name);
+          });
+          propSchema.items = { type: 'object', properties: itemProps };
+          if (itemRequired.length > 0) propSchema.items.required = itemRequired;
+        }
+      } else {
+        propSchema.type = 'object';
+        if (ft.properties && ft.properties.length > 0) {
+          const subProps: any = {};
+          const subRequired: string[] = [];
+          ft.properties.forEach(sp => {
+            subProps[sp.name || 'felt'] = buildPropertySchema(sp, model);
+            if (isRequired(sp)) subRequired.push(sp.name);
+          });
+          propSchema.properties = subProps;
+          if (subRequired.length > 0) propSchema.required = subRequired;
+        }
       }
       break;
     }
-    case 'array': {
-      propSchema.type = 'array';
-      if (p.subProperties && p.subProperties.length > 0) {
-        const itemProps: any = {};
-        const itemRequired: string[] = [];
-        p.subProperties.forEach(sp => {
-          itemProps[sp.name || 'felt'] = buildPropertySchema(sp, model);
-          if (sp.required) itemRequired.push(sp.name);
-        });
-        propSchema.items = { type: 'object', properties: itemProps };
-        if (itemRequired.length > 0) propSchema.items.required = itemRequired;
-      }
-      break;
-    }
-    case 'relation':
+    case 'feature-ref':
       propSchema.type = 'string';
-      if (p.relationConfig) {
-        const targetLayerName = model.layers.find(layer => layer.id === p.relationConfig?.targetLayerId)?.name || p.relationConfig?.targetLayerId;
+      {
+        const targetLayerName = model.layers.find(layer => layer.id === ft.layerId)?.name || ft.layerId;
         propSchema['x-relation'] = {
           targetLayer: targetLayerName,
-          relationType: p.relationConfig.relationType,
-          cascadeDelete: p.relationConfig.cascadeDelete,
-          multiplicity: p.relationConfig.multiplicity
+          relationType: ft.relationType,
+          cascadeDelete: ft.cascadeDelete,
+          multiplicity: f.multiplicity
         };
       }
       break;
     case 'codelist': {
       propSchema.type = 'string';
-      const resolvedValues = p.codelistMode === 'shared' && p.sharedEnumId
-        ? (model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values ?? p.codelistValues)
-        : p.codelistValues;
-      if (resolvedValues && resolvedValues.length > 0) {
+      let resolvedValues: { code: string; label: string }[] = [];
+      if (ft.mode === 'shared') {
+        resolvedValues = model.sharedEnums?.find(e => e.id === ft.enumRef)?.values ?? [];
+      } else if (ft.mode === 'inline') {
+        resolvedValues = ft.values;
+      }
+      if (resolvedValues.length > 0) {
         propSchema.enum = resolvedValues.map(v => v.code);
         propSchema['x-codelist-labels'] = resolvedValues.map(v => ({ code: v.code, label: v.label }));
       }
       break;
     }
-    default: propSchema.type = 'string';
+    case 'geometry':
+      propSchema.type = 'string';
+      propSchema.format = 'geometry';
+      break;
   }
 
   // Constraints & Default (skip for containers)
-  if (!['object', 'array', 'shared_type'].includes(p.type)) {
-    if (p.defaultValue !== undefined && p.defaultValue !== '') {
-        if (p.type === 'number' || p.type === 'integer') propSchema.default = Number(p.defaultValue);
-        else if (p.type === 'boolean') propSchema.default = p.defaultValue === 'true';
-        else propSchema.default = p.defaultValue;
+  if (ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref') {
+    if (f.defaultValue !== undefined && f.defaultValue !== '') {
+        if (ft.kind === 'primitive' && (ft.baseType === 'number' || ft.baseType === 'integer')) propSchema.default = Number(f.defaultValue);
+        else if (ft.kind === 'primitive' && ft.baseType === 'boolean') propSchema.default = f.defaultValue === 'true';
+        else propSchema.default = f.defaultValue;
     }
-    const c = p.constraints;
+    const c = f.constraints;
     if (c) {
       if (c.min !== undefined && c.min !== null) propSchema.minimum = Number(c.min);
       if (c.max !== undefined && c.max !== null) propSchema.maximum = Number(c.max);
@@ -135,9 +151,9 @@ export const generateGeoJSONSchema = (model: DataModel): Record<string, any> => 
   model.layers.filter(l => !l.isAbstract).forEach(l => {
     const props: any = {};
     const required: string[] = [];
-    getEffectiveProperties(l, model.layers).forEach(p => {
-      props[p.name || 'felt'] = buildPropertySchema(p, model);
-      if (p.required) required.push(p.name);
+    getEffectiveProperties(l, model.layers).forEach(f => {
+      props[f.name || 'felt'] = buildPropertySchema(f, model);
+      if (isRequired(f)) required.push(f.name);
     });
 
     const propertiesSchema: any = { type: 'object', properties: props };
@@ -188,9 +204,9 @@ export const generateJSONFGSchema = (model: DataModel): Record<string, any> => {
   model.layers.filter(l => !l.isAbstract).forEach(l => {
     const props: any = {};
     const required: string[] = [];
-    getEffectiveProperties(l, model.layers).forEach(p => {
-      props[p.name || 'felt'] = buildPropertySchema(p, model);
-      if (p.required) required.push(p.name);
+    getEffectiveProperties(l, model.layers).forEach(f => {
+      props[f.name || 'felt'] = buildPropertySchema(f, model);
+      if (isRequired(f)) required.push(f.name);
     });
 
     const propertiesSchema: any = { type: 'object', properties: props };
@@ -199,7 +215,6 @@ export const generateJSONFGSchema = (model: DataModel): Record<string, any> => {
     const hasGeom = l.geometryType !== 'None';
 
     if (!hasGeom) {
-      // Pure attribute table — plain JSON Schema, no Feature wrapper
       result[l.name] = {
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         title: l.name,
@@ -227,11 +242,9 @@ export const generateJSONFGSchema = (model: DataModel): Record<string, any> => {
         type: { const: 'Feature' },
         id: { type: ['string', 'number'] },
         featureType: { const: l.name },
-        // geometry: GeoJSON (WGS84) — null if non-WGS84 CRS
         geometry: isWgs84 && whereSchema
           ? { oneOf: [whereSchema, { type: 'null' }] }
           : { type: 'null' },
-        // where: primary geometry in declared CRS
         where: whereSchema
           ? { oneOf: [whereSchema, { type: 'null' }] }
           : { type: 'null' },
@@ -257,34 +270,35 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
     const tbl = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     let sql = `CREATE TABLE ${tbl} (fid INTEGER PRIMARY KEY AUTOINCREMENT`;
     const effectiveProperties = getEffectiveProperties(layer, model.layers);
-    effectiveProperties.forEach(p => {
-      if (p.type === 'relation' && p.relationConfig?.relationType !== 'foreign_key') return;
-      const type = getSqliteType(p.type);
-      let colDef = `, "${p.name}" ${type}`;
-      if (p.required) colDef += ' NOT NULL';
-      if (p.constraints?.isUnique) colDef += ' UNIQUE';
+    effectiveProperties.forEach(f => {
+      const ft = f.fieldType;
+      if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
+      const type = getSqliteType(ft);
+      let colDef = `, "${f.name}" ${type}`;
+      if (isRequired(f)) colDef += ' NOT NULL';
+      if (f.constraints?.isUnique) colDef += ' UNIQUE';
       
       // Foreign Key logikk
-      if (p.type === 'relation' && p.relationConfig?.relationType === 'foreign_key') {
-        const targetLayer = model.layers.find(l => l.id === p.relationConfig?.targetLayerId);
+      if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
+        const targetLayer = model.layers.find(l => l.id === ft.layerId);
         if (targetLayer) {
           const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
           colDef += ` REFERENCES ${targetTbl}(fid)`;
-          if (p.relationConfig.cascadeDelete) colDef += ' ON DELETE CASCADE';
+          if (ft.cascadeDelete) colDef += ' ON DELETE CASCADE';
         }
       }
       
       // Check constraints
-      if (!['object', 'array', 'shared_type'].includes(p.type)) {
-          const c = p.constraints;
-          const checks = [];
-          if (c?.min !== undefined && c.min !== null) checks.push(`"${p.name}" >= ${c.min}`);
-          if (c?.max !== undefined && c.max !== null) checks.push(`"${p.name}" <= ${c.max}`);
-          if (c?.minLength !== undefined && c.minLength !== null) checks.push(`length("${p.name}") >= ${c.minLength}`);
-          if (c?.maxLength !== undefined && c.maxLength !== null) checks.push(`length("${p.name}") <= ${c.maxLength}`);
+      if (ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref') {
+          const c = f.constraints;
+          const checks: string[] = [];
+          if (c?.min !== undefined && c.min !== null) checks.push(`"${f.name}" >= ${c.min}`);
+          if (c?.max !== undefined && c.max !== null) checks.push(`"${f.name}" <= ${c.max}`);
+          if (c?.minLength !== undefined && c.minLength !== null) checks.push(`length("${f.name}") >= ${c.minLength}`);
+          if (c?.maxLength !== undefined && c.maxLength !== null) checks.push(`length("${f.name}") <= ${c.maxLength}`);
           if (c?.enumeration && c.enumeration.length > 0) {
             const enumVals = c.enumeration.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
-            checks.push(`"${p.name}" IN (${enumVals})`);
+            checks.push(`"${f.name}" IN (${enumVals})`);
           }
           if (checks.length > 0) colDef += ` CHECK (${checks.join(' AND ')})`;
       }
@@ -320,34 +334,35 @@ export const exportSQL = (model: DataModel, filename: string) => {
 
     sql += `CREATE TABLE ${tbl} (\n  fid SERIAL PRIMARY KEY`;
     const effectiveProperties = getEffectiveProperties(l, model.layers);
-    effectiveProperties.forEach(p => {
-      if (p.type === 'relation' && p.relationConfig?.relationType !== 'foreign_key') return;
-      const type = getSqlType(p.type);
-      const c = p.constraints; 
-      let line = `,\n  "${p.name}" ${type}`;
+    effectiveProperties.forEach(f => {
+      const ft = f.fieldType;
+      if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
+      const type = getSqlType(ft);
+      const c = f.constraints; 
+      let line = `,\n  "${f.name}" ${type}`;
       
-      if (p.required) line += ' NOT NULL';
+      if (isRequired(f)) line += ' NOT NULL';
       if (c?.isUnique || c?.isPrimaryKey) line += ' UNIQUE';
 
-      if (p.type === 'relation' && p.relationConfig?.relationType === 'foreign_key') {
-        const targetLayer = model.layers.find(lyr => lyr.id === p.relationConfig?.targetLayerId);
+      if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
+        const targetLayer = model.layers.find(lyr => lyr.id === ft.layerId);
         if (targetLayer) {
           const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
           line += ` REFERENCES ${targetTbl}(fid)`;
-          if (p.relationConfig.cascadeDelete) line += ' ON DELETE CASCADE';
+          if (ft.cascadeDelete) line += ' ON DELETE CASCADE';
         }
       }
 
-      if (!['object', 'array', 'shared_type'].includes(p.type)) {
+      if (ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref') {
         const checkParts: string[] = [];
-        if (c?.min !== undefined && c.min !== null) checkParts.push(`"${p.name}" >= ${c.min}`);
-        if (c?.max !== undefined && c.max !== null) checkParts.push(`"${p.name}" <= ${c.max}`);
-        if (c?.minLength !== undefined && c.minLength !== null) checkParts.push(`length("${p.name}") >= ${c.minLength}`);
-        if (c?.maxLength !== undefined && c.maxLength !== null) checkParts.push(`length("${p.name}") <= ${c.maxLength}`);
-        if (c?.pattern) checkParts.push(`"${p.name}" ~ '${c.pattern.replace(/'/g, "''")}'`);
+        if (c?.min !== undefined && c.min !== null) checkParts.push(`"${f.name}" >= ${c.min}`);
+        if (c?.max !== undefined && c.max !== null) checkParts.push(`"${f.name}" <= ${c.max}`);
+        if (c?.minLength !== undefined && c.minLength !== null) checkParts.push(`length("${f.name}") >= ${c.minLength}`);
+        if (c?.maxLength !== undefined && c.maxLength !== null) checkParts.push(`length("${f.name}") <= ${c.maxLength}`);
+        if (c?.pattern) checkParts.push(`"${f.name}" ~ '${c.pattern.replace(/'/g, "''")}'`);
         if (c?.enumeration && c.enumeration.length > 0) {
           const enumVals = c.enumeration.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
-          checkParts.push(`"${p.name}" IN (${enumVals})`);
+          checkParts.push(`"${f.name}" IN (${enumVals})`);
         }
         if (checkParts.length > 0) {
           line += ` CHECK (${checkParts.join(' AND ')})`;
@@ -386,14 +401,17 @@ export const exportDatabricks = (model: DataModel, filename: string) => {
     const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     sql += `CREATE TABLE ${tbl} (\n  fid BIGINT GENERATED ALWAYS AS IDENTITY`;
     const effectiveProperties = getEffectiveProperties(l, model.layers);
-    effectiveProperties.forEach(p => {
-      if (p.type === 'relation' && p.relationConfig?.relationType !== 'foreign_key') return;
+    effectiveProperties.forEach(f => {
+      const ft = f.fieldType;
+      if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
       let type = 'STRING';
-      if (p.type === 'integer') type = 'INT';
-      else if (p.type === 'number') type = 'DOUBLE';
-      else if (p.type === 'boolean') type = 'BOOLEAN';
-      else if (p.type === 'date') type = 'TIMESTAMP';
-      sql += `,\n  ${p.name} ${type}${p.required ? ' NOT NULL' : ''}`;
+      if (ft.kind === 'primitive') {
+        if (ft.baseType === 'integer') type = 'INT';
+        else if (ft.baseType === 'number') type = 'DOUBLE';
+        else if (ft.baseType === 'boolean') type = 'BOOLEAN';
+        else if (ft.baseType === 'date') type = 'TIMESTAMP';
+      }
+      sql += `,\n  ${f.name} ${type}${isRequired(f) ? ' NOT NULL' : ''}`;
     });
     
     if (l.geometryType !== 'None') {
@@ -406,9 +424,9 @@ export const exportDatabricks = (model: DataModel, filename: string) => {
   const a = document.createElement('a'); a.href = url; a.download = `${filename}_databricks.sql`; a.click();
 };
 
-export const getConstraintsString = (p: ModelProperty, model: DataModel) => {
-  const c = p.constraints;
-  const parts = [];
+export const getConstraintsString = (f: Field, model: DataModel) => {
+  const c = f.constraints;
+  const parts: string[] = [];
   if (c?.isPrimaryKey) parts.push('PRIMARY KEY');
   if (c?.isUnique) parts.push('UNIK');
   if (c?.min !== undefined && c.min !== null) parts.push(`Min: ${c.min}`);
@@ -418,14 +436,15 @@ export const getConstraintsString = (p: ModelProperty, model: DataModel) => {
   if (c?.pattern) parts.push(`Mønster: ${c.pattern}`);
   if (c?.enumeration && c.enumeration.length > 0) parts.push(`Verdier: [${c.enumeration.join(', ')}]`);
   
-  if (p.type === 'relation' && p.relationConfig) {
-    const target = model.layers.find(l => l.id === p.relationConfig.targetLayerId)?.name || p.relationConfig.targetLayerId;
-    parts.push(`Relation: ${p.relationConfig.relationType} -> ${target}`);
-    if (p.relationConfig.multiplicity) parts.push(`[${p.relationConfig.multiplicity}]`);
-    if (p.relationConfig.cascadeDelete) parts.push('Cascade Delete');
+  const ft = f.fieldType;
+  if (ft.kind === 'feature-ref') {
+    const target = model.layers.find(l => l.id === ft.layerId)?.name || ft.layerId;
+    parts.push(`Relation: ${ft.relationType} -> ${target}`);
+    parts.push(`[${f.multiplicity}]`);
+    if (ft.cascadeDelete) parts.push('Cascade Delete');
   }
-  if (p.type === 'codelist' && p.codelistMode === 'shared' && p.sharedEnumId) {
-    const se = model.sharedEnums?.find(e => e.id === p.sharedEnumId);
+  if (ft.kind === 'codelist' && ft.mode === 'shared') {
+    const se = model.sharedEnums?.find(e => e.id === ft.enumRef);
     if (se) parts.push(`Enum: ${se.name}`);
   }
 
@@ -434,24 +453,37 @@ export const getConstraintsString = (p: ModelProperty, model: DataModel) => {
 
 // --- Helper: flatten properties for documentation (handles Shared Types) ---
 const flattenPropertiesRecursive = (
-  props: ModelProperty[], 
+  props: Field[], 
   model: DataModel,
   depth: number = 0
-): (ModelProperty & { depth: number; displayName: string })[] => {
-  const result: (ModelProperty & { depth: number; displayName: string })[] = [];
-  props.forEach(p => {
+): (Field & { depth: number; displayName: string })[] => {
+  const result: (Field & { depth: number; displayName: string })[] = [];
+  props.forEach(f => {
     const indent = depth > 0 ? '  '.repeat(depth) + '↳ ' : '';
-    result.push({ ...p, depth, displayName: `${indent}${p.name}` });
+    result.push({ ...f, depth, displayName: `${indent}${f.name}` });
     
-    if (p.subProperties && p.subProperties.length > 0) {
-      result.push(...flattenPropertiesRecursive(p.subProperties, model, depth + 1));
+    if (f.fieldType.kind === 'datatype-inline' && f.fieldType.properties.length > 0) {
+      result.push(...flattenPropertiesRecursive(f.fieldType.properties, model, depth + 1));
     }
-    if (p.type === 'shared_type' && p.sharedTypeId) {
-        const shared = model.sharedTypes?.find(st => st.id === p.sharedTypeId);
+    if (f.fieldType.kind === 'datatype-ref' && f.fieldType.typeId) {
+        const shared = model.sharedTypes?.find(st => st.id === (f.fieldType as any).typeId);
         if (shared) result.push(...flattenPropertiesRecursive(shared.properties, model, depth + 1));
     }
   });
   return result;
+};
+
+/** Helper: get a display label for a field's type for docs */
+const fieldTypeDisplay = (f: Field, t: any): string => {
+  const ft = f.fieldType;
+  switch (ft.kind) {
+    case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;
+    case 'codelist':        return t.types?.codelist || 'Kodeliste';
+    case 'geometry':        return t.types?.geometry || 'Geometri';
+    case 'feature-ref':     return t.types?.relation || 'Relasjon';
+    case 'datatype-inline': return t.types?.object || 'Objekt';
+    case 'datatype-ref':    return t.types?.shared_type || 'Datatype';
+  }
 };
 
 export const exportDocumentationHTML = (model: DataModel, filename: string, lang: string, t: any) => {
@@ -491,31 +523,34 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
 
             <h3>📝 ${isNo ? 'Egenskaper (Felt)' : 'Properties (Fields)'}</h3>
             <table>
-                <thead><tr><th>${isNo ? 'Feltnavn' : 'Field'}</th><th>Type</th><th>${isNo ? 'Påkrevd' : 'Required'}</th><th>Restriksjoner</th><th>${isNo ? 'Beskrivelse' : 'Description'}</th></tr></thead>
+                <thead><tr><th>${isNo ? 'Feltnavn' : 'Field'}</th><th>Type</th><th>${isNo ? 'Multiplisitet' : 'Multiplicity'}</th><th>Restriksjoner</th><th>${isNo ? 'Beskrivelse' : 'Description'}</th></tr></thead>
                 <tbody>
-                    ${flatProps.map(p => `
+                    ${flatProps.map(f => `
                         <tr>
-                            <td style="padding-left: ${p.depth * 20 + 12}px"><code>${p.name}</code><br><small style="color:#94a3b8">${p.title || ''}</small></td>
-                            <td><span class="badge">${t.types[p.type] || p.type}</span></td>
-                            <td>${p.required ? '<strong>Ja</strong>' : 'Nei'}</td>
-                            <td>${getConstraintsString(p, model).split(', ').map(c => c !== '-' ? `<span class="constraint-badge">${c}</span>` : '-').join('')}</td>
-                            <td>${p.description || '-'}</td>
+                            <td style="padding-left: ${f.depth * 20 + 12}px"><code>${f.name}</code><br><small style="color:#94a3b8">${f.title || ''}</small></td>
+                            <td><span class="badge">${fieldTypeDisplay(f, t)}</span></td>
+                            <td><code>${f.multiplicity}</code></td>
+                            <td>${getConstraintsString(f, model).split(', ').map(c => c !== '-' ? `<span class="constraint-badge">${c}</span>` : '-').join('')}</td>
+                            <td>${f.description || '-'}</td>
                         </tr>`).join('')}
                 </tbody>
             </table>
             
-            ${flatProps.filter(p => {
-              if (p.type !== 'codelist') return false;
-              const vals = p.codelistMode === 'shared' && p.sharedEnumId
-                ? model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values
-                : p.codelistValues;
-              return vals && vals.length > 0;
-            }).map(p => {
-              const vals = p.codelistMode === 'shared' && p.sharedEnumId
-                ? (model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values ?? p.codelistValues)
-                : p.codelistValues;
+            ${flatProps.filter(f => {
+              if (f.fieldType.kind !== 'codelist') return false;
+              if (f.fieldType.mode === 'shared') {
+                const vals = model.sharedEnums?.find(e => e.id === (f.fieldType as any).enumRef)?.values;
+                return vals && vals.length > 0;
+              }
+              if (f.fieldType.mode === 'inline') return f.fieldType.values.length > 0;
+              return false;
+            }).map(f => {
+              const ft = f.fieldType as any;
+              const vals = ft.mode === 'shared'
+                ? (model.sharedEnums?.find(e => e.id === ft.enumRef)?.values ?? [])
+                : ft.values;
               return `
-                <h4>🔢 ${isNo ? 'Kodeliste' : 'Codelist'}: ${p.title || p.name}</h4>
+                <h4>🔢 ${isNo ? 'Kodeliste' : 'Codelist'}: ${f.title || f.name}</h4>
                 <table>
                     <thead>
                         <tr>
@@ -525,7 +560,7 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
                         </tr>
                     </thead>
                     <tbody>
-                        ${vals.map(v => `
+                        ${vals.map((v: any) => `
                             <tr>
                                 <td><code>${v.code}</code></td>
                                 <td>${v.label}</td>
@@ -556,30 +591,32 @@ export const exportDocumentation = (model: DataModel, filename: string, lang: st
         if (l.geometryType === 'None') md += `_Dette er en ren atributtabell uten geometri._\n\n`;
         else md += `- Geometri: ${t.geometryTypes[l.geometryType]} (\`${l.geometryColumnName}\`)\n\n`;
 
-        md += `| Feltnavn | Type | Påkrevd | Restriksjoner | Beskrivelse |\n| :--- | :--- | :--- | :--- | :--- |\n`;
+        md += `| Feltnavn | Type | Multiplisitet | Restriksjoner | Beskrivelse |\n| :--- | :--- | :--- | :--- | :--- |\n`;
         const flatProps = flattenPropertiesRecursive(getEffectiveProperties(l, model.layers), model);
-        flatProps.forEach(p => {
-            md += `| \`${p.displayName}\` | ${t.types[p.type] || p.type} | ${p.required ? 'Ja' : 'Nei'} | ${getConstraintsString(p, model)} | ${p.description || '-'} |\n`;
+        flatProps.forEach(f => {
+            md += `| \`${f.displayName}\` | ${fieldTypeDisplay(f, t)} | \`${f.multiplicity}\` | ${getConstraintsString(f, model)} | ${f.description || '-'} |\n`;
         });
         md += `\n`;
 
-        const codelistProps = flatProps.filter(p => {
-            if (p.type !== 'codelist') return false;
-            const vals = p.codelistMode === 'shared' && p.sharedEnumId
-                ? model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values
-                : p.codelistValues;
-            return vals && vals.length > 0;
+        const codelistProps = flatProps.filter(f => {
+            if (f.fieldType.kind !== 'codelist') return false;
+            if (f.fieldType.mode === 'shared') {
+              return (model.sharedEnums?.find(e => e.id === (f.fieldType as any).enumRef)?.values ?? []).length > 0;
+            }
+            if (f.fieldType.mode === 'inline') return f.fieldType.values.length > 0;
+            return false;
         });
         if (codelistProps.length > 0) {
             md += `### Kodelister\n\n`;
-            codelistProps.forEach(p => {
-                const vals = p.codelistMode === 'shared' && p.sharedEnumId
-                    ? (model.sharedEnums?.find(e => e.id === p.sharedEnumId)?.values ?? p.codelistValues)
-                    : p.codelistValues;
-                md += `#### Verdi-valg for: ${p.title || p.name}\n\n`;
+            codelistProps.forEach(f => {
+                const ft = f.fieldType as any;
+                const vals = ft.mode === 'shared'
+                    ? (model.sharedEnums?.find(e => e.id === ft.enumRef)?.values ?? [])
+                    : ft.values;
+                md += `#### Verdi-valg for: ${f.title || f.name}\n\n`;
                 md += `| Kode | Navn | Beskrivelse |\n`;
                 md += `| :--- | :--- | :--- |\n`;
-                vals.forEach(v => {
+                vals.forEach((v: any) => {
                     md += `| \`${v.code}\` | ${v.label} | ${v.description || '-'} |\n`;
                 });
                 md += `\n`;

@@ -1,4 +1,4 @@
-import { DataModel, ModelProperty } from '../types';
+import { DataModel, Field, Layer } from '../types';
 import { topoSortLayers } from './modelUtils';
 
 function toPascalCase(name: string): string {
@@ -7,81 +7,89 @@ function toPascalCase(name: string): string {
     .replace(/^[a-z]/, c => c.toUpperCase());
 }
 
-// Map a ModelProperty to its TypeScript type string
-function tsType(p: ModelProperty, model: DataModel, indent: string = ''): string {
-  switch (p.type) {
-    case 'string':
-      return 'string';
-    case 'number':
-    case 'integer':
-      return 'number';
-    case 'boolean':
-      return 'boolean';
-    case 'date':
-      return 'string'; // ISO 8601
+// Map a Field to its TypeScript type string
+function tsType(f: Field, model: DataModel, indent: string = ''): string {
+  const ft = f.fieldType;
+  switch (ft.kind) {
+    case 'primitive':
+      switch (ft.baseType) {
+        case 'string':  return 'string';
+        case 'number':
+        case 'integer': return 'number';
+        case 'boolean': return 'boolean';
+        case 'date':    return 'string'; // ISO 8601
+        case 'json':    return 'unknown';
+      }
+      break; // unreachable but satisfies TS
     case 'geometry':
       return 'GeoJSON.Geometry';
-    case 'json':
-      return 'unknown';
-    case 'relation': {
-      const mult = p.relationConfig?.multiplicity;
-      // Many-multiplicity → array; optional singular → string | null; default → string
+    case 'feature-ref': {
+      const mult = f.multiplicity;
       if (mult === '0..*' || mult === '1..*') return 'string[]';
       if (mult === '0..1') return 'string | null';
       return 'string';
     }
     case 'codelist': {
-      if (p.codelistMode === 'shared' && p.sharedEnumId) {
-        const se = model.sharedEnums?.find(e => e.id === p.sharedEnumId);
+      if (ft.mode === 'shared') {
+        const se = model.sharedEnums?.find(e => e.id === ft.enumRef);
         if (se) return toPascalCase(se.name);
       }
-      const vals = p.codelistValues;
-      if (vals && vals.length > 0) {
-        return vals.map(v => `'${v.code.replace(/'/g, "\\'")}'`).join(' | ');
+      if (ft.mode === 'inline') {
+        const vals = ft.values;
+        if (vals && vals.length > 0) {
+          return vals.map(v => `'${v.code.replace(/'/g, "\\'")}'`).join(' | ');
+        }
       }
       return 'string';
     }
-    case 'object': {
-      if (!p.subProperties || p.subProperties.length === 0) return 'Record<string, unknown>';
+    case 'datatype-inline': {
+      if (!ft.properties || ft.properties.length === 0) return 'Record<string, unknown>';
       const nextIndent = indent + '  ';
-      const fields = p.subProperties.map(sp => {
-        const opt = sp.required ? '' : '?';
+      const isArray = f.multiplicity === '0..*' || f.multiplicity === '1..*';
+      const fields = ft.properties.map(sp => {
+        const opt = sp.multiplicity === '1..1' || sp.multiplicity === '1..*' ? '' : '?';
         return `${nextIndent}${sp.name}${opt}: ${tsType(sp, model, nextIndent)};`;
       });
-      return `{\n${fields.join('\n')}\n${indent}}`;
+      const objType = `{\n${fields.join('\n')}\n${indent}}`;
+      return isArray ? `Array<${objType}>` : objType;
     }
-    case 'array': {
-      if (!p.subProperties || p.subProperties.length === 0) return 'unknown[]';
-      const nextIndent = indent + '  ';
-      const fields = p.subProperties.map(sp => {
-        const opt = sp.required ? '' : '?';
-        return `${nextIndent}${sp.name}${opt}: ${tsType(sp, model, nextIndent)};`;
-      });
-      return `Array<{\n${fields.join('\n')}\n${indent}}>`;
-    }
-    case 'shared_type': {
-      const shared = model.sharedTypes?.find(st => st.id === p.sharedTypeId);
+    case 'datatype-ref': {
+      const shared = model.sharedTypes?.find(st => st.id === ft.typeId);
       return shared ? toPascalCase(shared.name) : 'unknown';
     }
-    default:
-      return 'unknown';
   }
+  return 'unknown';
 }
 
-function renderInterface(name: string, properties: ModelProperty[], extendsName: string | undefined, model: DataModel): string {
+function renderInterface(name: string, properties: Field[], extendsName: string | undefined, model: DataModel, layer?: Layer): string {
   const extendsClause = extendsName ? ` extends ${toPascalCase(extendsName)}` : '';
   const lines: string[] = [`export interface ${toPascalCase(name)}${extendsClause} {`];
 
-  for (const p of properties) {
-    if (p.description) {
-      lines.push(`  /** ${p.description} */`);
+  if (layer && !layer.isAbstract) {
+    if (!extendsName) {
+      lines.push(`  /** Primary key */`);
+      lines.push(`  fid: number;`);
     }
-    if (p.type === 'relation' && p.relationConfig?.multiplicity) {
-      lines.push(`  /** @multiplicity ${p.relationConfig.multiplicity} */`);
+    
+    // Only add geom column if the layer defines one itself, or if we want to ensure it's there. 
+    // Since SQL export adds geom to every concrete table, we should include it.
+    if (layer.geometryType && layer.geometryType !== 'None') {
+      const geomType = layer.geometryType === 'GeometryCollection' ? 'GeometryCollection' : layer.geometryType;
+      lines.push(`  /** Geometry */`);
+      lines.push(`  ${layer.geometryColumnName || 'geom'}: GeoJSON.${geomType} | null;`);
     }
-    const opt = p.required ? '' : '?';
-    const type = tsType(p, model, '  ');
-    lines.push(`  ${p.name}${opt}: ${type};`);
+  }
+
+  for (const f of properties) {
+    if (f.description) {
+      lines.push(`  /** ${f.description} */`);
+    }
+    if (f.fieldType.kind === 'feature-ref') {
+      lines.push(`  /** @multiplicity ${f.multiplicity} */`);
+    }
+    const opt = f.multiplicity === '1..1' || f.multiplicity === '1..*' ? '' : '?';
+    const type = tsType(f, model, '  ');
+    lines.push(`  ${f.name}${opt}: ${type};`);
   }
 
   lines.push('}');
@@ -128,7 +136,7 @@ export const exportTypeScript = (model: DataModel, filename: string): void => {
       chunks.push(`// Abstract — not exported as a database table`);
     }
 
-    chunks.push(renderInterface(layer.name, layer.properties, parentName, model));
+    chunks.push(renderInterface(layer.name, layer.properties, parentName, model, layer));
     chunks.push('');
   }
 

@@ -3,8 +3,8 @@ import {
   ChevronDown, ChevronUp, Trash2, Asterisk,
   ArrowUp, ArrowDown, Lock, Plus, Link, CornerDownRight, Sparkles
 } from 'lucide-react';
-import { ModelProperty, PropertyType, PropertyConstraints, SharedType } from '../types';
-import { TYPE_CONFIG, createEmptyProperty } from '../constants';
+import { Field, FieldType, FieldKind, PropertyConstraints, SharedType, Multiplicity } from '../types';
+import { getFieldConfig, createEmptyField } from '../constants';
 import { ModelChange } from '../utils/diffUtils';
 import ConstraintsEditor from './property/ConstraintsEditor';
 import CodelistEditor from './property/CodelistEditor';
@@ -17,10 +17,47 @@ import { useAiContext } from '../hooks/useAiContext';
 import AiLoadingSkeleton from './ai/AiLoadingSkeleton';
 import AiErrorHandler from './ai/AiErrorHandler';
 
+// Helper: field kind display label for header
+const fieldKindLabel = (ft: FieldType, t: any, sharedTypes: SharedType[]): string => {
+  switch (ft.kind) {
+    case 'primitive': return t.types?.[ft.baseType] || ft.baseType;
+    case 'codelist': return t.types?.codelist || 'Kodeliste';
+    case 'geometry': return t.types?.geometry || 'Geometri';
+    case 'feature-ref': return t.types?.relation || 'Relasjon';
+    case 'datatype-inline': return t.types?.object || 'Objekt';
+    case 'datatype-ref': {
+      const st = sharedTypes.find(s => s.id === ft.typeId);
+      return st?.name || (t.types?.shared_type || 'Datatype');
+    }
+  }
+};
+
+// Type options for the dropdown
+type TypeOption = { value: string; label: string; toFieldType: () => FieldType };
+
+const getTypeOptions = (t: any): TypeOption[] => [
+  { value: 'string', label: t.types?.string || 'Tekst', toFieldType: () => ({ kind: 'primitive', baseType: 'string' }) },
+  { value: 'number', label: t.types?.number || 'Desimaltall', toFieldType: () => ({ kind: 'primitive', baseType: 'number' }) },
+  { value: 'integer', label: t.types?.integer || 'Heltall', toFieldType: () => ({ kind: 'primitive', baseType: 'integer' }) },
+  { value: 'boolean', label: t.types?.boolean || 'Boolsk', toFieldType: () => ({ kind: 'primitive', baseType: 'boolean' }) },
+  { value: 'date', label: t.types?.date || 'Dato', toFieldType: () => ({ kind: 'primitive', baseType: 'date' }) },
+  { value: 'json', label: t.types?.json || 'JSON', toFieldType: () => ({ kind: 'primitive', baseType: 'json' }) },
+  { value: 'codelist', label: t.types?.codelist || 'Kodeliste', toFieldType: () => ({ kind: 'codelist', mode: 'inline', values: [] }) },
+  { value: 'feature-ref', label: t.types?.relation || 'Relasjon', toFieldType: () => ({ kind: 'feature-ref', layerId: '', relationType: 'foreign_key' }) },
+  { value: 'datatype-inline', label: t.types?.object || 'Objekt', toFieldType: () => ({ kind: 'datatype-inline', properties: [] }) },
+  { value: 'datatype-ref', label: t.types?.shared_type || 'Datatype', toFieldType: () => ({ kind: 'datatype-ref', typeId: '' }) },
+];
+
+// Map FieldType back to dropdown value
+const fieldTypeToValue = (ft: FieldType): string => {
+  if (ft.kind === 'primitive') return ft.baseType;
+  return ft.kind;
+};
+
 interface PropertyEditorProps {
-  prop: ModelProperty;
-  baselineProp?: ModelProperty | null;
-  onUpdate: (prop: ModelProperty) => void;
+  prop: Field;
+  baselineProp?: Field | null;
+  onUpdate: (prop: Field) => void;
   onDelete: (id: string) => void;
   onMove: (direction: 'up' | 'down') => void;
   isFirst: boolean;
@@ -86,11 +123,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   prop, baselineProp, onUpdate, onDelete, onMove, isFirst, isLast, t, allLayers, sharedTypes = [], sharedEnums = [], change, isGhost, reviewMode, depth = 0, layerName = '', lang = 'no'
 }) => {
   const [isOpen, setIsOpen] = useState(prop.name === "" || depth > 0);
-  const config = TYPE_CONFIG[prop.type] || TYPE_CONFIG.string;
+  const config = getFieldConfig(prop.fieldType);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [constraintSuggestion, setConstraintSuggestion] = useState<AiConstraintSuggestion | null>(null);
+  const typeOptions = getTypeOptions(t);
 
   const aiContext = useAiContext();
+  const ft = prop.fieldType;
+  const isRequired = prop.multiplicity === '1..1' || prop.multiplicity === '1..*';
 
   const handleGenerateDescription = () => {
     if (!hasApiKey()) {
@@ -103,7 +143,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     aiContext.setLoading('description', `Generating description for "${prop.name}"…`);
     generatePropertyDescription({
       fieldName: prop.name || 'field',
-      fieldType: prop.type,
+      fieldType: fieldTypeToValue(ft),
       layerName,
       lang,
     }).then(result => {
@@ -128,10 +168,10 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
       description: prop.description || '',
       lang,
     }).then(result => {
-      const validTypes: PropertyType[] = ['string', 'number', 'integer', 'boolean', 'date', 'geometry', 'codelist', 'json', 'object', 'array'];
-      const cleaned = result.trim().toLowerCase() as PropertyType;
-      if (validTypes.includes(cleaned)) {
-        handleUpdate({ type: cleaned, defaultValue: '', constraints: {} });
+      const cleaned = result.trim().toLowerCase();
+      const option = typeOptions.find(o => o.value === cleaned);
+      if (option) {
+        handleUpdate({ fieldType: option.toFieldType(), defaultValue: '', constraints: {} });
       }
       aiContext.setSuccess();
     }).catch(error => {
@@ -150,7 +190,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     aiContext.setLoading('constraints', `Inferring constraints for "${prop.name}"…`);
     inferConstraints({
       fieldName: prop.name || 'field',
-      fieldType: prop.type,
+      fieldType: fieldTypeToValue(ft),
       description: prop.description || '',
       lang,
     }).then(result => {
@@ -166,48 +206,50 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     const { required, ...rest } = constraintSuggestion;
     handleUpdate({
       constraints: { ...(prop.constraints || {}), ...rest },
-      ...(required !== undefined ? { required } : {}),
+      ...(required !== undefined ? { multiplicity: required ? '1..1' as Multiplicity : '0..1' as Multiplicity } : {}),
     });
     setConstraintSuggestion(null);
   };
 
   const c = prop.constraints || {};
-  const hasActiveConstraints = Object.keys(c).some(k => {
+  const hasActiveConstraints = prop.multiplicity !== '0..1' || Object.keys(c).some(k => {
     const val = c[k as keyof PropertyConstraints];
     return val !== undefined && val !== '' && val !== false && (!Array.isArray(val) || val.length > 0);
   });
 
-  const handleUpdate = (updates: Partial<ModelProperty>) => {
+  const handleUpdate = (updates: Partial<Field>) => {
     onUpdate({ ...prop, ...updates });
   };
 
-
-
-  // Recursive sub-property handlers
+  // Recursive sub-property handlers (for datatype-inline)
   const handleAddSubProperty = () => {
+    if (ft.kind !== 'datatype-inline') return;
     handleUpdate({
-      subProperties: [...(prop.subProperties || []), createEmptyProperty()]
+      fieldType: { kind: 'datatype-inline', properties: [...ft.properties, createEmptyField()] }
     });
     setIsOpen(true);
   };
 
-  const handleUpdateSubProperty = (updatedProp: ModelProperty) => {
+  const handleUpdateSubProperty = (updatedProp: Field) => {
+    if (ft.kind !== 'datatype-inline') return;
     handleUpdate({
-      subProperties: (prop.subProperties || []).map(p => p.id === updatedProp.id ? updatedProp : p)
+      fieldType: { kind: 'datatype-inline', properties: ft.properties.map(p => p.id === updatedProp.id ? updatedProp : p) }
     });
   };
 
   const handleDeleteSubProperty = (id: string) => {
+    if (ft.kind !== 'datatype-inline') return;
     handleUpdate({
-      subProperties: (prop.subProperties || []).filter(p => p.id !== id)
+      fieldType: { kind: 'datatype-inline', properties: ft.properties.filter(p => p.id !== id) }
     });
   };
 
   const handleMoveSubProperty = (id: string, direction: 'up' | 'down') => {
-    const index = (prop.subProperties || []).findIndex(p => p.id === id);
+    if (ft.kind !== 'datatype-inline') return;
+    const index = ft.properties.findIndex(p => p.id === id);
     if (index === -1) return;
 
-    const newProps = [...(prop.subProperties || [])];
+    const newProps = [...ft.properties];
     if (direction === 'up' && index > 0) {
       [newProps[index - 1], newProps[index]] = [newProps[index], newProps[index - 1]];
     } else if (direction === 'down' && index < newProps.length - 1) {
@@ -215,55 +257,59 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     } else {
       return;
     }
-    handleUpdate({ subProperties: newProps });
+    handleUpdate({ fieldType: { kind: 'datatype-inline', properties: newProps } });
   };
-  // -------------------------------------
 
   const renderDefaultInput = () => {
     const commonClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all h-12";
 
-    switch (prop.type) {
-      case 'boolean':
-        return (
-          <div className="flex items-center gap-3 py-2">
-            <input
-              type="checkbox"
-              checked={prop.defaultValue === 'true'}
-              onChange={e => handleUpdate({ defaultValue: e.target.checked ? 'true' : 'false' })}
-              className="w-7 h-7 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
-            />
-            <span className="text-[10px] font-black text-slate-500 uppercase">{prop.defaultValue === 'true' ? 'True' : 'False'}</span>
-          </div>
-        );
-      case 'number':
-      case 'integer':
-        return <input type="number" placeholder={t.propDefaultPlaceholder} value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
-      case 'date':
-        return <input type="date" value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
-      case 'codelist':
-        return (
-          <select value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses}>
-            <option value="">None</option>
-            {prop.codelistValues.map(v => (
-              <option key={v.id} value={v.code}>{v.label || v.code}</option>
-            ))}
-          </select>
-        );
-      case 'json':
-        return <textarea placeholder='{ "id": 1, "status": "active" }' value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses + " mono h-24 resize-none"} />;
-      case 'relation':
-      case 'object':
-      case 'array':
-      case 'shared_type':
-        return (
-          <div className="flex items-center gap-2 text-slate-400 italic text-xs h-12">
-            <Link size={14} />
-            <span>Standardverdi støttes ikke for denne typen</span>
-          </div>
-        );
-      default:
-        return <input type="text" placeholder={t.propDefaultPlaceholder} value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
+    if (ft.kind === 'primitive') {
+      switch (ft.baseType) {
+        case 'boolean':
+          return (
+            <div className="flex items-center gap-3 py-2">
+              <input
+                type="checkbox"
+                checked={prop.defaultValue === 'true'}
+                onChange={e => handleUpdate({ defaultValue: e.target.checked ? 'true' : 'false' })}
+                className="w-7 h-7 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+              />
+              <span className="text-[10px] font-black text-slate-500 uppercase">{prop.defaultValue === 'true' ? 'True' : 'False'}</span>
+            </div>
+          );
+        case 'number':
+        case 'integer':
+          return <input type="number" placeholder={t.propDefaultPlaceholder} value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
+        case 'date':
+          return <input type="date" value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
+        case 'json':
+          return <textarea placeholder='{ "id": 1, "status": "active" }' value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses + " mono h-24 resize-none"} />;
+        default:
+          return <input type="text" placeholder={t.propDefaultPlaceholder} value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
+      }
     }
+
+    if (ft.kind === 'codelist' && ft.mode === 'inline') {
+      return (
+        <select value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses}>
+          <option value="">None</option>
+          {ft.values.map(v => (
+            <option key={v.id} value={v.code}>{v.label || v.code}</option>
+          ))}
+        </select>
+      );
+    }
+
+    if (ft.kind === 'feature-ref' || ft.kind === 'datatype-inline' || ft.kind === 'datatype-ref') {
+      return (
+        <div className="flex items-center gap-2 text-slate-400 italic text-xs h-12">
+          <Link size={14} />
+          <span>Standardverdi støttes ikke for denne typen</span>
+        </div>
+      );
+    }
+
+    return <input type="text" placeholder={t.propDefaultPlaceholder} value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
   };
 
   // Depth color coding for nested properties
@@ -271,6 +317,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     const colors = ['bg-slate-200', 'bg-indigo-300', 'bg-emerald-300', 'bg-amber-300', 'bg-rose-300'];
     return colors[depth % colors.length];
   };
+
+  const subProperties = ft.kind === 'datatype-inline' ? ft.properties : [];
 
   return (
     <div className={`bg-white rounded-2xl border transition-all relative ${isOpen ? 'border-indigo-200 ring-4 ring-indigo-50 shadow-sm mb-4' : 'border-slate-200 hover:border-slate-300'} ${change ? (change.type === 'added' ? 'border-emerald-500 ring-4 ring-emerald-50' : 'border-amber-500 ring-4 ring-amber-50') : ''} ${isGhost ? 'opacity-50 grayscale-[0.5] border-rose-300 bg-rose-50/10 pointer-events-none' : ''}`}>
@@ -289,16 +337,15 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className={`text-sm md:text-base font-bold truncate ${prop.name ? 'text-slate-800' : 'text-slate-300 italic'} ${isGhost ? 'line-through text-rose-500' : ''}`}>{prop.name || 'felt_navn'}</span>
-              {prop.required && <Asterisk size={11} className="text-indigo-500" />}
+              {isRequired && <Asterisk size={11} className="text-indigo-500" />}
             </div>
             <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-0.5">
-              <span>{t.types[prop.type]}</span>
+              <span>{fieldKindLabel(ft, t, sharedTypes)}</span>
               {prop.title && <span className="hidden xs:inline truncate opacity-60">• {prop.title}</span>}
 
-              {/* Vise navnet på den delte typen i overskriften hvis det er valgt */}
-              {prop.type === 'shared_type' && prop.sharedTypeId && (
+              {ft.kind === 'datatype-ref' && ft.typeId && (
                 <span className="hidden xs:inline font-bold text-fuchsia-600 truncate ml-1 px-1.5 py-0.5 bg-fuchsia-50 rounded">
-                  {sharedTypes.find(st => st.id === prop.sharedTypeId)?.name || 'Ukjent'}
+                  {sharedTypes.find(st => st.id === ft.typeId)?.name || 'Ukjent'}
                 </span>
               )}
 
@@ -324,12 +371,12 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-end">
-            <PropDiffField label={t.propType} currentValue={prop.type} baselineValue={baselineProp?.type} reviewMode={!!reviewMode}>
+            <PropDiffField label={t.propType} currentValue={fieldTypeToValue(ft)} baselineValue={baselineProp ? fieldTypeToValue(baselineProp.fieldType) : undefined} reviewMode={!!reviewMode}>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
-                  <select value={prop.type} onChange={e => handleUpdate({ type: e.target.value as PropertyType, defaultValue: '', constraints: {} })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12">
-                    {Object.entries(t.types).filter(([k]) => k !== 'geometry').map(([k, v]) => (
-                      <option key={k} value={k}>{v as string}</option>
+                  <select value={fieldTypeToValue(ft)} onChange={e => { const opt = typeOptions.find(o => o.value === e.target.value); if (opt) handleUpdate({ fieldType: opt.toFieldType(), defaultValue: '', constraints: {} }); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12">
+                    {typeOptions.filter(o => o.value !== 'geometry').map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -343,12 +390,12 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
               </div>
             </PropDiffField>
 
-            {prop.type === 'shared_type' && (
-              <PropDiffField label="Velg Datatype" currentValue={prop.sharedTypeId} baselineValue={baselineProp?.sharedTypeId} reviewMode={!!reviewMode}>
+            {ft.kind === 'datatype-ref' && (
+              <PropDiffField label="Velg Datatype" currentValue={ft.typeId} baselineValue={baselineProp?.fieldType.kind === 'datatype-ref' ? baselineProp.fieldType.typeId : undefined} reviewMode={!!reviewMode}>
                 <div className="relative">
                   <select
-                    value={prop.sharedTypeId || ''}
-                    onChange={e => handleUpdate({ sharedTypeId: e.target.value })}
+                    value={ft.typeId || ''}
+                    onChange={e => handleUpdate({ fieldType: { kind: 'datatype-ref', typeId: e.target.value } })}
                     className="w-full bg-fuchsia-50 border border-fuchsia-200 text-fuchsia-900 rounded-xl px-4 py-3.5 text-sm font-bold focus:ring-4 focus:ring-fuchsia-500/10 focus:border-fuchsia-500 outline-none transition-all appearance-none cursor-pointer h-12"
                   >
                     <option value="">-- Velg type --</option>
@@ -362,7 +409,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
             )}
           </div>
 
-          {prop.type !== 'object' && prop.type !== 'array' && prop.type !== 'shared_type' && (
+          {ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref' && (
             <PropDiffField label={t.propDefault} currentValue={prop.defaultValue} baselineValue={baselineProp?.defaultValue} reviewMode={!!reviewMode}>
               {renderDefaultInput()}
             </PropDiffField>
@@ -416,14 +463,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
             )}
           </div>
 
-          {prop.type === 'relation' && (
+          {ft.kind === 'feature-ref' && (
             <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <PropDiffField label={t.propTargetLayer} currentValue={prop.relationConfig?.targetLayerId} baselineValue={baselineProp?.relationConfig?.targetLayerId} reviewMode={!!reviewMode}>
+                <PropDiffField label={t.propTargetLayer} currentValue={ft.layerId} baselineValue={baselineProp?.fieldType.kind === 'feature-ref' ? baselineProp.fieldType.layerId : undefined} reviewMode={!!reviewMode}>
                   <div className="relative">
                     <select
-                      value={prop.relationConfig?.targetLayerId || ''}
-                      onChange={e => handleUpdate({ relationConfig: { ...(prop.relationConfig || { relationType: 'foreign_key' }), targetLayerId: e.target.value } as any })}
+                      value={ft.layerId || ''}
+                      onChange={e => handleUpdate({ fieldType: { ...ft, layerId: e.target.value } })}
                       className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12"
                     >
                       <option value="">-- {t.propTargetLayer} --</option>
@@ -435,11 +482,11 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                   </div>
                 </PropDiffField>
 
-                <PropDiffField label={t.propRelationType} currentValue={prop.relationConfig?.relationType} baselineValue={baselineProp?.relationConfig?.relationType} reviewMode={!!reviewMode}>
+                <PropDiffField label={t.propRelationType} currentValue={ft.relationType} baselineValue={baselineProp?.fieldType.kind === 'feature-ref' ? baselineProp.fieldType.relationType : undefined} reviewMode={!!reviewMode}>
                   <div className="relative">
                     <select
-                      value={prop.relationConfig?.relationType || 'foreign_key'}
-                      onChange={e => handleUpdate({ relationConfig: { ...(prop.relationConfig || { targetLayerId: '' }), relationType: e.target.value as any } as any })}
+                      value={ft.relationType || 'foreign_key'}
+                      onChange={e => handleUpdate({ fieldType: { ...ft, relationType: e.target.value as any } })}
                       className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12"
                     >
                       <optgroup label={t.relationGroups.standard}>
@@ -458,32 +505,15 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 </PropDiffField>
               </div>
 
-              {/* Multiplicity */}
-              <div className="pt-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">
-                  {lang === 'no' ? 'Multiplisitet' : 'Multiplicity'}
-                </label>
-                <div className="flex gap-2">
-                  {(['1..1', '0..1', '1..*', '0..*'] as const).map(m => (
-                    <button
-                      key={m}
-                      onClick={() => handleUpdate({ relationConfig: { ...(prop.relationConfig || { targetLayerId: '', relationType: 'foreign_key' }), multiplicity: prop.relationConfig?.multiplicity === m ? undefined : m } as any })}
-                      className={`px-3 py-2 rounded-xl text-[10px] font-black font-mono border transition-all ${prop.relationConfig?.multiplicity === m ? 'bg-rose-500 border-rose-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500 hover:border-rose-300'}`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              {prop.relationConfig?.relationType === 'foreign_key' && (
+              {ft.relationType === 'foreign_key' && (
                 <div className="pt-2">
-                  <PropDiffField label="" currentValue={prop.relationConfig?.cascadeDelete} baselineValue={baselineProp?.relationConfig?.cascadeDelete} reviewMode={!!reviewMode}>
+                  <PropDiffField label="" currentValue={ft.cascadeDelete} baselineValue={baselineProp?.fieldType.kind === 'feature-ref' ? baselineProp.fieldType.cascadeDelete : undefined} reviewMode={!!reviewMode}>
                     <label className="flex items-center gap-3 cursor-pointer select-none">
                       <input
                         type="checkbox"
-                        checked={!!prop.relationConfig?.cascadeDelete}
-                        onChange={e => handleUpdate({ relationConfig: { ...(prop.relationConfig || { targetLayerId: '', relationType: 'foreign_key' }), cascadeDelete: e.target.checked } as any })}
+                        checked={!!ft.cascadeDelete}
+                        onChange={e => handleUpdate({ fieldType: { ...ft, cascadeDelete: e.target.checked } })}
                         className="w-6 h-6 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
                       />
                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">{t.propCascadeDelete}</span>
@@ -494,7 +524,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
             </div>
           )}
 
-          {prop.type === 'codelist' && (
+          {ft.kind === 'codelist' && (
             <CodelistEditor prop={prop} baselineProp={baselineProp} onUpdate={onUpdate} isGhost={isGhost} reviewMode={reviewMode} sharedEnums={sharedEnums} t={t} lang={lang} />
           )}
 
@@ -511,8 +541,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
             </div>
           </PropDiffField>
 
-          {/* --- NESTED SUB-PROPERTIES (OBJECT/ARRAY) --- */}
-          {(prop.type === 'object' || prop.type === 'array') && (
+          {/* --- NESTED SUB-PROPERTIES (DATATYPE-INLINE) --- */}
+          {ft.kind === 'datatype-inline' && (
             <div className="mt-8 relative">
               <div className={`absolute top-0 bottom-0 left-5 w-0.5 ${getDepthColor()} rounded-full opacity-50`}></div>
 
@@ -520,13 +550,13 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 <div className="flex items-center gap-2 mb-2">
                   <CornerDownRight size={16} className={depth === 0 ? "text-slate-400" : "text-indigo-400"} />
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                    {prop.type === 'object' ? 'Objekt-struktur' : 'Array-struktur'}
+                    Datatype-struktur
                   </h4>
                 </div>
 
                 <div className="space-y-3">
-                  {(prop.subProperties || []).map((subProp, idx) => {
-                    const subBaseline = baselineProp?.subProperties?.find(p => p.id === subProp.id);
+                  {subProperties.map((subProp, idx) => {
+                    const subBaseline = baselineProp?.fieldType.kind === 'datatype-inline' ? baselineProp.fieldType.properties.find(p => p.id === subProp.id) : undefined;
                     return (
                       <PropertyEditor
                         key={subProp.id}
@@ -536,7 +566,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                         onDelete={handleDeleteSubProperty}
                         onMove={(dir) => handleMoveSubProperty(subProp.id, dir)}
                         isFirst={idx === 0}
-                        isLast={idx === (prop.subProperties || []).length - 1}
+                        isLast={idx === subProperties.length - 1}
                         t={t}
                         allLayers={allLayers}
                         sharedTypes={sharedTypes}

@@ -5,9 +5,9 @@ import {
   ChevronDown, ChevronUp, Edit3, Eye, Box,
   Database, GripVertical, RotateCcw, Sparkles
 } from 'lucide-react';
-import { DataModel, Layer, ModelProperty, GeometryType, SharedType, SharedEnum, CodeValue } from '../types';
+import { DataModel, Layer, Field, GeometryType, SharedType, SharedEnum, CodeValue } from '../types';
 import { getEffectiveProperties } from '../utils/modelUtils';
-import { createEmptyProperty, createEmptyLayer, createEmptyCodeValue, COLORS } from '../constants';
+import { createEmptyField, createEmptyLayer, createEmptyCodeValue, COLORS } from '../constants';
 import { createEmptySharedEnum } from '../utils/factories';
 import { compareModels, getStructuredChanges } from '../utils/diffUtils';
 import { fetchModelHistory, fetchModelAtCommit, CommitInfo } from '../utils/githubService';
@@ -189,11 +189,11 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   const handleAddProperty = () => {
     if (!activeLayer) return;
     handleUpdateLayer({
-      properties: [...activeLayer.properties, createEmptyProperty()]
+      properties: [...activeLayer.properties, createEmptyField()]
     });
   };
 
-  const handleUpdateProperty = (updatedProp: ModelProperty) => {
+  const handleUpdateProperty = (updatedProp: Field) => {
     handleUpdateLayer({
       properties: activeLayer.properties.map(p => p.id === updatedProp.id ? updatedProp : p)
     });
@@ -257,11 +257,11 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   const handleAddSharedProperty = () => {
     if (!activeSharedType) return;
     handleUpdateSharedType({
-      properties: [...activeSharedType.properties, createEmptyProperty()]
+      properties: [...activeSharedType.properties, createEmptyField()]
     });
   };
 
-  const handleUpdateSharedProperty = (updatedProp: ModelProperty) => {
+  const handleUpdateSharedProperty = (updatedProp: Field) => {
     if (!activeSharedType) return;
     handleUpdateSharedType({
       properties: activeSharedType.properties.map(p => p.id === updatedProp.id ? updatedProp : p)
@@ -352,7 +352,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
 
   const getLayersForAi = () => model.layers.map(l => ({
     name: l.name,
-    properties: (l.properties || []).map(p => ({ name: p.name, type: p.type })),
+    properties: (l.properties || []).map(p => ({ name: p.name, type: p.fieldType.kind === 'primitive' ? p.fieldType.baseType : p.fieldType.kind })),
   }));
 
   const handleGenerateDatasetDescription = () => {
@@ -383,7 +383,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
     }
 
     aiContext.setLoading('description', 'Generating layer description…');
-    const layerProperties = activeLayer.properties.map(p => ({ name: p.name, type: p.type }));
+    const layerProperties = activeLayer.properties.map(p => ({ name: p.name, type: p.fieldType.kind === 'primitive' ? p.fieldType.baseType : p.fieldType.kind }));
     generateLayerDescription({
       layerName: activeLayer.name,
       geometryType: activeLayer.geometryType || 'None',
@@ -879,7 +879,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                         {inheritedProps.map(p => (
                           <div key={p.id} className="bg-violet-50/60 border border-violet-100 rounded-[14px] px-4 py-2.5 flex items-center justify-between gap-2">
                             <span className="text-xs font-mono font-bold text-slate-600">{p.name}</span>
-                            <span className="text-[9px] font-black uppercase tracking-wide text-violet-400">{t.types?.[p.type] || p.type}</span>
+                            <span className="text-[9px] font-black uppercase tracking-wide text-violet-400">{p.fieldType.kind === 'primitive' ? (t.types?.[p.fieldType.baseType] || p.fieldType.baseType) : (t.types?.[p.fieldType.kind] || p.fieldType.kind)}</span>
                           </div>
                         ))}
                       </div>

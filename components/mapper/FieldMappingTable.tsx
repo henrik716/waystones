@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRightLeft, Wand2, ChevronDown } from 'lucide-react';
-import { Layer, ModelProperty } from '../../types';
+import { Layer, Field } from '../../types';
+import { getFieldConfig } from '../../constants';
 
 interface LayerMapping {
   sourceLayer: string;
@@ -17,6 +18,19 @@ interface FieldMappingTableProps {
   onUpdateFieldMapping: (propId: string, sourceField: string) => void;
   onOpenValueMap: (propId: string) => void;
 }
+
+/** Helper: get a display label for field kind */
+const fieldKindLabel = (f: Field, t: any): string => {
+  const ft = f.fieldType;
+  switch (ft.kind) {
+    case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;
+    case 'codelist':        return t.types?.codelist || 'Codelist';
+    case 'geometry':        return t.types?.geometry || 'Geometry';
+    case 'feature-ref':     return t.types?.relation || 'Relation';
+    case 'datatype-inline': return t.types?.object || 'Object';
+    case 'datatype-ref':    return t.types?.shared_type || 'Datatype';
+  }
+};
 
 const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
   activeLayer,
@@ -63,7 +77,7 @@ const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
                   ) : (
                     activeLayer.properties.map(prop => {
                       const mappedField = activeMapping.fieldMappings[prop.id];
-                      const isValueMappable = (prop.type === 'codelist' || (prop.constraints?.enumeration && prop.constraints.enumeration.length > 0)) && !!mappedField;
+                      const isValueMappable = (prop.fieldType.kind === 'codelist' || (prop.constraints?.enumeration && prop.constraints.enumeration.length > 0)) && !!mappedField;
                       const valueMapCount = Object.keys(activeMapping.valueMappings[prop.id] || {}).length;
 
                       return (
@@ -74,7 +88,7 @@ const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
                           </td>
                           <td className="px-4 py-3">
                              <span className="text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
-                               {t.types[prop.type]}
+                               {fieldKindLabel(prop, t)}
                              </span>
                           </td>
                           <td className="px-6 py-3">

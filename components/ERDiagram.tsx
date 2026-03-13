@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { DataModel, Layer, ModelProperty, SharedType } from '../types';
-import { COLORS, TYPE_CONFIG } from '../constants';
+import { DataModel, Layer, Field, SharedType } from '../types';
+import { COLORS, getFieldConfig } from '../constants';
 import { Download } from 'lucide-react';
 
 interface ERDiagramProps {
@@ -9,25 +9,37 @@ interface ERDiagramProps {
 }
 
 interface FlatProp {
-  prop: ModelProperty;
+  prop: Field;
   depth: number;
   isFromSharedType?: boolean;
 }
 
+const fieldTypeDisplay = (f: Field, t: any): string => {
+  const ft = f.fieldType;
+  switch (ft.kind) {
+    case 'primitive':       return (t.types?.[ft.baseType] || ft.baseType).toUpperCase();
+    case 'codelist':        return (t.types?.codelist || 'CODELIST').toUpperCase();
+    case 'geometry':        return ft.geometryType.toUpperCase();
+    case 'feature-ref':     return (t.types?.relation || 'RELATION').toUpperCase();
+    case 'datatype-inline': return (t.types?.object || 'OBJECT').toUpperCase();
+    case 'datatype-ref': return '';  // will be overridden below
+  }
+};
+
 const flattenProperties = (
-  properties: ModelProperty[], 
+  properties: Field[], 
   allSharedTypes: SharedType[] = [], 
   currentDepth = 0,
   fromShared = false
 ): FlatProp[] => {
   let flatList: FlatProp[] = [];
-  properties.forEach(p => {
-    flatList.push({ prop: p, depth: currentDepth, isFromSharedType: fromShared });
-    if (p.subProperties && p.subProperties.length > 0) {
-      flatList = [...flatList, ...flattenProperties(p.subProperties, allSharedTypes, currentDepth + 1, fromShared)];
+  properties.forEach(f => {
+    flatList.push({ prop: f, depth: currentDepth, isFromSharedType: fromShared });
+    if (f.fieldType.kind === 'datatype-inline' && f.fieldType.properties.length > 0) {
+      flatList = [...flatList, ...flattenProperties(f.fieldType.properties, allSharedTypes, currentDepth + 1, fromShared)];
     }
-    if (p.type === 'shared_type' && p.sharedTypeId) {
-      const sharedType = allSharedTypes.find(st => st.id === p.sharedTypeId);
+    if (f.fieldType.kind === 'datatype-ref' && f.fieldType.typeId) {
+      const sharedType = allSharedTypes.find(st => st.id === (f.fieldType as any).typeId);
       if (sharedType && sharedType.properties) {
         flatList = [...flatList, ...flattenProperties(sharedType.properties, allSharedTypes, currentDepth + 1, true)];
       }
@@ -52,11 +64,9 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
   const layerVisuals = model.layers.map((layer) => {
     const flatProps = flattenProperties(layer.properties, model.sharedTypes || []);
     
-    // Sjekk om laget har geometri
     const hasGeom = layer.geometryType !== 'None';
     const geomRows = hasGeom ? 1 : 0;
     
-    // Calculate height based on whether geometry row is included
     const layerH = mainBoxHeaderH + (geomRows + Math.max(0, flatProps.length)) * rowH + 16;
     const layerY = currentY;
     const visuals = {
@@ -71,24 +81,24 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
 
     flatProps.forEach((flatItem, propIdx) => {
         const { prop } = flatItem;
-        // sourceY with dynamic offset for geometry rows
         const sourceY = layerY + mainBoxHeaderH + (propIdx + geomRows) * rowH + rowH/2;
 
-        if (prop.type === 'codelist' && prop.codelistMode === 'inline' && prop.codelistValues.length > 0) {
-            const clH = 40 + prop.codelistValues.length * 26 + 10;
+        if (prop.fieldType.kind === 'codelist' && prop.fieldType.mode === 'inline' && prop.fieldType.values.length > 0) {
+            const clH = 40 + prop.fieldType.values.length * 26 + 10;
             visuals.codelists.push({
                 prop,
+                values: prop.fieldType.values,
                 sourceY,
                 h: clH,
                 targetY: currentY + clH/2 
             });
         }
 
-        if (prop.type === 'relation' && prop.relationConfig?.targetLayerId) {
+        if (prop.fieldType.kind === 'feature-ref' && prop.fieldType.layerId) {
             visuals.relations.push({
-                targetLayerId: prop.relationConfig.targetLayerId,
-                relationType: prop.relationConfig.relationType,
-                multiplicity: prop.relationConfig.multiplicity,
+                targetLayerId: prop.fieldType.layerId,
+                relationType: prop.fieldType.relationType,
+                multiplicity: prop.multiplicity,
                 sourceY
             });
         }
@@ -105,7 +115,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
     return visuals;
   });
 
-  // Inheritance paths — curves to the left, hollow triangle arrowhead
+  // Inheritance paths
   const inheritancePaths = layerVisuals.flatMap(vis => {
     if (!vis.layer.extends) return [];
     const parentVis = layerVisuals.find(v => v.layer.id === vis.layer.extends);
@@ -157,6 +167,8 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
     document.body.removeChild(downloadLink);
   };
 
+  const isRequired = (f: Field) => f.multiplicity === '1..1' || f.multiplicity === '1..*';
+
   return (
     <div className="relative group">
       <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -189,31 +201,14 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
 
           <g>
             {inheritancePaths.map((inh: any) => (
-              <path
-                key={inh.id}
-                d={inh.path}
-                fill="none"
-                stroke="#7c3aed"
-                strokeWidth="2"
-                strokeDasharray="6 3"
-                strokeOpacity="0.8"
-                markerEnd="url(#inheritanceArrow)"
-              />
+              <path key={inh.id} d={inh.path} fill="none" stroke="#7c3aed" strokeWidth="2" strokeDasharray="6 3" strokeOpacity="0.8" markerEnd="url(#inheritanceArrow)" />
             ))}
           </g>
 
           <g>
             {relationPaths.map((rel: any) => (
               <g key={rel.id}>
-                <path
-                  d={rel.path}
-                  fill="none"
-                  stroke="#6366f1"
-                  strokeWidth="2.5"
-                  strokeOpacity="0.6"
-                  markerEnd="url(#relationArrow)"
-                  className="transition-all hover:stroke-opacity-100"
-                />
+                <path d={rel.path} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeOpacity="0.6" markerEnd="url(#relationArrow)" className="transition-all hover:stroke-opacity-100" />
                 {rel.multiplicity && (
                   <text x={rel.sX + 8} y={rel.sY - 5} fontSize="9" fontWeight="700" fill="#6366f1" opacity="0.85">
                     {rel.multiplicity}
@@ -234,27 +229,25 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                   <text x={startX + 16} y={vis.y + 42} fill="white" fontSize="9" fontWeight="700" opacity="0.65">«abstract»</text>
                 )}
 
-                {/* Tegn Geometrirad kun hvis den eksisterer */}
                 {vis.hasGeom && (
                   <g>
                     <rect x={startX + 2} y={vis.y + mainBoxHeaderH} width={mainBoxW - 4} height={rowH} fill="#f5f7ff" />
-                    <circle cx={startX + 20} cy={vis.y + mainBoxHeaderH + rowH/2} r="3" fill={TYPE_CONFIG.geometry.color} />
+                    <circle cx={startX + 20} cy={vis.y + mainBoxHeaderH + rowH/2} r="3" fill={getFieldConfig({ kind: 'geometry' }).color} />
                     <text x={startX + 34} y={vis.y + mainBoxHeaderH + rowH/2 + 4} fill={COLORS.primaryDark} fontSize="12" fontWeight="900" className="mono">{vis.layer.geometryColumnName}*</text>
-                    <text x={startX + mainBoxW - 16} y={vis.y + mainBoxHeaderH + rowH/2 + 4} textAnchor="end" fill={TYPE_CONFIG.geometry.color} fontSize="9" fontWeight="900" opacity="0.6">{vis.layer.geometryType.toUpperCase()}</text>
+                    <text x={startX + mainBoxW - 16} y={vis.y + mainBoxHeaderH + rowH/2 + 4} textAnchor="end" fill={getFieldConfig({ kind: 'geometry' }).color} fontSize="9" fontWeight="900" opacity="0.6">{vis.layer.geometryType.toUpperCase()}</text>
                   </g>
                 )}
 
                 {vis.flatProps.map((flatItem, i) => {
                   const { prop, depth, isFromSharedType } = flatItem;
-                  const config = TYPE_CONFIG[prop.type] || TYPE_CONFIG.string;
+                  const config = getFieldConfig(prop.fieldType);
                   
-                  // Radens y-posisjon tar nå hensyn til om geometriraden finnes (geomRows)
                   const y = vis.y + mainBoxHeaderH + (i + geomRows) * rowH + 10;
                   const indentX = startX + (depth * 15);
                   
-                  let typeDisplay = t.types[prop.type]?.toUpperCase() || prop.type.toUpperCase();
-                  if (prop.type === 'shared_type' && prop.sharedTypeId) {
-                      const st = model.sharedTypes?.find(s => s.id === prop.sharedTypeId);
+                  let typeDisplay = fieldTypeDisplay(prop, t);
+                  if (prop.fieldType.kind === 'datatype-ref' && prop.fieldType.typeId) {
+                      const st = model.sharedTypes?.find(s => s.id === (prop.fieldType as any).typeId);
                       if (st) typeDisplay = st.name.toUpperCase();
                   }
 
@@ -272,8 +265,8 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                       )}
                       
                       <circle cx={indentX + 20} cy={y + rowH/2} r="3" fill={isFromSharedType ? "#d946ef" : config.color} />
-                      <text x={indentX + 34} y={y + rowH/2 + 4} fill={isFromSharedType ? "#701a75" : "#334155"} fontSize="12" fontWeight={prop.required ? "800" : "600"} className="mono">
-                        {prop.name}{prop.required && "*"}
+                      <text x={indentX + 34} y={y + rowH/2 + 4} fill={isFromSharedType ? "#701a75" : "#334155"} fontSize="12" fontWeight={isRequired(prop) ? "800" : "600"} className="mono">
+                        {prop.name}{isRequired(prop) && "*"}
                       </text>
                       <text x={startX + mainBoxW - 16} y={y + rowH/2 + 4} textAnchor="end" fill={isFromSharedType ? "#d946ef" : config.color} fontSize="9" fontWeight="900" opacity="0.6">
                         {typeDisplay}
@@ -288,7 +281,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                      <rect x={startX + mainBoxW + gapX} y={cl.targetY - cl.h/2} width={codelistBoxW} height={cl.h} rx="12" fill="white" stroke="#e2e8f0" strokeWidth="1.5" />
                      <rect x={startX + mainBoxW + gapX} y={cl.targetY - cl.h/2} width={codelistBoxW} height={32} rx="12" fill="#f8fafc" />
                      <text x={startX + mainBoxW + gapX + 12} y={cl.targetY - cl.h/2 + 20} fill="#64748b" fontSize="10" fontWeight="900" className="uppercase">{cl.prop.name}</text>
-                     {cl.prop.codelistValues.map((cv: any, ci: number) => (
+                     {cl.values.map((cv: any, ci: number) => (
                         <text key={cv.id} x={startX + mainBoxW + gapX + 12} y={cl.targetY - cl.h/2 + 50 + ci * 24} fill={COLORS.blue} fontSize="10" fontWeight="700" className="mono">{cv.code} <tspan fill="#64748b" fontWeight="400">{cv.label}</tspan></text>
                      ))}
                    </g>

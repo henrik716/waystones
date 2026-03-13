@@ -53,7 +53,9 @@ const ValueMappingModal: React.FC<ValueMappingModalProps> = ({
                {(uniqueValues[activeMapping.sourceLayer]?.[activeMapping.fieldMappings[openValueMapId]] || []).map(srcVal => {
                   const prop = activeLayer?.properties.find(p => p.id === openValueMapId)!;
                   const currentTarget = activeMapping.valueMappings[openValueMapId]?.[srcVal] || '';
-                  const allowedValues = prop.type === 'codelist' ? prop.codelistValues : (prop.constraints?.enumeration?.map(v => ({ code: v, label: v })) || []);
+                  const allowedValues = prop.fieldType.kind === 'codelist' && prop.fieldType.mode === 'inline'
+                     ? prop.fieldType.values
+                     : (prop.constraints?.enumeration?.map(v => ({ code: v, label: v, id: v })) || []);
 
                   return (
                     <div key={srcVal} className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center p-4 bg-slate-50 border border-slate-100 rounded-3xl group/val hover:bg-slate-100/50 transition-colors">

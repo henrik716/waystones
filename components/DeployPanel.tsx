@@ -547,6 +547,17 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onSourceChang
                 }
                 if (!isGpkg) {
                   items.push({ file: 'delta_export.py', desc: d.files?.delta || 'Sync engine', icon: <RefreshCw size={16}/> });
+                  items.push({ file: 'nginx-stac.conf', desc: d.files?.nginxStac || 'STAC download server config', icon: <Server size={16}/> });
+                  items.push({ file: 'data/output/stac/catalog.json', desc: d.files?.stacCatalog || 'Root STAC catalog', icon: <Layers size={16}/> });
+                  const nonAbstract = model.layers.filter(l => !l.isAbstract);
+                  if (nonAbstract.length > 0) {
+                    const example = nonAbstract[0].name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    items.push({
+                      file: `data/output/stac/${example}/catalog.json (+${nonAbstract.length})`,
+                      desc: d.files?.stacLayerCatalogs || `Per-layer STAC catalogs (${nonAbstract.length})`,
+                      icon: <Layers size={16}/>,
+                    });
+                  }
                 }
                 if (deployTarget === 'docker-compose' || deployTarget === 'ghcr') {
                   items.push({ file: 'docker-compose.yml', desc: d.files?.docker || 'Orchestration', icon: <Cloud size={16}/> });
@@ -559,8 +570,12 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onSourceChang
                 }
                 if (deployTarget === 'railway') {
                   items.push({ file: 'railway.json', desc: d.files?.railwayJson || 'Railway config', icon: <Cloud size={16}/> });
+                  if (hasWms) {
+                    items.push({ file: 'railway.qgis.json', desc: d.files?.railwayQgisJson || 'Railway config for QGIS Server', icon: <Cloud size={16}/> });
+                  }
                 }
                 items.push(
+                  { file: '.gitignore', desc: d.files?.gitignore || 'Excludes secrets and build artifacts', icon: <Shield size={16}/> },
                   { file: '.env.template', desc: d.files?.env || 'Secrets template', icon: <Shield size={16}/> },
                   { file: '.github/workflows/deploy.yml', desc: d.files?.workflow || 'CI/CD pipeline', icon: <Zap size={16}/> },
                   { file: 'README.md', desc: d.files?.readme || 'Documentation', icon: <FileText size={16}/> },
@@ -568,8 +583,8 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onSourceChang
                 return items.map((item, i) => (
                   <div key={i} className="flex gap-4 p-5 bg-slate-800/40 border border-slate-700/50 rounded-2xl group hover:bg-slate-800 hover:border-violet-500/30 transition-all duration-300">
                     <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-violet-400 border border-slate-700 shrink-0 group-hover:scale-110 transition-transform">{item.icon}</div>
-                    <div>
-                      <p className="text-sm font-mono font-bold text-slate-100 mb-0.5">{item.file}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-mono font-bold text-slate-100 mb-0.5 break-all">{item.file}</p>
                       <p className="text-[10px] text-slate-500 font-medium">{item.desc}</p>
                     </div>
                   </div>

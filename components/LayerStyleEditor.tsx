@@ -24,7 +24,7 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
   const isLine = layer.geometryType.includes('Line') || layer.geometryType.includes('Polygon') || layer.geometryType === 'GeometryCollection';
   const isPolygon = layer.geometryType.includes('Polygon') || layer.geometryType === 'GeometryCollection';
 
-  const codelistProps = layer.properties.filter(p => p.codelistValues && p.codelistValues.length > 0);
+  const codelistProps = layer.properties.filter(p => p.fieldType.kind === 'codelist' && p.fieldType.mode === 'inline' && p.fieldType.values.length > 0);
 
   // Theme classes
   const isDark = variant === 'dark';
@@ -198,7 +198,7 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
               <div className={`rounded-2xl p-4 space-y-3 border max-h-[300px] overflow-y-auto custom-scrollbar shadow-inner ${cls.categorizedBg}`}>
                 <label className={`text-[10px] font-black uppercase tracking-widest ${cls.categorizedLabel} block mb-2`}>{st.colorsForValues}</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {layer.properties.find(p => p.id === style.propertyId)?.codelistValues.map(v => (
+                  {(() => { const sp = layer.properties.find(p => p.id === style.propertyId); const vals = sp?.fieldType.kind === 'codelist' && sp.fieldType.mode === 'inline' ? sp.fieldType.values : []; return vals; })().map(v => (
                     <div key={v.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${cls.categorizedItem}`}>
                       <span className="text-xs font-bold truncate max-w-[120px]">{v.label || v.code}</span>
                       <input

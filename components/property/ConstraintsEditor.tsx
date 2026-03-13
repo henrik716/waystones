@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, ShieldCheck, X, Plus } from 'lucide-react';
-import { ModelProperty, PropertyConstraints } from '../../types';
+import { Field, PropertyConstraints } from '../../types';
 
 interface ConstraintsEditorProps {
-  prop: ModelProperty;
-  onUpdate: (prop: ModelProperty) => void;
+  prop: Field;
+  onUpdate: (prop: Field) => void;
   t: any;
 }
 
@@ -13,12 +13,12 @@ const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t
   const [enumInputValue, setEnumInputValue] = useState('');
 
   const c = prop.constraints || {};
-  const hasActiveConstraints = Object.keys(c).some(k => {
+  const hasActiveConstraints = prop.multiplicity !== '0..1' || Object.keys(c).some(k => {
     const val = c[k as keyof PropertyConstraints];
     return val !== undefined && val !== '' && val !== false && (!Array.isArray(val) || val.length > 0);
   });
 
-  const handleUpdate = (updates: Partial<ModelProperty>) => {
+  const handleUpdate = (updates: Partial<Field>) => {
     onUpdate({ ...prop, ...updates });
   };
 
@@ -50,10 +50,9 @@ const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t
     }
   };
 
-  const isNumeric = prop.type === 'number' || prop.type === 'integer';
-  const isString = prop.type === 'string' || prop.type === 'codelist';
-
-  if (prop.type === 'object' || prop.type === 'array' || prop.type === 'relation' || prop.type === 'shared_type') return null;
+  const ft = prop.fieldType;
+  const isNumeric = ft.kind === 'primitive' && (ft.baseType === 'number' || ft.baseType === 'integer');
+  const isString = ft.kind === 'primitive' && ft.baseType === 'string' || ft.kind === 'codelist';
 
   return (
     <div className="space-y-2 pt-2">
@@ -70,22 +69,40 @@ const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t
       </button>
 
       {isOpen && (
-        <div className="bg-slate-50 p-5 rounded-xl border border-emerald-100 space-y-5 animate-in slide-in-from-top-1 duration-200">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-wrap gap-x-6 gap-y-4 px-2 py-1">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input type="checkbox" checked={!!prop.required} onChange={e => handleUpdate({ required: e.target.checked })} className="w-6 h-6 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600" />
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">{t.constraints.notNull}</span>
+        <div className="bg-slate-50 p-5 rounded-xl border border-emerald-100 space-y-6 animate-in slide-in-from-top-1 duration-200">
+          <div className="flex flex-wrap items-end gap-x-8 gap-y-5">
+            {/* Multiplicity */}
+            <div>
+              <label className="text-[9px] font-black text-slate-400 uppercase block mb-1.5">
+                {t.constraints.multiplicity}
               </label>
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input type="checkbox" checked={!!c.isPrimaryKey} onChange={e => handleConstraintUpdate({ isPrimaryKey: e.target.checked })} className="w-6 h-6 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600" />
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">{t.constraints.primaryKey}</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input type="checkbox" checked={!!c.isUnique} onChange={e => handleConstraintUpdate({ isUnique: e.target.checked })} className="w-6 h-6 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600" />
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">{t.constraints.unique}</span>
-              </label>
+              <div className="inline-flex bg-slate-200/60 p-1 rounded-lg">
+                {(['1..1', '0..1', '1..*', '0..*'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => handleUpdate({ multiplicity: m })}
+                    className={`px-3 py-1.5 rounded-md text-[10px] font-bold font-mono transition-all ${prop.multiplicity === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Checkboxes */}
+            {ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref' && (
+              <div className="flex items-center gap-5 pb-1.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none group">
+                  <input type="checkbox" checked={!!c.isPrimaryKey} onChange={e => handleConstraintUpdate({ isPrimaryKey: e.target.checked })} className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer" />
+                  <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-emerald-700 transition-colors">{t.constraints.primaryKey}</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none group">
+                  <input type="checkbox" checked={!!c.isUnique} onChange={e => handleConstraintUpdate({ isUnique: e.target.checked })} className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer" />
+                  <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-emerald-700 transition-colors">{t.constraints.unique}</span>
+                </label>
+              </div>
+            )}
+          </div>
 
             {(isNumeric || isString) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-emerald-100/50">
@@ -145,7 +162,6 @@ const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t
                 )}
               </div>
             )}
-          </div>
         </div>
       )}
     </div>

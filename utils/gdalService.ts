@@ -12,9 +12,9 @@
  */
 
 import {
-  DataModel, Layer, ModelProperty, PropertyType, GeometryType, PropertyConstraints, ImportValidationResult, ImportWarning, ImportError
+  DataModel, Layer, Field, FieldType, GeometryType, PropertyConstraints, ImportValidationResult, ImportWarning, ImportError
 } from '../types';
-import { createEmptyModel, createEmptyProperty, createEmptyLayer } from '../constants';
+import { createEmptyModel, createEmptyField, createEmptyLayer } from '../constants';
 import { normalizeGeometryType } from './geomUtils';
 import { InferredDataSummary, InferredLayerSummary } from './importUtils';
 import { sanitizeTechnicalName } from './nameSanitizer';
@@ -374,16 +374,16 @@ const parseOgrinfoText = (text: string, basicInfo: any): GdalLayerInfo[] => {
 };
 
 // ============================================================
-// Mapping GDAL types to Waystones PropertyType
+// Mapping GDAL types to Waystones FieldType
 // ============================================================
 
-const gdalTypeToPropertyType = (gdalType: string): PropertyType => {
+const gdalTypeToFieldType = (gdalType: string): FieldType => {
   const t = gdalType.toLowerCase();
-  if (t === 'integer' || t === 'integer64') return 'integer';
-  if (t === 'real' || t === 'float') return 'number';
-  if (t === 'date' || t === 'datetime' || t === 'time') return 'date';
-  if (t === 'binary') return 'string'; // fallback
-  return 'string';
+  if (t === 'integer' || t === 'integer64') return { kind: 'primitive', baseType: 'integer' };
+  if (t === 'real' || t === 'float') return { kind: 'primitive', baseType: 'number' };
+  if (t === 'date' || t === 'datetime' || t === 'time') return { kind: 'primitive', baseType: 'date' };
+  if (t === 'binary') return { kind: 'primitive', baseType: 'string' }; // fallback
+  return { kind: 'primitive', baseType: 'string' };
 };
 
 /**
@@ -482,17 +482,17 @@ export const gdalInfoToModel = (
     }
 
     // Map fields to Waystones properties
-    const properties: ModelProperty[] = layerInfo.fields
+    const properties: Field[] = layerInfo.fields
       .filter(f => f.name.toLowerCase() !== 'fid' && sanitizeTechnicalName(f.name).toLowerCase() !== geometryColumnName.toLowerCase())
       .map(f => {
         const constraints: PropertyConstraints = {};
         if (f.uniqueConstraint) constraints.isPrimaryKey = true;
         return {
-          ...createEmptyProperty(),
+          ...createEmptyField(),
           name: sanitizeTechnicalName(f.name),
           title: f.name.charAt(0).toUpperCase() + f.name.slice(1).replace(/_/g, ' '),
-          type: gdalTypeToPropertyType(f.type),
-          required: f.nullable === false,
+          fieldType: gdalTypeToFieldType(f.type),
+          multiplicity: (f.nullable === false ? '1..1' : '0..1') as Field['multiplicity'],
           constraints,
         };
       });

@@ -1,4 +1,4 @@
-import { DataModel, Layer, ModelProperty, PropertyConstraints, LayerConstraint, SharedType } from '../types';
+import { DataModel, Layer, Field, PropertyConstraints, LayerConstraint, SharedType } from '../types';
 
 export type ChangeType = 'added' | 'deleted' | 'modified';
 
@@ -16,6 +16,18 @@ export interface ModelChange {
 
 const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
+/** Helper: get a display label for a field's type */
+const fieldTypeLabel = (f: Field, t: any): string => {
+  switch (f.fieldType.kind) {
+    case 'primitive':       return t.types?.[f.fieldType.baseType] || f.fieldType.baseType;
+    case 'codelist':        return t.types?.codelist || 'Codelist';
+    case 'geometry':        return t.types?.geometry || 'Geometry';
+    case 'feature-ref':     return t.types?.['feature-ref'] || 'Relation';
+    case 'datatype-inline': return t.types?.['datatype-inline'] || 'Object';
+    case 'datatype-ref':    return t.types?.['datatype-ref'] || 'Datatype';
+  }
+};
+
 /**
  * Sammenligner to datamodeller og returnerer en liste over endringer.
  * Bruker rekursjon for å håndtere nøstede objekter og Shared Types.
@@ -29,29 +41,30 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
 
   // Collect sub-property fields recursively
   const collectSubPropertyFields = (
-    props: ModelProperty[], 
+    props: Field[], 
     path: string
   ): { field: string; oldValue: any; newValue: any }[] => {
     const fields: { field: string; oldValue: any; newValue: any }[] = [];
     props.forEach(sp => {
       const subPath = `${path} ▸ ${sp.name}`;
-      fields.push({ field: `${subPath} (${t.propType || 'Type'})`, oldValue: emptyLabel, newValue: t.types?.[sp.type] || sp.type });
-      fields.push({ field: `${subPath} (${t.propRequired || 'Required'})`, oldValue: emptyLabel, newValue: sp.required ? t.doc?.yes : t.doc?.no });
+      fields.push({ field: `${subPath} (${t.propType || 'Type'})`, oldValue: emptyLabel, newValue: fieldTypeLabel(sp, t) });
+      fields.push({ field: `${subPath} (${t.propRequired || 'Multiplicity'})`, oldValue: emptyLabel, newValue: sp.multiplicity });
       
       if (sp.description) {
         fields.push({ field: `${subPath} (${t.propDescription || 'Description'})`, oldValue: emptyLabel, newValue: sp.description });
       }
       
-      if (sp.type === 'shared_type' && sp.sharedTypeId) {
-        const st = current.sharedTypes?.find(s => s.id === sp.sharedTypeId);
+      if (sp.fieldType.kind === 'datatype-ref') {
+        const dtRef = sp.fieldType;
+        const st = current.sharedTypes?.find(s => s.id === dtRef.typeId);
         if (st) {
             fields.push({ field: `${subPath} (Datatype)`, oldValue: emptyLabel, newValue: st.name });
             fields.push(...collectSubPropertyFields(st.properties, subPath));
         }
       }
 
-      if (sp.subProperties && sp.subProperties.length > 0) {
-        fields.push(...collectSubPropertyFields(sp.subProperties, subPath));
+      if (sp.fieldType.kind === 'datatype-inline' && sp.fieldType.properties.length > 0) {
+        fields.push(...collectSubPropertyFields(sp.fieldType.properties, subPath));
       }
     });
     return fields;
@@ -59,8 +72,8 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
 
   // Recursively compare properties between baseline and current
   const compareProperties = (
-    baseProps: ModelProperty[], 
-    currProps: ModelProperty[], 
+    baseProps: Field[], 
+    currProps: Field[], 
     containerId: string, 
     containerName: string, 
     itemType: 'layer' | 'shared_type',
@@ -74,13 +87,14 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
       const fullPropName = parentPath ? `${parentPath} ▸ ${prop.name}` : prop.name;
       if (!baseMap.has(prop.id)) {
         const addedFields = [
-          { field: t.propType || 'Type', oldValue: emptyLabel, newValue: t.types?.[prop.type] || prop.type },
-          { field: t.propRequired || 'Required', oldValue: emptyLabel, newValue: prop.required ? t.doc?.yes : t.doc?.no }
+          { field: t.propType || 'Type', oldValue: emptyLabel, newValue: fieldTypeLabel(prop, t) },
+          { field: t.propRequired || 'Multiplicity', oldValue: emptyLabel, newValue: prop.multiplicity }
         ];
         
-        if (prop.type === 'shared_type' && prop.sharedTypeId) {
-          const st = current.sharedTypes?.find(s => s.id === prop.sharedTypeId);
-          addedFields.push({ field: t.sharedTypeName || 'Datatype', oldValue: emptyLabel, newValue: st?.name || prop.sharedTypeId });
+        if (prop.fieldType.kind === 'datatype-ref') {
+          const dtRef = prop.fieldType;
+          const st = current.sharedTypes?.find(s => s.id === dtRef.typeId);
+          addedFields.push({ field: t.sharedTypeName || 'Datatype', oldValue: emptyLabel, newValue: st?.name || dtRef.typeId });
           if (st && st.properties.length > 0) {
             addedFields.push(...collectSubPropertyFields(st.properties, fullPropName));
           }
@@ -88,8 +102,8 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
 
         if (prop.description) addedFields.push({ field: t.propDescription || 'Description', oldValue: emptyLabel, newValue: prop.description });
         
-        if (prop.subProperties && prop.subProperties.length > 0) {
-          addedFields.push(...collectSubPropertyFields(prop.subProperties, fullPropName));
+        if (prop.fieldType.kind === 'datatype-inline' && prop.fieldType.properties.length > 0) {
+          addedFields.push(...collectSubPropertyFields(prop.fieldType.properties, fullPropName));
         }
 
         changes.push({ 
@@ -105,8 +119,10 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
         });
       }
 
-      if (prop.subProperties && prop.subProperties.length > 0 && baseMap.has(prop.id)) {
-        compareProperties(baseMap.get(prop.id)!.subProperties || [], prop.subProperties, containerId, containerName, itemType, fullPropName);
+      if (prop.fieldType.kind === 'datatype-inline' && prop.fieldType.properties.length > 0 && baseMap.has(prop.id)) {
+        const baseProp = baseMap.get(prop.id)!;
+        const baseSubProps = baseProp.fieldType.kind === 'datatype-inline' ? baseProp.fieldType.properties : [];
+        compareProperties(baseSubProps, prop.fieldType.properties, containerId, containerName, itemType, fullPropName);
       }
     });
 
@@ -136,14 +152,18 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
         
         if (baseProp.name !== prop.name) propModifiedFields.push({ field: t.propName || 'Name', oldValue: baseProp.name, newValue: prop.name });
         if (baseProp.title !== prop.title) propModifiedFields.push({ field: t.propTitle || 'Title', oldValue: baseProp.title || emptyLabel, newValue: prop.title || emptyLabel });
-        if (baseProp.type !== prop.type) propModifiedFields.push({ field: t.propType || 'Type', oldValue: t.types?.[baseProp.type] || baseProp.type, newValue: t.types?.[prop.type] || prop.type });
+        if (!isEqual(baseProp.fieldType, prop.fieldType)) propModifiedFields.push({ field: t.propType || 'Type', oldValue: fieldTypeLabel(baseProp, t), newValue: fieldTypeLabel(prop, t) });
         
-        if (baseProp.sharedTypeId !== prop.sharedTypeId) {
-            const oldST = baseline.sharedTypes?.find(s => s.id === baseProp.sharedTypeId);
-            const newST = current.sharedTypes?.find(s => s.id === prop.sharedTypeId);
-            propModifiedFields.push({ field: t.sharedTypeName || 'Datatype', oldValue: oldST?.name || emptyLabel, newValue: newST?.name || emptyLabel });
-            if (newST) {
-                propModifiedFields.push(...collectSubPropertyFields(newST.properties, fullPropName));
+        if (prop.fieldType.kind === 'datatype-ref' && baseProp.fieldType.kind === 'datatype-ref') {
+            const baseDtRef = baseProp.fieldType;
+            const currDtRef = prop.fieldType;
+            if (baseDtRef.typeId !== currDtRef.typeId) {
+                const oldST = baseline.sharedTypes?.find(s => s.id === baseDtRef.typeId);
+                const newST = current.sharedTypes?.find(s => s.id === currDtRef.typeId);
+                propModifiedFields.push({ field: t.sharedTypeName || 'Datatype', oldValue: oldST?.name || emptyLabel, newValue: newST?.name || emptyLabel });
+                if (newST) {
+                    propModifiedFields.push(...collectSubPropertyFields(newST.properties, fullPropName));
+                }
             }
         }
         
@@ -221,7 +241,6 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
         layerModifiedFields.push({ field: t.layerName, oldValue: baselineLayer.name, newValue: layer.name });
       }
 
-      // Sjekk Geometritype (inkludert 'None')
       if (baselineLayer.geometryType !== layer.geometryType) {
         layerModifiedFields.push({ 
           field: t.propGeometryType, 
@@ -230,12 +249,10 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
         });
       }
 
-      // Sjekk Geometrikolonne (hvis relevant)
       if (layer.geometryType !== 'None' && baselineLayer.geometryColumnName !== layer.geometryColumnName) {
         layerModifiedFields.push({ field: t.geomColumnName, oldValue: baselineLayer.geometryColumnName, newValue: layer.geometryColumnName });
       }
 
-      // Sjekk Lag-restriksjoner (Valideringsregler)
       const baseConstraints = baselineLayer.layerConstraints || [];
       const currConstraints = layer.layerConstraints || [];
       if (!isEqual(baseConstraints, currConstraints)) {

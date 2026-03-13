@@ -1,13 +1,22 @@
-import { DataModel, Layer, ModelProperty, PropertyType, GeometryType, PropertyConstraints, ImportWarning, ImportError, ImportValidationResult } from '../types';
-import { createEmptyModel, createEmptyProperty, createEmptyLayer } from '../constants';
+import { DataModel, Layer, Field, FieldType, GeometryType, PropertyConstraints, ImportWarning, ImportError, ImportValidationResult } from '../types';
+import { createEmptyModel, createEmptyField, createEmptyLayer } from '../constants';
 import { normalizeGeometryType } from './geomUtils';
-import { mapSqlTypeToPropertyType } from './typeMapUtils';
+import { mapSqlTypeToFieldType } from './typeMapUtils';
 import { sanitizeTechnicalName } from './nameSanitizer';
 
 export { normalizeGeometryType } from './geomUtils';
-export { mapSqlTypeToPropertyType } from './typeMapUtils';
+export { mapSqlTypeToFieldType } from './typeMapUtils';
 
 declare var initSqlJs: any;
+
+/** Helper: infer a FieldType from a JS value */
+const inferFieldType = (value: any): FieldType => {
+  if (typeof value === 'number') {
+    return { kind: 'primitive', baseType: Number.isInteger(value) ? 'integer' : 'number' };
+  }
+  if (typeof value === 'boolean') return { kind: 'primitive', baseType: 'boolean' };
+  return { kind: 'primitive', baseType: 'string' };
+};
 
 export const processGeoJsonToModel = (json: any, name: string): DataModel => {
   const newModel = createEmptyModel();
@@ -19,11 +28,11 @@ export const processGeoJsonToModel = (json: any, name: string): DataModel => {
       newModel.layers[0].geometryType = normalizeGeometryType(firstFeature.geometry.type);
     }
     const p = firstFeature.properties || firstFeature;
-    const newProperties = Object.keys(p).map(key => ({
-      ...createEmptyProperty(),
+    const newProperties: Field[] = Object.keys(p).map(key => ({
+      ...createEmptyField(),
       name: sanitizeTechnicalName(key),
       title: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
-      type: typeof p[key] === 'number' ? (Number.isInteger(p[key]) ? 'integer' : 'number') : 'string' as PropertyType,
+      fieldType: inferFieldType(p[key]),
       constraints: {}
     }));
     newModel.layers[0].properties = newProperties;
@@ -51,7 +60,7 @@ export const processOpenApiToModel = (json: any, name: string): DataModel => {
     const props = (schema as any).properties;
     if (!props) continue;
 
-    const properties: ModelProperty[] = [];
+    const properties: Field[] = [];
     const requiredProps = (schema as any).required || [];
 
     let geometryColumnName = '';
@@ -62,25 +71,25 @@ export const processOpenApiToModel = (json: any, name: string): DataModel => {
       const rawType = pDef.format || pDef.type || 'string';
       const description = pDef.description?.toLowerCase() || '';
 
-      let mappedType: PropertyType = 'string';
+      let fieldType: FieldType = { kind: 'primitive', baseType: 'string' };
 
-      if (rawType.includes('int')) mappedType = 'integer';
-      else if (rawType.includes('numeric') || rawType === 'number' || rawType.includes('float')) mappedType = 'number';
-      else if (rawType === 'boolean') mappedType = 'boolean';
-      else if (rawType.includes('date') || rawType.includes('timestamp')) mappedType = 'date';
+      if (rawType.includes('int')) fieldType = { kind: 'primitive', baseType: 'integer' };
+      else if (rawType.includes('numeric') || rawType === 'number' || rawType.includes('float')) fieldType = { kind: 'primitive', baseType: 'number' };
+      else if (rawType === 'boolean') fieldType = { kind: 'primitive', baseType: 'boolean' };
+      else if (rawType.includes('date') || rawType.includes('timestamp')) fieldType = { kind: 'primitive', baseType: 'date' };
 
       if (description.includes('geometry') || rawType.includes('geometry') || rawType.includes('geography')) {
-        mappedType = 'geometry';
+        fieldType = { kind: 'geometry', geometryType: normalizeGeometryType(rawType + " " + description) };
         geometryColumnName = sanitizeTechnicalName(propName);
         geometryType = normalizeGeometryType(rawType + " " + description);
       }
 
       properties.push({
-        ...createEmptyProperty(),
+        ...createEmptyField(),
         name: sanitizeTechnicalName(propName),
         title: propName.charAt(0).toUpperCase() + propName.slice(1).replace(/_/g, ' '),
-        type: mappedType,
-        required: requiredProps.includes(propName),
+        fieldType,
+        multiplicity: requiredProps.includes(propName) ? '1..1' : '0..1',
         defaultValue: pDef.default ? String(pDef.default) : '',
         constraints: {}
       });
@@ -121,7 +130,7 @@ export const processOgcCollectionsToModel = async (json: any, name: string, base
       if (!res.ok) continue;
       const itemsJson = await res.json();
 
-      const properties: ModelProperty[] = [];
+      const properties: Field[] = [];
       let geometryColumnName = 'geometry';
       let geometryType: GeometryType = 'Polygon';
 
@@ -136,10 +145,10 @@ export const processOgcCollectionsToModel = async (json: any, name: string, base
         const p = firstFeature.properties || {};
         Object.keys(p).forEach(key => {
           properties.push({
-            ...createEmptyProperty(),
+            ...createEmptyField(),
             name: sanitizeTechnicalName(key),
             title: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
-            type: typeof p[key] === 'number' ? (Number.isInteger(p[key]) ? 'integer' : 'number') : 'string',
+            fieldType: inferFieldType(p[key]),
             constraints: {}
           });
         });
@@ -173,7 +182,7 @@ export const processSqlToModel = (sqlText: string, name: string): DataModel => {
   while ((match = createTableRegex.exec(sqlText)) !== null) {
     const tableName = match[1];
     const columnsText = match[2];
-    const properties: ModelProperty[] = [];
+    const properties: Field[] = [];
 
     const columnLines = columnsText.split(/,(?![^\(]*\))/);
 
@@ -190,19 +199,19 @@ export const processSqlToModel = (sqlText: string, name: string): DataModel => {
       if (colMatch) {
         const colName = colMatch[1];
         const colType = colMatch[2];
-        const mappedType = mapSqlTypeToPropertyType(colType);
+        const fieldType = mapSqlTypeToFieldType(colType);
 
-        if (mappedType === 'geometry') {
+        if (fieldType.kind === 'geometry') {
           geometryColumnName = sanitizeTechnicalName(colName);
           geometryType = normalizeGeometryType(colType);
         }
 
         properties.push({
-          ...createEmptyProperty(),
+          ...createEmptyField(),
           name: sanitizeTechnicalName(colName),
           title: colName.charAt(0).toUpperCase() + colName.slice(1).replace(/_/g, ' '),
-          type: mappedType,
-          required: line.toUpperCase().includes('NOT NULL'),
+          fieldType,
+          multiplicity: line.toUpperCase().includes('NOT NULL') ? '1..1' : '0..1',
         });
       }
     }
@@ -243,7 +252,6 @@ export const validateGeoPackageIdFields = async (
 ): Promise<ImportWarning[]> => {
   const warnings: ImportWarning[] = [];
 
-  // Check if primary key is actually a primary key constraint
   const columnsRes = db.exec(`PRAGMA table_info("${tableName}")`);
   let foundPkColumn = false;
   let pkColumnType = '';
@@ -258,7 +266,6 @@ export const validateGeoPackageIdFields = async (
       if (name === primaryKeyColumn) {
         foundPkColumn = isPk;
         pkColumnType = type.toLowerCase();
-        // Check for NULL values in primary key column
         try {
           const nullCheckRes = db.exec(`SELECT COUNT(*) FROM "${tableName}" WHERE "${primaryKeyColumn}" IS NULL`);
           if (nullCheckRes.length > 0 && Number(nullCheckRes[0].values[0][0]) > 0) {
@@ -272,7 +279,6 @@ export const validateGeoPackageIdFields = async (
     }
   }
 
-  // Check for missing primary key
   if (!foundPkColumn || primaryKeyColumn === 'fid') {
     warnings.push({
       type: 'no_primary_key',
@@ -284,7 +290,6 @@ export const validateGeoPackageIdFields = async (
     });
   }
 
-  // Check for non-integer primary key
   if (foundPkColumn && !pkColumnType.includes('int')) {
     warnings.push({
       type: 'non_integer_pk',
@@ -296,7 +301,6 @@ export const validateGeoPackageIdFields = async (
     });
   }
 
-  // Check for NULL values in primary key
   if (pkHasNulls) {
     warnings.push({
       type: 'null_pk',
@@ -308,7 +312,6 @@ export const validateGeoPackageIdFields = async (
     });
   }
 
-  // Check for duplicate values in primary key
   try {
     const duplicateCheckRes = db.exec(`SELECT "${primaryKeyColumn}", COUNT(*) as count FROM "${tableName}" GROUP BY "${primaryKeyColumn}" HAVING count > 1`);
     if (duplicateCheckRes.length > 0 && duplicateCheckRes[0].values.length > 0) {
@@ -347,7 +350,7 @@ export const processGpkgFile = async (file: File): Promise<{
     for (const row of tableRows) {
       const tableName = String(row[0]);
       const columnsRes = db.exec(`PRAGMA table_info("${tableName}")`);
-      const properties: ModelProperty[] = [];
+      const properties: Field[] = [];
       let geometryColumnName = 'geom';
       let geometryType: GeometryType = 'Polygon';
       let srid = 25833;
@@ -408,11 +411,11 @@ export const processGpkgFile = async (file: File): Promise<{
             const c: PropertyConstraints = {};
             if (isPk) c.isPrimaryKey = true;
             properties.push({
-              ...createEmptyProperty(),
+              ...createEmptyField(),
               name: sanitizeTechnicalName(name),
               title: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
-              type: mapSqlTypeToPropertyType(type),
-              required: notNull,
+              fieldType: mapSqlTypeToFieldType(type),
+              multiplicity: notNull ? '1..1' : '0..1',
               constraints: c
             });
           }

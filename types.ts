@@ -7,9 +7,53 @@ export interface CodeValue {
   description?: string;
 }
 
-export type PropertyType = 'string' | 'number' | 'integer' | 'boolean' | 'date' | 'geometry' | 'codelist' | 'json' | 'relation' | 'object' | 'array' | 'shared_type';
+export type GeometryType = 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon' | 'GeometryCollection' | 'None';
 
-export type GeometryType = 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon' | 'GeometryCollection' | 'None'; 
+export type Multiplicity = '1..1' | '0..1' | '1..*' | '0..*';
+
+// --- FieldType: diskriminerte union-varianter ---
+
+export type PrimitiveFieldType = {
+  kind: 'primitive';
+  baseType: 'string' | 'integer' | 'number' | 'boolean' | 'date' | 'json';
+};
+
+export type CodelistFieldType =
+  | { kind: 'codelist'; mode: 'inline'; values: CodeValue[] }
+  | { kind: 'codelist'; mode: 'external'; url: string }
+  | { kind: 'codelist'; mode: 'shared'; enumRef: string };
+
+export type GeometryFieldType = {
+  kind: 'geometry';
+  geometryType: GeometryType;
+};
+
+export type DatatypeInlineFieldType = {
+  kind: 'datatype-inline';
+  properties: Field[];
+};
+
+export type DatatypeRefFieldType = {
+  kind: 'datatype-ref';
+  typeId: string;
+};
+
+export type FeatureRefFieldType = {
+  kind: 'feature-ref';
+  layerId: string;
+  relationType: 'foreign_key' | 'intersects' | 'contains' | 'within' | 'touches' | 'crosses';
+  cascadeDelete?: boolean;
+};
+
+export type FieldType =
+  | PrimitiveFieldType
+  | CodelistFieldType
+  | GeometryFieldType
+  | DatatypeInlineFieldType
+  | DatatypeRefFieldType
+  | FeatureRefFieldType;
+
+// --- Feltet ---
 
 export interface PropertyConstraints {
   min?: number;
@@ -22,35 +66,25 @@ export interface PropertyConstraints {
   enumeration?: string[];
 }
 
-export interface ModelProperty {
+export interface Field {
   id: string;
   name: string;
   title: string;
-  type: PropertyType;
-  required: boolean;
   description: string;
+  multiplicity: Multiplicity;
   defaultValue?: string;
-  geometryType?: GeometryType;
-  codelistMode?: 'inline' | 'external' | 'shared';
-  codelistUrl?: string;
-  codelistValues: CodeValue[];
-  sharedEnumId?: string;        // reference to a SharedEnum (when codelistMode = 'shared')
   constraints?: PropertyConstraints;
-  relationConfig?: {
-    targetLayerId: string;
-    relationType: 'foreign_key' | 'intersects' | 'contains' | 'within' | 'touches' | 'crosses';
-    cascadeDelete?: boolean;
-    multiplicity?: '1..1' | '0..1' | '1..*' | '0..*';
-  };
-  subProperties?: ModelProperty[];
-  sharedTypeId?: string;
+  fieldType: FieldType;
 }
+
+// --- Helper: hent en lesbar "kind"-streng for UI/config-oppslag ---
+export type FieldKind = FieldType['kind'];
 
 export interface LayerStyle {
   type: 'simple' | 'categorized';
   simpleColor: string;
   propertyId?: string;
-  categorizedColors?: Record<string, string>; // Maps code value to hex color
+  categorizedColors?: Record<string, string>;
   pointSize?: number;
   pointIcon?: 'circle' | 'square' | 'triangle' | 'star';
   lineWidth?: number;
@@ -75,13 +109,13 @@ export interface Layer {
   id: string;
   name: string;
   description: string;
-  properties: ModelProperty[];
+  properties: Field[];
   geometryType: GeometryType;
   geometryColumnName: string;
   style: LayerStyle;
   layerConstraints?: LayerConstraint[];
-  extends?: string;      // ID of parent Layer (optional inheritance)
-  isAbstract?: boolean;  // If true, excluded from SQL/GeoPackage/Deploy output
+  extends?: string;
+  isAbstract?: boolean;
 }
 
 export interface ModelMetadata {
@@ -102,8 +136,8 @@ export interface ModelMetadata {
   };
   temporalExtentFrom: string;
   temporalExtentTo: string;
-  url?: string;                    // Dataset URL
-  termsOfService?: string;         // Terms of service URL
+  url?: string;
+  termsOfService?: string;
 }
 
 export interface DataModel {
@@ -121,14 +155,14 @@ export interface DataModel {
   sourceConnection?: SourceConnection;
   sharedTypes?: SharedType[];
   sharedEnums?: SharedEnum[];
-  renderingOrder?: string[]; // Layer IDs in desired rendering order
+  renderingOrder?: string[];
 }
 
 export interface SharedType {
   id: string;
   name: string;
   description: string;
-  properties: ModelProperty[];
+  properties: Field[];
 }
 
 export interface SharedEnum {

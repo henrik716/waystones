@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Box, Hash } from 'lucide-react';
-import { DataModel, SharedType, SharedEnum, ModelProperty, CodeValue } from '../../types';
+import { DataModel, SharedType, SharedEnum, Field, CodeValue } from '../../types';
 import PropertyEditor from '../PropertyEditor';
 import { createEmptyCodeValue } from '../../constants';
 
@@ -14,7 +14,7 @@ interface SharedTypesTabProps {
   onDeleteSharedType: (id: string) => void;
   onUpdateSharedType: (update: Partial<SharedType>) => void;
   onAddProperty: () => void;
-  onUpdateProperty: (prop: ModelProperty) => void;
+  onUpdateProperty: (prop: Field) => void;
   onDeleteProperty: (id: string) => void;
   onMoveProperty: (id: string, direction: 'up' | 'down') => void;
   // SharedEnum props
@@ -72,7 +72,7 @@ const SharedTypesTab: React.FC<SharedTypesTabProps> = ({
         <>
           <div className="flex items-center justify-between mb-4 px-2">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{t.sharedTypes || 'Datatyper'}</h3>
-            <button onClick={onAddSharedType} className="text-xs font-black text-indigo-600 hover:underline flex items-center gap-1.5 shrink-0"><Plus size={14}/> {t.addSharedType || 'Ny datatype'}</button>
+            <button onClick={onAddSharedType} className="text-xs font-black text-indigo-600 hover:underline flex items-center gap-1.5 shrink-0"><Plus size={14} /> {t.addSharedType || 'Ny datatype'}</button>
           </div>
 
           <div className="flex flex-wrap gap-2 md:gap-3 px-1 pb-4">
@@ -133,7 +133,7 @@ const SharedTypesTab: React.FC<SharedTypesTabProps> = ({
               {lang === 'no' ? 'Delte kodelister' : 'Shared Codelists'}
             </h3>
             <button onClick={onAddSharedEnum} className="text-xs font-black text-amber-600 hover:underline flex items-center gap-1.5 shrink-0">
-              <Plus size={14}/> {lang === 'no' ? 'Ny kodeliste' : 'New codelist'}
+              <Plus size={14} /> {lang === 'no' ? 'Ny kodeliste' : 'New codelist'}
             </button>
           </div>
 

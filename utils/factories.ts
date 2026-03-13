@@ -1,4 +1,4 @@
-import { DataModel, Layer, ModelProperty, CodeValue, SharedType, SharedEnum } from '../types';
+import { DataModel, Layer, Field, CodeValue, SharedType, SharedEnum } from '../types';
 import { COLORS } from '../constants';
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
@@ -10,20 +10,19 @@ export const createEmptyCodeValue = (): CodeValue => ({
   description: ""
 });
 
-export const createEmptyProperty = (): ModelProperty => ({
+export const createEmptyField = (): Field => ({
   id: uid(),
   name: "",
   title: "",
-  type: "string",
-  required: false,
   description: "",
+  multiplicity: '0..1',
   defaultValue: "",
-  codelistMode: "inline",
-  codelistUrl: "",
-  codelistValues: [],
   constraints: {},
-  subProperties: []
+  fieldType: { kind: 'primitive', baseType: 'string' },
 });
+
+/** @deprecated Use createEmptyField instead */
+export const createEmptyProperty = createEmptyField;
 
 export const createEmptyLayer = (name = ""): Layer => ({
   id: uid(),

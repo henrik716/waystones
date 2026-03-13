@@ -5,6 +5,13 @@ import {
 import { reprojectCoordinates } from './gdalService';
 import { hexToRgb } from './colorUtils';
 import { i18n } from '../i18n';
+import {
+  generateStacCatalog,
+  generateStacCollection,
+  generateStacLayerCatalog,
+  generateStacItemSnippet,
+  generateNginxStacConf,
+} from './stacUtils';
 
 // ============================================================
 // Helper: get table name for a layer (same logic as existing exports)
@@ -595,14 +602,13 @@ def get_since(args, layer_id):
 
 def get_pg_conn_string():
     """OGR connection string for ogr2ogr."""
-    return (
-        f"PG:host=${pgEnv.POSTGRES_HOST} "
-        f"port=${pgEnv.POSTGRES_PORT} "
-        f"dbname=${pgEnv.POSTGRES_DB} "
-        f"user=${pgEnv.POSTGRES_USER} "
-        f"password=${pgEnv.POSTGRES_PASSWORD} "
-        f"schemas=${pgEnv.POSTGRES_SCHEMA}"
-    )
+    host = os.environ.get("POSTGRES_HOST", "${pgEnv.POSTGRES_HOST}")
+    port = os.environ.get("POSTGRES_PORT", "${pgEnv.POSTGRES_PORT}")
+    dbname = os.environ.get("POSTGRES_DB", "${pgEnv.POSTGRES_DB}")
+    user = os.environ.get("POSTGRES_USER", "${pgEnv.POSTGRES_USER}")
+    password = os.environ.get("POSTGRES_PASSWORD", "${pgEnv.POSTGRES_PASSWORD}")
+    schema = os.environ.get("POSTGRES_SCHEMA", "${pgEnv.POSTGRES_SCHEMA}")
+    return f"PG:host={host} port={port} dbname={dbname} user={user} password={password} schemas={schema}"
 
 PG_CONN = get_pg_conn_string()
 
@@ -611,12 +617,12 @@ def pg_connect():
     """Direct psycopg2 connection for FID queries."""
     import psycopg2
     return psycopg2.connect(
-        host="${pgEnv.POSTGRES_HOST}",
-        port=${pgEnv.POSTGRES_PORT},
-        dbname="${pgEnv.POSTGRES_DB}",
-        user="${pgEnv.POSTGRES_USER}",
-        password="${pgEnv.POSTGRES_PASSWORD}",
-        options="-c search_path=${pgEnv.POSTGRES_SCHEMA}"
+        host=os.environ.get("POSTGRES_HOST", "${pgEnv.POSTGRES_HOST}"),
+        port=int(os.environ.get("POSTGRES_PORT", "${pgEnv.POSTGRES_PORT}")),
+        dbname=os.environ.get("POSTGRES_DB", "${pgEnv.POSTGRES_DB}"),
+        user=os.environ.get("POSTGRES_USER", "${pgEnv.POSTGRES_USER}"),
+        password=os.environ.get("POSTGRES_PASSWORD", "${pgEnv.POSTGRES_PASSWORD}"),
+        options=f"-c search_path={os.environ.get('POSTGRES_SCHEMA', '${pgEnv.POSTGRES_SCHEMA}')}"
     )
 
 
@@ -705,16 +711,20 @@ def export_${tbl}(since=None):
 
       if (tsCol) {
         script += `    # Step 4: Export inserts + updates (timestamp-based)
+    if inserted_pks:
+        pk_csv = ','.join(str(f) for f in sorted(inserted_pks))
+        change_type_expr = f'CASE WHEN "${pkCol}" IN ({pk_csv}) THEN \\'insert\\' ELSE \\'update\\' END'
+        pk_filter = f'OR "${pkCol}" IN ({pk_csv})'
+    else:
+        change_type_expr = "'update'"
+        pk_filter = ""
+
     sql_changes = f"""
-        SELECT *,
-            CASE
-                WHEN "${pkCol}" IN ({','.join(str(f) for f in inserted_pks)}) THEN 'insert'
-                ELSE 'update'
-            END as _change_type
+        SELECT *, {change_type_expr} as _change_type
         FROM "${sourceTable}"
         WHERE "${tsCol}" > '{since}'
-           OR "${pkCol}" IN ({','.join(str(f) for f in inserted_pks)})
-    """ if (inserted_pks or since) else None
+           {pk_filter}
+    """ if since else None
 
     has_changes = False
 
@@ -849,10 +859,14 @@ def export_${tbl}(since=None):
 
       if (tsCol) {
         script += `        # Changed + new features
-        pk_csv = ','.join(str(f) for f in inserted_pks) if inserted_pks else '-1'
+        if inserted_pks:
+            pk_csv = ','.join(str(f) for f in sorted(inserted_pks))
+            pk_filter = f'OR ${pkCol} IN ({pk_csv})'
+        else:
+            pk_filter = ""
         cursor.execute(f"""
             SELECT * FROM {full_table}
-            WHERE ${tsCol} > '{since}' OR ${pkCol} IN ({pk_csv})
+            WHERE ${tsCol} > '{since}' {pk_filter}
         """)
 `;
       } else {
@@ -1116,13 +1130,14 @@ services:
     compose += `
   # --- Delta File Download Server (Nginx) ---
   # Serves the generated .gpkg files as an auto-indexed web directory
+  # STAC catalog: http://localhost:\${DOWNLOAD_PORT:-8081}/stac/catalog.json
   downloads:
     image: nginx:alpine
     ports:
       - "\${DOWNLOAD_PORT:-8081}:80"
     volumes:
       - ./data/output:/usr/share/nginx/html:ro
-    command: /bin/sh -c "echo 'server { listen 80; location / { root /usr/share/nginx/html; autoindex on; autoindex_exact_size off; autoindex_localtime on; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+      - ./nginx-stac.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
 
   # --- Automated Delta GeoPackage Exporter ---
@@ -1220,6 +1235,7 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
     md += `${s.deltaDesc}\n`;
     md += `${s.deltaInterval}\n\n`;
     md += `${s.deltaDownloadHint}\n\n`;
+    md += `${s.stacAvailable}\n\n`;
 
     md += `### ${s.deltaContents}\n\n`;
     md += `| ${s.changeType} | ${s.description} |\n`;
@@ -1228,6 +1244,17 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
     md += `| \`update\` | ${s.updateDesc} |\n`;
     md += `| \`delete\` | ${s.deleteDesc} |\n\n`;
     md += `${s.deletesStoredHint}\n\n`;
+
+    md += `### ${s.deltaHowItWorksTitle}\n\n`;
+    md += `${s.deltaHowItWorks1}\n\n`;
+    md += `${s.deltaHowItWorks2}\n\n`;
+    md += `> **Note:** ${s.deltaTimestampNote}\n\n`;
+    md += `${s.deltaManualTrigger}\n`;
+    md += `\`\`\`bash\n`;
+    md += `${s.deltaManualFull}\n`;
+    md += `${s.deltaManualDelta}\n`;
+    md += `${s.deltaManualDate}\n`;
+    md += `\`\`\`\n\n`;
   }
 
   md += `## ${s.files}\n\n`;
@@ -1800,8 +1827,9 @@ const generateReadmeForTarget = (
   md += `\n`;
 
   if (target === 'docker-compose') {
-    const inner = generateReadme(model, source, lang);
-    return md + inner.substring(inner.indexOf(`## ${s.gettingStarted}`));
+    const readmeFull = generateReadme(model, source, lang);
+    const anchor = `## ${s.gettingStarted}`;
+    return md + readmeFull.substring(readmeFull.indexOf(anchor));
   }
 
   if (target === 'fly') {
@@ -1904,6 +1932,21 @@ const generateReadmeForTarget = (
     md += `${s.autoBuildDesc}\n\n`;
   }
 
+  // Delta export section (for non-docker-compose targets — docker-compose gets this via generateReadme)
+  if (!isGpkg && target !== 'docker-compose') {
+    md += `## ${s.deltaExport}\n\n`;
+    md += `${s.deltaDesc}\n\n`;
+    md += `> **Note:** ${s.deltaTimestampNote}\n\n`;
+    md += `### ${s.deltaHowItWorksTitle}\n\n`;
+    md += `${s.deltaHowItWorks1}\n\n`;
+    md += `${s.deltaManualTrigger}\n`;
+    md += `\`\`\`bash\n`;
+    md += `${s.deltaManualFull}\n`;
+    md += `${s.deltaManualDelta}\n`;
+    md += `${s.deltaManualDate}\n`;
+    md += `\`\`\`\n\n`;
+  }
+
   // Files table
   md += `## ${s.files}\n\n`;
   md += `| ${s.file} | ${s.description} |\n`;
@@ -1915,12 +1958,32 @@ const generateReadmeForTarget = (
     md += `| \`Dockerfile.qgis\` | ${s.dockerfileQgisFile} |\n`;
     md += `| \`project.qgs\` | ${s.qgisProjectFile} |\n`;
   }
+  if (target === 'docker-compose') md += `| \`docker-compose.yml\` | ${s.dockerComposeFile} |\n`;
   if (target === 'fly') md += `| \`fly.toml\` | ${s.flyTomlFile} |\n`;
   if (target === 'fly' && hasWms) md += `| \`fly.qgis.toml\` | ${s.flyQgisTomlFile} |\n`;
   if (target === 'railway') md += `| \`railway.json\` | ${s.railwayJsonFile} |\n`;
   if (target === 'railway' && hasWms) md += `| \`railway.qgis.json\` | ${s.railwayQgisJsonFile} |\n`;
   md += `| \`.env.template\` | ${s.envTemplateShort} |\n`;
   if (!isGpkg) md += `| \`delta_export.py\` | ${s.deltaScriptFile} |\n`;
+  if (!isGpkg) md += `| \`nginx-stac.conf\` | ${s.nginxStacConfFile} |\n`;
+
+  // STAC catalog section
+  if (!isGpkg) {
+    const modelId = model.id || model.name.toLowerCase().replace(/\s+/g, '-');
+    const downloadBase = target === 'fly' ? `https://${slug}-downloads.fly.dev` : 'https://<downloads-url>';
+    md += `\n## ${s.stacCatalogSection}\n\n`;
+    md += `| ${s.resource} | ${s.url} |\n`;
+    md += `|---------|-----|\n`;
+    md += `| ${s.stacRootCatalog} | ${downloadBase}/stac/catalog.json |\n`;
+    md += `| ${s.stacCollectionLabel} | ${downloadBase}/stac/collections/${modelId}/collection.json |\n`;
+    model.layers
+      .filter(l => !l.isAbstract)
+      .forEach(layer => {
+        const tbl = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        md += `| ${layer.name} items | ${downloadBase}/stac/${tbl}/catalog.json |\n`;
+      });
+    md += `\n${s.stacItemsNote}\n`;
+  }
 
   return md;
 };
@@ -1957,9 +2020,23 @@ export const generateDeployFiles = async (
     }
   }
 
-  // Delta script for database sources
+  // Delta script + STAC helpers for database sources
   if (!isGpkg) {
-    files['delta_export.py'] = generateDeltaScript(model, source);
+    const modelId = model.id || model.name.toLowerCase().replace(/\s+/g, '-');
+    files['delta_export.py'] = generateDeltaScript(model, source) + '\n\n' + generateStacItemSnippet(model, source);
+
+    // STAC static catalog structure
+    files['data/output/stac/catalog.json'] = generateStacCatalog(model);
+    files[`data/output/stac/collections/${modelId}/collection.json`] = generateStacCollection(model, source);
+    model.layers
+      .filter(l => !l.isAbstract)
+      .forEach(layer => {
+        const tbl = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        files[`data/output/stac/${tbl}/catalog.json`] = generateStacLayerCatalog(layer, model);
+      });
+
+    // Nginx config with correct MIME types
+    files['nginx-stac.conf'] = generateNginxStacConf();
   }
 
   // Target-specific files

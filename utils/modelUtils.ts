@@ -1,18 +1,18 @@
-import { Layer, ModelProperty } from '../types';
+import { Layer, Field } from '../types';
 
 /**
  * Returns a layer's own properties merged with all inherited properties from
  * its parent chain. Parent properties come first, followed by the layer's own.
  * Cycles are prevented by tracking visited layer IDs.
  */
-export function getEffectiveProperties(layer: Layer, allLayers: Layer[]): ModelProperty[] {
+export function getEffectiveProperties(layer: Layer, allLayers: Layer[]): Field[] {
   const visited = new Set<string>();
 
-  function collect(l: Layer): ModelProperty[] {
+  function collect(l: Layer): Field[] {
     if (visited.has(l.id)) return [];
     visited.add(l.id);
 
-    const parentProps: ModelProperty[] = [];
+    const parentProps: Field[] = [];
     if (l.extends) {
       const parent = allLayers.find(lyr => lyr.id === l.extends);
       if (parent) {

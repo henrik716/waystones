@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, Plus, MessageSquare } from 'lucide-react';
-import { ModelProperty, CodeValue, SharedEnum } from '../../types';
+import { Field, CodeValue, SharedEnum, CodelistFieldType } from '../../types';
 import { createEmptyCodeValue } from '../../constants';
 
 interface PropDiffFieldProps {
@@ -31,9 +31,9 @@ const PropDiffField: React.FC<PropDiffFieldProps> = ({ label, currentValue, base
 };
 
 interface CodelistEditorProps {
-  prop: ModelProperty;
-  baselineProp?: ModelProperty | null;
-  onUpdate: (prop: ModelProperty) => void;
+  prop: Field;
+  baselineProp?: Field | null;
+  onUpdate: (prop: Field) => void;
   isGhost?: boolean;
   reviewMode?: boolean;
   sharedEnums?: SharedEnum[];
@@ -44,21 +44,48 @@ interface CodelistEditorProps {
 const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onUpdate, isGhost, reviewMode, sharedEnums = [], t, lang = 'no' }) => {
   const [expandedDescs, setExpandedDescs] = useState<Record<string, boolean>>({});
 
-  const handleUpdate = (updates: Partial<ModelProperty>) => {
+  // Safe access to codelist-specific fields
+  const ft = prop.fieldType as CodelistFieldType;
+  const mode = ft.mode;
+  const values = mode === 'inline' ? ft.values : [];
+  const enumRef = mode === 'shared' ? ft.enumRef : undefined;
+  const externalUrl = mode === 'external' ? ft.url : undefined;
+
+  const baselineFt = baselineProp?.fieldType.kind === 'codelist' ? baselineProp.fieldType as CodelistFieldType : null;
+  const baselineMode = baselineFt?.mode;
+
+  const handleUpdate = (updates: Partial<Field>) => {
     onUpdate({ ...prop, ...updates });
   };
 
+  const handleModeChange = (newMode: 'inline' | 'external' | 'shared') => {
+    switch (newMode) {
+      case 'inline':
+        handleUpdate({ fieldType: { kind: 'codelist', mode: 'inline', values: [] } });
+        break;
+      case 'external':
+        handleUpdate({ fieldType: { kind: 'codelist', mode: 'external', url: '' } });
+        break;
+      case 'shared':
+        handleUpdate({ fieldType: { kind: 'codelist', mode: 'shared', enumRef: '' } });
+        break;
+    }
+  };
+
   const handleAddCodeValue = () => {
+    if (mode !== 'inline') return;
     const newValue = createEmptyCodeValue();
-    handleUpdate({ codelistValues: [...(prop.codelistValues || []), newValue] });
+    handleUpdate({ fieldType: { kind: 'codelist', mode: 'inline', values: [...values, newValue] } });
   };
 
   const handleUpdateCodeValue = (updated: CodeValue) => {
-    handleUpdate({ codelistValues: (prop.codelistValues || []).map(v => v.id === updated.id ? updated : v) });
+    if (mode !== 'inline') return;
+    handleUpdate({ fieldType: { kind: 'codelist', mode: 'inline', values: values.map(v => v.id === updated.id ? updated : v) } });
   };
 
   const handleDeleteCodeValue = (id: string) => {
-    handleUpdate({ codelistValues: (prop.codelistValues || []).filter(v => v.id !== id) });
+    if (mode !== 'inline') return;
+    handleUpdate({ fieldType: { kind: 'codelist', mode: 'inline', values: values.filter(v => v.id !== id) } });
   };
 
   const toggleDesc = (id: string) => {
@@ -69,26 +96,26 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
     <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-4 border-b border-slate-200/50">
         <div className="flex flex-wrap items-center gap-6">
-          <PropDiffField label={t.propCodelistMode} currentValue={prop.codelistMode} baselineValue={baselineProp?.codelistMode} reviewMode={!!reviewMode}>
+          <PropDiffField label={t.propCodelistMode} currentValue={mode} baselineValue={baselineMode} reviewMode={!!reviewMode}>
             <div className="flex items-center gap-6 flex-wrap">
               <label className="flex items-center gap-3 cursor-pointer">
-                <input type="radio" name={`mode-${prop.id}`} checked={prop.codelistMode === 'inline' || !prop.codelistMode} onChange={() => handleUpdate({ codelistMode: 'inline', sharedEnumId: undefined })} className="w-6 h-6 accent-indigo-600" />
+                <input type="radio" name={`mode-${prop.id}`} checked={mode === 'inline'} onChange={() => handleModeChange('inline')} className="w-6 h-6 accent-indigo-600" />
                 <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">{t.propCodelistModeInline}</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
-                <input type="radio" name={`mode-${prop.id}`} checked={prop.codelistMode === 'external'} onChange={() => handleUpdate({ codelistMode: 'external', sharedEnumId: undefined })} className="w-6 h-6 accent-indigo-600" />
+                <input type="radio" name={`mode-${prop.id}`} checked={mode === 'external'} onChange={() => handleModeChange('external')} className="w-6 h-6 accent-indigo-600" />
                 <span className="text-[10px] font-black text-slate-600 uppercase tracking-wide">{t.propCodelistModeExternal}</span>
               </label>
               {sharedEnums.length > 0 && (
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="radio" name={`mode-${prop.id}`} checked={prop.codelistMode === 'shared'} onChange={() => handleUpdate({ codelistMode: 'shared' })} className="w-6 h-6 accent-amber-500" />
+                  <input type="radio" name={`mode-${prop.id}`} checked={mode === 'shared'} onChange={() => handleModeChange('shared')} className="w-6 h-6 accent-amber-500" />
                   <span className="text-[10px] font-black text-amber-600 uppercase tracking-wide">{lang === 'no' ? 'Delt kodeliste' : 'Shared'}</span>
                 </label>
               )}
             </div>
           </PropDiffField>
         </div>
-        {(prop.codelistMode === 'inline' || !prop.codelistMode) && !isGhost && (
+        {mode === 'inline' && !isGhost && (
           <button onClick={handleAddCodeValue} className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-white hover:bg-indigo-600 transition-all bg-indigo-50 px-5 py-3 rounded-xl border border-indigo-100 flex items-center justify-center gap-2">
             <Plus size={16} /> {t.addValue}
           </button>
@@ -96,14 +123,14 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
       </div>
 
       {/* Shared mode: enum picker */}
-      {prop.codelistMode === 'shared' && (
+      {mode === 'shared' && (
         <div className="space-y-3">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
             {lang === 'no' ? 'Delt kodeliste' : 'Shared Codelist'}
           </label>
           <select
-            value={prop.sharedEnumId ?? ''}
-            onChange={e => handleUpdate({ sharedEnumId: e.target.value || undefined })}
+            value={enumRef ?? ''}
+            onChange={e => handleUpdate({ fieldType: { kind: 'codelist', mode: 'shared', enumRef: e.target.value || '' } })}
             className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-400 transition-all"
           >
             <option value="">{lang === 'no' ? '— Velg kodeliste —' : '— Select codelist —'}</option>
@@ -111,8 +138,8 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
               <option key={se.id} value={se.id}>{se.name} ({se.values.length} {lang === 'no' ? 'verdier' : 'values'})</option>
             ))}
           </select>
-          {prop.sharedEnumId && (() => {
-            const se = sharedEnums.find(e => e.id === prop.sharedEnumId);
+          {enumRef && (() => {
+            const se = sharedEnums.find(e => e.id === enumRef);
             if (!se || se.values.length === 0) return null;
             return (
               <div className="flex flex-wrap gap-1.5 pt-1">
@@ -126,14 +153,14 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
       )}
 
       {/* External mode: URL input */}
-      {prop.codelistMode === 'external' && (
-        <PropDiffField label={t.propCodelistUrl} currentValue={prop.codelistUrl} baselineValue={baselineProp?.codelistUrl} reviewMode={!!reviewMode}>
-          <input type="text" placeholder={t.propCodelistUrlPlaceholder} value={prop.codelistUrl} onChange={e => handleUpdate({ codelistUrl: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all h-12" />
+      {mode === 'external' && (
+        <PropDiffField label={t.propCodelistUrl} currentValue={externalUrl} baselineValue={baselineFt?.mode === 'external' ? baselineFt.url : undefined} reviewMode={!!reviewMode}>
+          <input type="text" placeholder={t.propCodelistUrlPlaceholder} value={externalUrl || ''} onChange={e => handleUpdate({ fieldType: { kind: 'codelist', mode: 'external', url: e.target.value } })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all h-12" />
         </PropDiffField>
       )}
 
       {/* Inline mode: value grid */}
-      {(prop.codelistMode === 'inline' || !prop.codelistMode) && (
+      {mode === 'inline' && (
         <div className="space-y-3">
           <div className="grid grid-cols-[80px_1fr_90px] gap-2 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
             <span>{t.codeKey}</span>
@@ -141,9 +168,10 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
             <span className="text-right"></span>
           </div>
           <div className="space-y-3">
-            {prop.codelistValues.map((v) => {
+            {values.map((v) => {
               const isExpanded = expandedDescs[v.id];
-              const baselineVal = baselineProp?.codelistValues.find(bv => bv.id === v.id);
+              const baselineValues = baselineFt?.mode === 'inline' ? baselineFt.values : [];
+              const baselineVal = baselineValues.find(bv => bv.id === v.id);
               return (
                 <div key={v.id} className="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm transition-all hover:border-indigo-200">
                   <div className="grid grid-cols-[80px_1fr_90px] items-center gap-2 p-2">
@@ -170,7 +198,7 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
                 </div>
               );
             })}
-            {prop.codelistValues.length === 0 && (
+            {values.length === 0 && (
               <div className="py-12 text-center text-slate-300 italic text-[10px] uppercase tracking-widest font-black border-2 border-dashed border-slate-100 rounded-2xl">
                 Ingen verdier lagt til ennå.
               </div>
