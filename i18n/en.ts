@@ -67,7 +67,7 @@ export const en = {
   properties: "Properties", addProperty: "Add field", addSubProperty: "Add sub-field",
   sharedTypes: "Shared Types", addSharedType: "New type", sharedTypeName: "Type name",
   modelName: "Model name", modelNamePlaceholder: "e.g. Protected areas",
-  descriptionPlaceholder: "Describe the contents of this dataset...",
+  description: "Description", descriptionPlaceholder: "Describe the contents of this dataset...",
   sharedTypeDescriptionPlaceholder: "Describe what this type is used for (e.g., common address fields)...",
   namespace: "Namespace", namespacePlaceholder: "e.g. no.agency.project",
   version: "Version", cancel: "Cancel", delete: "Delete",

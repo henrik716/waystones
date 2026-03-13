@@ -50,10 +50,10 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
       fields.push({ field: `${subPath} (${t.propType || 'Type'})`, oldValue: emptyLabel, newValue: fieldTypeLabel(sp, t) });
       fields.push({ field: `${subPath} (${t.propRequired || 'Multiplicity'})`, oldValue: emptyLabel, newValue: sp.multiplicity });
       
-      if (sp.description) {
-        fields.push({ field: `${subPath} (${t.propDescription || 'Description'})`, oldValue: emptyLabel, newValue: sp.description });
-      }
-      
+      if (sp.description) fields.push({ field: `${subPath} (${t.propDescription || 'Description'})`, oldValue: emptyLabel, newValue: sp.description });
+      if (sp.defaultValue) fields.push({ field: `${subPath} (${t.propDefaultValue || 'Default Value'})`, oldValue: emptyLabel, newValue: sp.defaultValue });
+      if (sp.constraints && Object.keys(sp.constraints).length > 0) fields.push({ field: `${subPath} (${t.constraints?.title || 'Constraints'})`, oldValue: emptyLabel, newValue: t.review?.added || 'Added' });
+
       if (sp.fieldType.kind === 'datatype-ref') {
         const dtRef = sp.fieldType;
         const st = current.sharedTypes?.find(s => s.id === dtRef.typeId);
@@ -90,6 +90,8 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
           { field: t.propType || 'Type', oldValue: emptyLabel, newValue: fieldTypeLabel(prop, t) },
           { field: t.propRequired || 'Multiplicity', oldValue: emptyLabel, newValue: prop.multiplicity }
         ];
+        if (prop.defaultValue) addedFields.push({ field: t.propDefaultValue || 'Default Value', oldValue: emptyLabel, newValue: prop.defaultValue });
+        if (prop.constraints && Object.keys(prop.constraints).length > 0) addedFields.push({ field: t.constraints?.title || 'Constraints', oldValue: emptyLabel, newValue: t.review?.added || 'Added' });
         
         if (prop.fieldType.kind === 'datatype-ref') {
           const dtRef = prop.fieldType;
@@ -152,7 +154,11 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
         
         if (baseProp.name !== prop.name) propModifiedFields.push({ field: t.propName || 'Name', oldValue: baseProp.name, newValue: prop.name });
         if (baseProp.title !== prop.title) propModifiedFields.push({ field: t.propTitle || 'Title', oldValue: baseProp.title || emptyLabel, newValue: prop.title || emptyLabel });
+        if (baseProp.description !== prop.description) propModifiedFields.push({ field: t.propDescription || 'Description', oldValue: baseProp.description || emptyLabel, newValue: prop.description || emptyLabel });
         if (!isEqual(baseProp.fieldType, prop.fieldType)) propModifiedFields.push({ field: t.propType || 'Type', oldValue: fieldTypeLabel(baseProp, t), newValue: fieldTypeLabel(prop, t) });
+        if (baseProp.multiplicity !== prop.multiplicity) propModifiedFields.push({ field: t.propRequired || 'Multiplicity', oldValue: baseProp.multiplicity || emptyLabel, newValue: prop.multiplicity || emptyLabel });
+        if (baseProp.defaultValue !== prop.defaultValue) propModifiedFields.push({ field: t.propDefaultValue || 'Default Value', oldValue: baseProp.defaultValue || emptyLabel, newValue: prop.defaultValue || emptyLabel });
+        if (!isEqual(baseProp.constraints, prop.constraints)) propModifiedFields.push({ field: t.constraints?.title || 'Constraints', oldValue: t.review?.modified || 'Modified', newValue: t.review?.modified || 'Modified' });
         
         if (prop.fieldType.kind === 'datatype-ref' && baseProp.fieldType.kind === 'datatype-ref') {
             const baseDtRef = baseProp.fieldType;

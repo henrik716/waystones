@@ -67,7 +67,7 @@ export const no = {
   properties: "Egenskaper", addProperty: "Legg til felt", addSubProperty: "Legg til underfelt",
   sharedTypes: "Delte datatyper", addSharedType: "Ny datatype", sharedTypeName: "Typenavn",
   modelName: "Modellnavn", modelNamePlaceholder: "f.eks. Naturvernområder",
-  descriptionPlaceholder: "Beskriv innholdet i dette datasettet...",
+  description: "Beskrivelse", descriptionPlaceholder: "Beskriv innholdet i dette datasettet...",
   sharedTypeDescriptionPlaceholder: "Beskriv hva denne datatypen brukes til (f.eks. felles adressefelt)...",
   namespace: "Navnerom", namespacePlaceholder: "f.eks. no.kommune.plan",
   version: "Versjon", cancel: "Avbryt", delete: "Slett",

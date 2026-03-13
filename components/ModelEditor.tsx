@@ -402,7 +402,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
       type="button"
       onClick={onClick}
       disabled={aiContext.isLoading}
-      className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50'
+      className={`absolute bottom-2 right-2 z-10 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50'
         } ${aiContext.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <Sparkles size={10} className={aiContext.currentOperation === feature ? 'animate-pulse' : ''} />
@@ -534,24 +534,18 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                 </div>
 
                 <DiffField label={t.description} currentValue={model.description} baselineValue={baselineModel?.description} reviewMode={reviewMode}>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <textarea
-                          placeholder={t.descriptionPlaceholder}
-                          value={model.description}
-                          onChange={e => onUpdate({ ...model, description: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-3 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <AiBtn
-                        feature="abstract"
-                        label={t.ai?.generateAbstract || 'Generate description'}
-                        onClick={handleGenerateDatasetDescription}
-                      />
-                    </div>
+                  <div className="relative">
+                    <textarea
+                      placeholder={t.descriptionPlaceholder}
+                      value={model.description}
+                      onChange={e => onUpdate({ ...model, description: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-3 pb-10 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
+                    />
+                    <AiBtn
+                      feature="abstract"
+                      label={t.ai?.generateDescription || 'Generate description'}
+                      onClick={handleGenerateDatasetDescription}
+                    />
                   </div>
                 </DiffField>
               </div>
@@ -767,21 +761,21 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <textarea
-                    placeholder={t.descriptionPlaceholder}
-                    value={activeLayer.description}
-                    onChange={e => handleUpdateLayer({ description: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 md:px-5 md:py-4 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
-                  />
-                  <div className="flex justify-end">
+                <DiffField label={t.description} currentValue={activeLayer.description} baselineValue={baselineLayer?.description} reviewMode={reviewMode}>
+                  <div className="relative">
+                    <textarea
+                      placeholder={t.descriptionPlaceholder}
+                      value={activeLayer.description}
+                      onChange={e => handleUpdateLayer({ description: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 pb-10 md:px-5 md:py-4 md:pb-10 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
+                    />
                     <AiBtn
                       feature="description"
                       label={t.ai?.generateDescription || 'Generate description'}
                       onClick={handleGenerateLayerDescription}
                     />
                   </div>
-                </div>
+                </DiffField>
 
                 {/* Advanced / OO section — collapsed by default */}
                 {!isGhostLayer && (
