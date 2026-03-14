@@ -15,7 +15,7 @@ export type Multiplicity = '1..1' | '0..1' | '1..*' | '0..*';
 
 export type PrimitiveFieldType = {
   kind: 'primitive';
-  baseType: 'string' | 'integer' | 'number' | 'boolean' | 'date' | 'json';
+  baseType: 'string' | 'integer' | 'number' | 'boolean' | 'date' | 'date-time' | 'json';
 };
 
 export type CodelistFieldType =

@@ -41,6 +41,7 @@ const getTypeOptions = (t: any): TypeOption[] => [
   { value: 'integer', label: t.types?.integer || 'Heltall', toFieldType: () => ({ kind: 'primitive', baseType: 'integer' }) },
   { value: 'boolean', label: t.types?.boolean || 'Boolsk', toFieldType: () => ({ kind: 'primitive', baseType: 'boolean' }) },
   { value: 'date', label: t.types?.date || 'Dato', toFieldType: () => ({ kind: 'primitive', baseType: 'date' }) },
+  { value: 'date-time', label: t.types?.datetime || 'Dato/Tid', toFieldType: () => ({ kind: 'primitive', baseType: 'date-time' }) },
   { value: 'json', label: t.types?.json || 'JSON', toFieldType: () => ({ kind: 'primitive', baseType: 'json' }) },
   { value: 'codelist', label: t.types?.codelist || 'Kodeliste', toFieldType: () => ({ kind: 'codelist', mode: 'inline', values: [] }) },
   { value: 'feature-ref', label: t.types?.relation || 'Relasjon', toFieldType: () => ({ kind: 'feature-ref', layerId: '', relationType: 'foreign_key' }) },
@@ -282,6 +283,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           return <input type="number" placeholder={t.propDefaultPlaceholder} value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
         case 'date':
           return <input type="date" value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
+        case 'date-time':
+          return <input type="datetime-local" value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses} />;
         case 'json':
           return <textarea placeholder='{ "id": 1, "status": "active" }' value={prop.defaultValue || ''} onChange={e => handleUpdate({ defaultValue: e.target.value })} className={commonClasses + " mono h-24 resize-none"} />;
         default:

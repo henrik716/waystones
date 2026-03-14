@@ -48,7 +48,7 @@ export const createEmptyLayer = (name = ""): Layer => ({
 
 export const createEmptySharedType = (name = ""): SharedType => ({
   id: uid(),
-  name: name || "Ny Type",
+  name: name || "New Type",
   description: "",
   properties: []
 });
@@ -66,7 +66,7 @@ export const createEmptyModel = (): DataModel => ({
   namespace: "",
   description: "",
   version: "1.0.0",
-  layers: [createEmptyLayer("Lag 1")],
+  layers: [createEmptyLayer("Layer 1")],
   sharedTypes: [],
   sharedEnums: [],
   crs: "EPSG:4326",

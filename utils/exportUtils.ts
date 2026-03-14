@@ -30,6 +30,7 @@ const buildPropertySchema = (f: Field, model: DataModel): any => {
         case 'number':  propSchema.type = 'number'; break;
         case 'boolean': propSchema.type = 'boolean'; break;
         case 'date':    propSchema.type = 'string'; propSchema.format = 'date'; break;
+        case 'date-time': propSchema.type = 'string'; propSchema.format = 'date-time'; break;
         case 'json':    propSchema.type = 'object'; break;
         default:        propSchema.type = 'string'; break;
       }
@@ -146,7 +147,15 @@ const geoJsonGeometrySchema = (geometryType: GeometryType): any => {
 };
 
 export const generateGeoJSONSchema = (model: DataModel): Record<string, any> => {
-  const result: Record<string, any> = {};
+  const rootSchema: Record<string, any> = {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    title: model.name,
+    type: 'object',
+    $defs: {},
+    oneOf: []
+  };
+
+  if (model.description) rootSchema.description = model.description;
 
   model.layers.filter(l => !l.isAbstract).forEach(l => {
     const props: any = {};
@@ -162,21 +171,20 @@ export const generateGeoJSONSchema = (model: DataModel): Record<string, any> => 
     const hasGeom = l.geometryType !== 'None';
 
     if (!hasGeom) {
-      result[l.name] = {
-        $schema: 'https://json-schema.org/draft/2020-12/schema',
+      rootSchema.$defs[l.name] = {
         title: l.name,
         type: 'object',
         properties: props,
         ...(required.length > 0 ? { required } : {}),
         ...(l.description ? { description: l.description } : {}),
       };
+      rootSchema.oneOf.push({ $ref: `#/$defs/${l.name}` });
       return;
     }
 
     const geomSchema = geoJsonGeometrySchema(l.geometryType);
 
     const featureSchema: any = {
-      $schema: 'https://json-schema.org/draft/2020-12/schema',
       title: l.name,
       type: 'object',
       required: ['type', 'geometry', 'properties'],
@@ -186,20 +194,29 @@ export const generateGeoJSONSchema = (model: DataModel): Record<string, any> => 
         geometry: geomSchema
           ? { oneOf: [geomSchema, { type: 'null' }] }
           : { type: 'null' },
-        properties: propertiesSchema,
+        properties: { oneOf: [propertiesSchema, { type: 'null' }] },
       },
     };
 
     if (l.description) featureSchema.description = l.description;
 
-    result[l.name] = featureSchema;
+    rootSchema.$defs[l.name] = featureSchema;
+    rootSchema.oneOf.push({ $ref: `#/$defs/${l.name}` });
   });
 
-  return result;
+  return rootSchema;
 };
 
 export const generateJSONFGSchema = (model: DataModel): Record<string, any> => {
-  const result: Record<string, any> = {};
+  const rootSchema: Record<string, any> = {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    title: model.name,
+    type: 'object',
+    $defs: {},
+    oneOf: []
+  };
+
+  if (model.description) rootSchema.description = model.description;
 
   model.layers.filter(l => !l.isAbstract).forEach(l => {
     const props: any = {};
@@ -215,49 +232,57 @@ export const generateJSONFGSchema = (model: DataModel): Record<string, any> => {
     const hasGeom = l.geometryType !== 'None';
 
     if (!hasGeom) {
-      result[l.name] = {
-        $schema: 'https://json-schema.org/draft/2020-12/schema',
+      rootSchema.$defs[l.name] = {
         title: l.name,
         type: 'object',
         properties: props,
         ...(required.length > 0 ? { required } : {}),
         ...(l.description ? { description: l.description } : {}),
       };
+      rootSchema.oneOf.push({ $ref: `#/$defs/${l.name}` });
       return;
     }
 
     const crs = model.crs || 'EPSG:4326';
     const isWgs84 = crs === 'EPSG:4326' || crs === 'CRS84';
-    const whereSchema = geoJsonGeometrySchema(l.geometryType);
+    const placeSchema = geoJsonGeometrySchema(l.geometryType);
 
     const featureSchema: any = {
-      $schema: 'https://json-schema.org/draft/2020-12/schema',
       title: l.name,
       type: 'object',
       conformsTo: '[OGC-21-045]',
       featureType: l.name,
       coordRefSys: `https://www.opengis.net/def/crs/${crs.replace(':', '/')}`,
-      required: ['type', 'geometry', 'properties'],
+      required: ['type', 'time', 'geometry', 'properties'],
       properties: {
         type: { const: 'Feature' },
         id: { type: ['string', 'number'] },
         featureType: { const: l.name },
-        geometry: isWgs84 && whereSchema
-          ? { oneOf: [whereSchema, { type: 'null' }] }
+        time: {
+          oneOf: [
+            { type: 'null' },
+            { type: 'string', format: 'date' },
+            { type: 'string', format: 'date-time' },
+            { type: 'object', properties: { date: { type: 'string', format: 'date' }, timestamp: { type: 'string', format: 'date-time' } } }
+          ]
+        },
+        geometry: isWgs84 && placeSchema
+          ? { oneOf: [placeSchema, { type: 'null' }] }
           : { type: 'null' },
-        where: whereSchema
-          ? { oneOf: [whereSchema, { type: 'null' }] }
+        place: placeSchema
+          ? { oneOf: [placeSchema, { type: 'null' }] }
           : { type: 'null' },
-        properties: propertiesSchema,
+        properties: { oneOf: [propertiesSchema, { type: 'null' }] },
       },
     };
 
     if (l.description) featureSchema.description = l.description;
 
-    result[l.name] = featureSchema;
+    rootSchema.$defs[l.name] = featureSchema;
+    rootSchema.oneOf.push({ $ref: `#/$defs/${l.name}` });
   });
 
-  return result;
+  return rootSchema;
 };
 
 export const exportGeoPackage = async (model: DataModel, filename: string) => {
@@ -409,7 +434,8 @@ export const exportDatabricks = (model: DataModel, filename: string) => {
         if (ft.baseType === 'integer') type = 'INT';
         else if (ft.baseType === 'number') type = 'DOUBLE';
         else if (ft.baseType === 'boolean') type = 'BOOLEAN';
-        else if (ft.baseType === 'date') type = 'TIMESTAMP';
+        else if (ft.baseType === 'date') type = 'DATE';
+        else if (ft.baseType === 'date-time') type = 'TIMESTAMP';
       }
       sql += `,\n  ${f.name} ${type}${isRequired(f) ? ' NOT NULL' : ''}`;
     });

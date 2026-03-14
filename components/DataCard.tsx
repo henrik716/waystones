@@ -29,11 +29,11 @@ const hasMeaningfulConstraints = (c?: PropertyConstraints): boolean => {
 const fieldTypeLabel = (f: Field, t: any): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
-    case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;
-    case 'codelist':        return t.types?.codelist || 'Kodeliste';
-    case 'geometry':        return t.types?.geometry || 'Geometri';
-    case 'feature-ref':     return t.types?.relation || 'Relasjon';
-    case 'datatype-inline': return t.types?.object || 'Objekt';
+    case 'primitive':       return (ft.baseType === 'date-time' ? t.types?.datetime : t.types?.[ft.baseType]) || ft.baseType;
+    case 'codelist':        return t.types?.codelist || 'Codelist';
+    case 'geometry':        return t.types?.geometry || 'Geometry';
+    case 'feature-ref':     return t.types?.relation || 'Relation';
+    case 'datatype-inline': return t.types?.object || 'Object';
     case 'datatype-ref':    return t.types?.shared_type || 'Datatype';
   }
 };
@@ -116,19 +116,19 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
                 <div className="flex flex-wrap gap-1.5">
                   {hasActiveConstraints && (
                     <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
-                      <Lock size={8} /> Restriksjoner
+                      <Lock size={8} /> {t.constraints?.title || 'Constraints'}
                     </div>
                   )}
                   {isPk && <span className="text-[8px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">PK</span>}
-                  {isUnique && <span className="text-[8px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded uppercase tracking-wider">Unique</span>}
-                  {isRequired(prop) && !isPk && <span className="text-[8px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase tracking-wider">NOT NULL</span>}
-                  {c?.min !== undefined && <span className="text-[8px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">Min: {c.min}</span>}
-                  {c?.max !== undefined && <span className="text-[8px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">Max: {c.max}</span>}
+                  {isUnique && <span className="text-[8px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded uppercase tracking-wider">{t.constraints?.unique || 'Unique'}</span>}
+                  {isRequired(prop) && !isPk && <span className="text-[8px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase tracking-wider">{t.constraints?.notNull || 'NOT NULL'}</span>}
+                  {c?.min !== undefined && <span className="text-[8px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{t.constraints?.min || 'Min'}: {c.min}</span>}
+                  {c?.max !== undefined && <span className="text-[8px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{t.constraints?.max || 'Max'}: {c.max}</span>}
                 </div>
                 {hasEnum && (
                   <div className="flex flex-wrap items-center gap-1.5 bg-blue-50/50 p-2 rounded-xl border border-blue-100/50">
                     <ListChecks size={10} className="text-blue-600" />
-                    <span className="text-[8px] font-black uppercase text-blue-400 mr-1">Tillatte verdier:</span>
+                    <span className="text-[8px] font-black uppercase text-blue-400 mr-1">{t.constraints?.enumeration || 'Allowed values'}:</span>
                     {c.enumeration?.map((val, idx) => (
                       <span key={idx} className="bg-white text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-blue-100 shadow-sm mono">{val}</span>
                     ))}
@@ -163,9 +163,9 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
     <div className="space-y-6">
       {/* Header Info Card */}
       <div className="rounded-2xl p-6 text-white shadow-xl shadow-indigo-100" style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%)` }}>
-        <h2 className="text-xl font-black mb-1">{model.name || 'Untitled Model'}</h2>
+        <h2 className="text-xl font-black mb-1">{model.name || t.untitledModel || 'Untitled Model'}</h2>
         <div className="flex flex-wrap items-center gap-3 text-white/70 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">
-          <span>{model.namespace || 'no.namespace'}</span>
+          <span>{model.namespace || t.noNamespace || 'no.namespace'}</span>
           <span className="w-1 h-1 rounded-full bg-white/30" />
           <span>v{model.version}</span>
           <span className="w-1 h-1 rounded-full bg-white/30" />
@@ -213,7 +213,7 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
                    <Layers size={16} className="text-indigo-600" />
                    {layer.name}
                    {layer.isAbstract && (
-                     <span className="text-[8px] font-black text-violet-500 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded-full">«abstract»</span>
+                     <span className="text-[8px] font-black text-violet-500 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded-full">{t.abstract || '«abstract»'}</span>
                    )}
                    {layer.extends && (() => {
                      const parent = model.layers.find(l => l.id === layer.extends);

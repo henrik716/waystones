@@ -1,6 +1,6 @@
 import {
   DataModel, Layer, SourceConnection, SourceType, DeployTarget,
-  PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig, LayerSourceMapping
+  PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig, LayerSourceMapping, ModelMetadata
 } from '../types';
 import { reprojectCoordinates } from './gdalService';
 import { hexToRgb } from './colorUtils';
@@ -99,7 +99,7 @@ export const generatePygeoapiConfig = async (
   yaml += `logging:\n  level: INFO\n\n`;
 
   // Metadata — enriched from model.metadata if available
-  const meta = model.metadata || {};
+  const meta = model.metadata || ({} as Partial<ModelMetadata>);
   const keywords = meta?.keywords?.length ? meta.keywords : ['geospatial', model.namespace || 'data'];
   const licenseName = meta?.license || 'CC-BY-4.0';
   const licenseUrls: Record<string, string> = {
@@ -1933,7 +1933,7 @@ const generateReadmeForTarget = (
   }
 
   // Delta export section (for non-docker-compose targets — docker-compose gets this via generateReadme)
-  if (!isGpkg && target !== 'docker-compose') {
+  if (!isGpkg) {
     md += `## ${s.deltaExport}\n\n`;
     md += `${s.deltaDesc}\n\n`;
     md += `> **Note:** ${s.deltaTimestampNote}\n\n`;
@@ -1958,7 +1958,6 @@ const generateReadmeForTarget = (
     md += `| \`Dockerfile.qgis\` | ${s.dockerfileQgisFile} |\n`;
     md += `| \`project.qgs\` | ${s.qgisProjectFile} |\n`;
   }
-  if (target === 'docker-compose') md += `| \`docker-compose.yml\` | ${s.dockerComposeFile} |\n`;
   if (target === 'fly') md += `| \`fly.toml\` | ${s.flyTomlFile} |\n`;
   if (target === 'fly' && hasWms) md += `| \`fly.qgis.toml\` | ${s.flyQgisTomlFile} |\n`;
   if (target === 'railway') md += `| \`railway.json\` | ${s.railwayJsonFile} |\n`;

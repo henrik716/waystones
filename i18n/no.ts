@@ -3,6 +3,9 @@ export const no = {
   appSubtitle: "Fra data til tjeneste",
   newModel: "Ny modell", models: "Modeller", noModels: "Ingen modeller ennå",
   noModelsHint: "Opprett en ny modell for å komme i gang",
+  abstract: "«abstrakt»",
+  untitledModel: "Navnløs modell",
+  noNamespace: "no.navnerom",
   landing: {
     title: "Hva vil du gjøre?",
     subtitle: "Velg utgangspunkt for å komme i gang",
@@ -65,7 +68,7 @@ export const no = {
   fetchUrl: "Hent data", fetchError: "Kunne ikke hente data. Sjekk URL og CORS-innstillinger.",
   importGisError: "Kunne ikke lese filen. Sjekk at formatet er gyldig.",
   properties: "Egenskaper", addProperty: "Legg til felt", addSubProperty: "Legg til underfelt",
-  sharedTypes: "Delte datatyper", addSharedType: "Ny datatype", sharedTypeName: "Typenavn",
+  sharedTypes: "Delte datatyper", addSharedType: "Ny datatype", sharedTypeName: "Typenavn", sharedTypeDefault: "Type",
   modelName: "Modellnavn", modelNamePlaceholder: "f.eks. Naturvernområder",
   description: "Beskrivelse", descriptionPlaceholder: "Beskriv innholdet i dette datasettet...",
   sharedTypeDescriptionPlaceholder: "Beskriv hva denne datatypen brukes til (f.eks. felles adressefelt)...",
@@ -76,7 +79,7 @@ export const no = {
   confirmDeleteBtn: "Ja, slett modell",
   undo: "Angre", redo: "Gjør om",
   layers: "Lag", addLayer: "Nytt lag", deleteLayer: "Slett lag",
-  layerName: "Lagnavn", layerNamePlaceholder: "f.eks. Verneområder",
+  layerName: "Lagnavn", layerNameDefault: "Lag", layerNamePlaceholder: "f.eks. Verneområder",
   geomColumnName: "Geometrikolonne",
   propName: "Teknisk navn", propNamePlaceholder: "f.eks. verneform",
   propTitle: "Visningsnavn", propTitlePlaceholder: "f.eks. Verneform",
@@ -123,7 +126,7 @@ export const no = {
     deleteRule: "Slett regel",
     noRules: "Ingen valideringsregler definert ennå."
   },
-  visualTab: "Visning", schemaTab: "Schema", githubTab: "GitHub", exportTab: "Eksport", tutorialTab: "API",
+  visualTab: "Visning", schemaTab: "Skjema", githubTab: "GitHub", exportTab: "Eksport", tutorialTab: "API",
   helpTab: "Hjelp",
   mappingTab: "Data Mapper",
   viewDiagram: "ER-diagram", viewCard: "Datakort",
@@ -131,7 +134,7 @@ export const no = {
   moveUp: "Flytt opp", moveDown: "Flytt ned",
   crsLabel: "Koordinatsystem (CRS)",
   crsPlaceholder: "f.eks. EPSG:4326 eller EPSG:25833",
-  tabs: { models: "Modeller", editor: "Rediger", preview: "Forhåndsvis" },
+  tabs: { models: "Modeller", editor: "Rediger", preview: "Forhåndsvis", tools: "Verktøy" },
   review: {
     reviewChanges: "Se endringer",
     exitReview: "Avslutt gjennomgang",
@@ -610,7 +613,7 @@ export const no = {
     tableHeader: { name: "Navn", type: "Type", req: "Obligatorisk", desc: "Beskrivelse" },
     yes: "Ja", no: "Nei"
   },
-  types: { string: "Tekst", number: "Desimaltall", integer: "Heltall", boolean: "Ja/Nei", date: "Dato", geometry: "Geometri", codelist: "Kodeliste", json: "JSON", relation: "Relasjon", object: "Objekt (sammensatt)", array: "Liste", shared_type: "Delt datatype" },
+  types: { string: "Tekst", number: "Desimaltall", integer: "Heltall", boolean: "Ja/Nei", date: "Dato", datetime: "Dato/Tid", geometry: "Geometri", codelist: "Kodeliste", json: "JSON", relation: "Relasjon", object: "Objekt (sammensatt)", array: "Liste", shared_type: "Delt datatype" },
   geometryTypes: { Point: "Punkt", LineString: "Linje", Polygon: "Flate", MultiPoint: "Multipunkt", MultiLineString: "Multilinje", MultiPolygon: "Multiflate", GeometryCollection: "Geometrisamling", None: "Ingen geometri" },
   export: {
     gpkgTitle: "GeoPackage-mal", gpkgDesc: "Generer en tom .gpkg-fil med alle tabeller og metadata.",

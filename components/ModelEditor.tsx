@@ -164,7 +164,8 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   const baselineLayer = baselineModel?.layers.find(l => l.id === activeLayerId);
 
   const handleAddLayer = () => {
-    const newLayer = createEmptyLayer(`Layer ${model.layers.length + 1}`);
+    const defaultLayerName = t.layerNameDefault ? `${t.layerNameDefault} ${model.layers.length + 1}` : `Layer ${model.layers.length + 1}`;
+    const newLayer = createEmptyLayer(defaultLayerName);
     onUpdate({
       ...model,
       layers: [...model.layers, newLayer]
@@ -233,7 +234,8 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   const activeSharedType = sharedTypes.find(t => t.id === activeSharedTypeId) || sharedTypes[0];
 
   const handleAddSharedType = () => {
-    const newType = createEmptySharedType(`Type ${sharedTypes.length + 1}`);
+    const defaultTypeName = t.sharedTypeDefault ? `${t.sharedTypeDefault} ${sharedTypes.length + 1}` : `Type ${sharedTypes.length + 1}`;
+    const newType = createEmptySharedType(defaultTypeName);
     onUpdate({
       ...model,
       sharedTypes: [...sharedTypes, newType]

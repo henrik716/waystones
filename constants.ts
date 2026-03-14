@@ -30,6 +30,7 @@ export const PRIMITIVE_TYPE_CONFIG: Record<string, { color: string; bg: string; 
   'integer': { color: "#F59E0B", bg: "#FEF3C7", icon: "#" },
   'boolean': { color: "#A855F7", bg: "#F3E8FF", icon: "⊙" },
   'date':    { color: "#10B981", bg: "#ECFDF5", icon: "▦" },
+  'date-time': { color: "#059669", bg: "#D1FAE5", icon: "⏱" },
   'json':    { color: "#6366F1", bg: "#EEF2FF", icon: "{ }" },
 };
 

@@ -17,7 +17,7 @@ interface FlatProp {
 const fieldTypeDisplay = (f: Field, t: any): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
-    case 'primitive':       return (t.types?.[ft.baseType] || ft.baseType).toUpperCase();
+    case 'primitive':       return ((ft.baseType === 'date-time' ? t.types?.datetime : t.types?.[ft.baseType]) || ft.baseType).toUpperCase();
     case 'codelist':        return (t.types?.codelist || 'CODELIST').toUpperCase();
     case 'geometry':        return ft.geometryType.toUpperCase();
     case 'feature-ref':     return (t.types?.relation || 'RELATION').toUpperCase();
@@ -226,7 +226,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                 <path d={`M${startX},${vis.y+16} Q${startX},${vis.y} ${startX+16},${vis.y} H${startX+mainBoxW-16} Q${startX+mainBoxW},${vis.y} ${startX+mainBoxW},${vis.y+16} V${vis.y+mainBoxHeaderH} H${startX} Z`} fill="url(#mainHeaderGrad)" />
                 <text x={startX + 16} y={vis.layer.isAbstract ? vis.y + 24 : vis.y + 30} fill="white" fontSize="14" fontWeight="900">{vis.layer.name}</text>
                 {vis.layer.isAbstract && (
-                  <text x={startX + 16} y={vis.y + 42} fill="white" fontSize="9" fontWeight="700" opacity="0.65">«abstract»</text>
+                  <text x={startX + 16} y={vis.y + 42} fill="white" fontSize="9" fontWeight="700" opacity="0.65">{t.abstract || '«abstract»'}</text>
                 )}
 
                 {vis.hasGeom && (

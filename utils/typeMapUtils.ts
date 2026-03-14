@@ -6,7 +6,8 @@ export const mapSqlTypeToFieldType = (type: string): FieldType => {
   if (tLower.includes('int'))                                                                                    return { kind: 'primitive', baseType: 'integer' };
   if (tLower.includes('double') || tLower.includes('float') || tLower.includes('real') || tLower.includes('numeric')) return { kind: 'primitive', baseType: 'number' };
   if (tLower.includes('bool') || tLower.includes('boolean'))                                                     return { kind: 'primitive', baseType: 'boolean' };
-  if (tLower.includes('date') || tLower.includes('time') || tLower.includes('timestamp'))                        return { kind: 'primitive', baseType: 'date' };
+  if (tLower.includes('timestamp') || tLower.includes('datetime'))                                               return { kind: 'primitive', baseType: 'date-time' };
+  if (tLower.includes('date') || tLower.includes('time'))                                                        return { kind: 'primitive', baseType: 'date' };
   if (tLower.includes('geom') || tLower.includes('point') || tLower.includes('line') || tLower.includes('poly') || tLower.includes('shape')) return { kind: 'geometry', geometryType: 'Point' };
   return { kind: 'primitive', baseType: 'string' };
 };
@@ -19,7 +20,8 @@ export const getSqlType = (ft: FieldType): string => {
         case 'integer': return 'INTEGER';
         case 'number':  return 'DOUBLE PRECISION';
         case 'boolean': return 'BOOLEAN';
-        case 'date':    return 'TIMESTAMP';
+        case 'date':    return 'DATE';
+        case 'date-time': return 'TIMESTAMP WITH TIME ZONE';
         case 'json':    return 'JSONB';
         default:        return 'TEXT';
       }

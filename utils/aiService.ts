@@ -218,7 +218,7 @@ export async function suggestFieldType(params: {
   description: string;
   lang: string;
 }): Promise<string> {
-  const validTypes = 'string, number, integer, boolean, date, geometry, codelist, json, object, array';
+  const validTypes = 'string, number, integer, boolean, date, date-time, geometry, codelist, json, object, array';
   const system = `You are a geospatial data modeler. Given a field name and optional description, choose the single most appropriate data type from this exact list: ${validTypes}. Output ONLY the type keyword (e.g. "integer"). No explanation, no punctuation.`;
   const user = `Field name: "${params.fieldName}"\nDescription: "${params.description || '(none)'}"`;
   return callAI(system, user);

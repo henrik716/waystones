@@ -3,6 +3,9 @@ export const en = {
   appSubtitle: "From data to service",
   newModel: "New model", models: "Models", noModels: "No models yet",
   noModelsHint: "Create a new model to get started",
+  abstract: "«abstract»",
+  untitledModel: "Untitled Model",
+  noNamespace: "no.namespace",
   landing: {
     title: "What would you like to do?",
     subtitle: "Choose a starting point",
@@ -65,7 +68,7 @@ export const en = {
   fetchUrl: "Fetch data", fetchError: "Could not fetch data. Check URL and CORS settings.",
   importGisError: "Could not read the file. Please check that the format is valid.",
   properties: "Properties", addProperty: "Add field", addSubProperty: "Add sub-field",
-  sharedTypes: "Shared Types", addSharedType: "New type", sharedTypeName: "Type name",
+  sharedTypes: "Shared Types", addSharedType: "New type", sharedTypeName: "Type name", sharedTypeDefault: "Type",
   modelName: "Model name", modelNamePlaceholder: "e.g. Protected areas",
   description: "Description", descriptionPlaceholder: "Describe the contents of this dataset...",
   sharedTypeDescriptionPlaceholder: "Describe what this type is used for (e.g., common address fields)...",
@@ -76,7 +79,7 @@ export const en = {
   confirmDeleteBtn: "Yes, delete model",
   undo: "Undo", redo: "Redo",
   layers: "Layers", addLayer: "New layer", deleteLayer: "Delete layer",
-  layerName: "Layer name", layerNamePlaceholder: "e.g. Protected areas",
+  layerName: "Layer name", layerNameDefault: "Layer", layerNamePlaceholder: "e.g. Protected areas",
   geomColumnName: "Geometry column",
   propName: "Field name", propNamePlaceholder: "e.g. protection_type",
   propTitle: "Display name", propTitlePlaceholder: "e.g. Protection Type",
@@ -131,7 +134,7 @@ export const en = {
   moveUp: "Move up", moveDown: "Move down",
   crsLabel: "CRS",
   crsPlaceholder: "e.g. EPSG:4326",
-  tabs: { models: "Models", editor: "Edit", preview: "Preview" },
+  tabs: { models: "Models", editor: "Edit", preview: "Preview", tools: "Tools" },
   review: {
     reviewChanges: "Review changes",
     exitReview: "Exit review",
@@ -610,7 +613,7 @@ export const en = {
     tableHeader: { name: "Name", type: "Type", req: "Required", desc: "Description" },
     yes: "Yes", no: "No"
   },
-  types: { string: "Text", number: "Decimal", integer: "Integer", boolean: "Yes/No", date: "Date", geometry: "Geometry", codelist: "Codelist", json: "JSON", relation: "Relation", object: "Object (composite)", array: "Array (list)", shared_type: "Shared type" },
+  types: { string: "Text", number: "Decimal", integer: "Integer", boolean: "Yes/No", date: "Date", datetime: "Date/Time", geometry: "Geometry", codelist: "Codelist", json: "JSON", relation: "Relation", object: "Object (composite)", array: "Array (list)", shared_type: "Shared type" },
   geometryTypes: { Point: "Point", LineString: "LineString", Polygon: "Polygon", MultiPoint: "MultiPoint", MultiLineString: "MultiLineString", MultiPolygon: "MultiPolygon", GeometryCollection: "Geometry collection", None: "No geometry" },
   export: {
     gpkgTitle: "GeoPackage Template", gpkgDesc: "Generate an empty .gpkg file with all tables and metadata.",
