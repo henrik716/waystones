@@ -3,7 +3,7 @@ import {
   Plus, Trash2, Layers, LayoutList, MapPin, Globe, Palette, MousePointer2,
   GitCommit, Square, Hash, Shapes, Package,
   ChevronDown, ChevronUp, Edit3, Eye, Box,
-  Database, GripVertical, RotateCcw, Sparkles
+  Database, GripVertical, RotateCcw
 } from 'lucide-react';
 import { DataModel, Layer, Field, GeometryType, SharedType, SharedEnum, CodeValue } from '../types';
 import { getEffectiveProperties } from '../utils/modelUtils';
@@ -23,6 +23,7 @@ import ChangeReviewBar from './editor/ChangeReviewBar';
 import MetadataSection from './editor/MetadataSection';
 import LayerConstraintsSection from './editor/LayerConstraintsSection';
 import SharedTypesTab from './editor/SharedTypesTab';
+import AiTrigger from './ai/AiTrigger';
 
 interface ModelEditorProps {
   model: DataModel;
@@ -41,17 +42,21 @@ const DiffField: React.FC<{
   reviewMode: boolean;
   children: React.ReactNode;
   className?: string;
-}> = ({ label, currentValue, baselineValue, reviewMode, children, className }) => {
+  action?: React.ReactNode;
+}> = ({ label, currentValue, baselineValue, reviewMode, children, className, action }) => {
   const isChanged = reviewMode && baselineValue !== undefined && baselineValue !== null && currentValue !== baselineValue;
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-2">
         <label className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 block">{label}</label>
-        {isChanged && (
-          <span className="text-[10px] text-rose-500 line-through font-bold animate-in fade-in slide-in-from-right-2">
-            {String(baselineValue)}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {isChanged && (
+            <span className="text-[10px] text-rose-500 line-through font-bold animate-in fade-in slide-in-from-right-2">
+              {String(baselineValue)}
+            </span>
+          )}
+          {action}
+        </div>
       </div>
       <div className={`transition-all duration-300 ${isChanged ? 'ring-2 ring-amber-400 bg-amber-50 rounded-[20px] overflow-hidden' : ''}`}>
         {children}
@@ -399,18 +404,6 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
     });
   };
 
-  const AiBtn: React.FC<{ feature: 'abstract' | 'description'; label: string; onClick: () => void }> = ({ feature, label, onClick }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={aiContext.isLoading}
-      className={`absolute bottom-2 right-2 z-10 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50'
-        } ${aiContext.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      <Sparkles size={10} className={aiContext.currentOperation === feature ? 'animate-pulse' : ''} />
-      {aiContext.currentOperation === feature ? (t.ai?.generating || 'Generating…') : label}
-    </button>
-  );
 
   return (
     <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12 w-full custom-scrollbar scroll-smooth">
@@ -535,20 +528,28 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                   </DiffField>
                 </div>
 
-                <DiffField label={t.description} currentValue={model.description} baselineValue={baselineModel?.description} reviewMode={reviewMode}>
-                  <div className="relative">
-                    <textarea
-                      placeholder={t.descriptionPlaceholder}
-                      value={model.description}
-                      onChange={e => onUpdate({ ...model, description: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-3 pb-10 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
-                    />
-                    <AiBtn
-                      feature="abstract"
-                      label={t.ai?.generateDescription || 'Generate description'}
+                <DiffField
+                  label={t.description}
+                  currentValue={model.description}
+                  baselineValue={baselineModel?.description}
+                  reviewMode={reviewMode}
+                  action={
+                    <AiTrigger
                       onClick={handleGenerateDatasetDescription}
+                      isLoading={aiContext.isLoading}
+                      isActive={aiContext.currentOperation === 'abstract'}
+                      hasError={!!aiContext.error}
+                      label={t.ai?.generateDescription || 'Generate description'}
+                      t={t}
                     />
-                  </div>
+                  }
+                >
+                  <textarea
+                    placeholder={t.descriptionPlaceholder}
+                    value={model.description}
+                    onChange={e => onUpdate({ ...model, description: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-3 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
+                  />
                 </DiffField>
               </div>
             </div>
@@ -763,20 +764,28 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                   )}
                 </div>
 
-                <DiffField label={t.description} currentValue={activeLayer.description} baselineValue={baselineLayer?.description} reviewMode={reviewMode}>
-                  <div className="relative">
-                    <textarea
-                      placeholder={t.descriptionPlaceholder}
-                      value={activeLayer.description}
-                      onChange={e => handleUpdateLayer({ description: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 pb-10 md:px-5 md:py-4 md:pb-10 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
-                    />
-                    <AiBtn
-                      feature="description"
-                      label={t.ai?.generateDescription || 'Generate description'}
+                <DiffField
+                  label={t.description}
+                  currentValue={activeLayer.description}
+                  baselineValue={baselineLayer?.description}
+                  reviewMode={reviewMode}
+                  action={
+                    <AiTrigger
                       onClick={handleGenerateLayerDescription}
+                      isLoading={aiContext.isLoading}
+                      isActive={aiContext.currentOperation === 'description'}
+                      hasError={!!aiContext.error}
+                      label={t.ai?.generateDescription || 'Generate description'}
+                      t={t}
                     />
-                  </div>
+                  }
+                >
+                  <textarea
+                    placeholder={t.descriptionPlaceholder}
+                    value={activeLayer.description}
+                    onChange={e => handleUpdateLayer({ description: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 md:px-5 md:py-4 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
+                  />
                 </DiffField>
 
                 {/* Advanced / OO section — collapsed by default */}

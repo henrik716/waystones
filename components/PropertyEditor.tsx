@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   ChevronDown, ChevronUp, Trash2, Asterisk,
-  ArrowUp, ArrowDown, Lock, Plus, Link, CornerDownRight, Sparkles
+  ArrowUp, ArrowDown, Lock, Plus, Link, CornerDownRight
 } from 'lucide-react';
 import { Field, FieldType, FieldKind, PropertyConstraints, SharedType, Multiplicity } from '../types';
 import { getFieldConfig, createEmptyField } from '../constants';
@@ -16,6 +16,7 @@ import { sanitizeTechnicalName } from '../utils/nameSanitizer';
 import { useAiContext } from '../hooks/useAiContext';
 import AiLoadingSkeleton from './ai/AiLoadingSkeleton';
 import AiErrorHandler from './ai/AiErrorHandler';
+import AiTrigger from './ai/AiTrigger';
 
 // Helper: field kind display label for header
 const fieldKindLabel = (ft: FieldType, t: any, sharedTypes: SharedType[]): string => {
@@ -77,41 +78,27 @@ interface PropertyEditorProps {
 
 type AiFeature = 'desc' | 'type' | 'constraints';
 
-const AiButton: React.FC<{
-  onClick: () => void;
-  isLoading: boolean;
-  hasError: boolean;
-  tooltip: string;
-  className?: string;
-}> = ({ onClick, isLoading, hasError, tooltip, className = '' }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    title={tooltip}
-    disabled={isLoading}
-    className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all shrink-0 ${hasError ? 'text-rose-400 hover:text-rose-600 bg-rose-50' : 'text-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
-  >
-    <Sparkles size={14} className={isLoading ? 'animate-pulse' : ''} />
-  </button>
-);
-
 const PropDiffField: React.FC<{
   label: string;
   currentValue: any;
   baselineValue: any;
   reviewMode: boolean;
   children: React.ReactNode;
-}> = ({ label, currentValue, baselineValue, reviewMode, children }) => {
+  action?: React.ReactNode;
+}> = ({ label, currentValue, baselineValue, reviewMode, children, action }) => {
   const isChanged = reviewMode && baselineValue !== undefined && baselineValue !== null && currentValue !== baselineValue;
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{label}</label>
-        {isChanged && (
-          <span className="text-[9px] text-rose-500 line-through font-bold">
-            {String(baselineValue)}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {isChanged && (
+            <span className="text-[9px] text-rose-500 line-through font-bold">
+              {String(baselineValue)}
+            </span>
+          )}
+          {action}
+        </div>
       </div>
       <div className={`transition-all ${isChanged ? 'ring-2 ring-amber-400 bg-amber-50 rounded-xl overflow-hidden' : ''}`}>
         {children}
@@ -384,11 +371,13 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
-                <AiButton
+                <AiTrigger
                   onClick={handleSuggestType}
-                  isLoading={aiContext.isLoading && aiContext.currentOperation === 'type'}
+                  isLoading={aiContext.isLoading}
+                  isActive={aiContext.currentOperation === 'type'}
                   hasError={aiContext.error !== null}
                   tooltip={t.ai?.suggestType || 'Suggest type'}
+                  t={t}
                 />
               </div>
             </PropDiffField>
@@ -420,11 +409,13 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
 
           <div className="space-y-2">
             <div className="flex items-center justify-end">
-              <AiButton
+              <AiTrigger
                 onClick={handleInferConstraints}
-                isLoading={aiContext.isLoading && aiContext.currentOperation === 'constraints'}
+                isLoading={aiContext.isLoading}
+                isActive={aiContext.currentOperation === 'constraints'}
                 hasError={aiContext.error !== null}
                 tooltip={t.ai?.inferConstraints || 'Suggest constraints'}
+                t={t}
               />
             </div>
             <ConstraintsEditor prop={prop} onUpdate={onUpdate} t={t} />
@@ -531,17 +522,23 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
             <CodelistEditor prop={prop} baselineProp={baselineProp} onUpdate={onUpdate} isGhost={isGhost} reviewMode={reviewMode} sharedEnums={sharedEnums} t={t} lang={lang} />
           )}
 
-          <PropDiffField label={t.propDescription} currentValue={prop.description} baselineValue={baselineProp?.description} reviewMode={!!reviewMode}>
-            <div className="relative">
-              <textarea placeholder={t.propDescriptionPlaceholder} value={prop.description} onChange={e => handleUpdate({ description: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 pr-10 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[100px] resize-none leading-relaxed" />
-              <AiButton
+          <PropDiffField
+            label={t.propDescription}
+            currentValue={prop.description}
+            baselineValue={baselineProp?.description}
+            reviewMode={!!reviewMode}
+            action={
+              <AiTrigger
                 onClick={handleGenerateDescription}
-                isLoading={aiContext.isLoading && aiContext.currentOperation === 'description'}
+                isLoading={aiContext.isLoading}
+                isActive={aiContext.currentOperation === 'description'}
                 hasError={aiContext.error !== null}
                 tooltip={t.ai?.generateDescription || 'Generate description'}
-                className="absolute top-2 right-2"
+                t={t}
               />
-            </div>
+            }
+          >
+            <textarea placeholder={t.propDescriptionPlaceholder} value={prop.description} onChange={e => handleUpdate({ description: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[100px] resize-none leading-relaxed" />
           </PropDiffField>
 
           {/* --- NESTED SUB-PROPERTIES (DATATYPE-INLINE) --- */}

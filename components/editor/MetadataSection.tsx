@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { FileText, ChevronDown, ChevronUp, X, Sparkles } from 'lucide-react';
+import { FileText, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { DataModel, ModelMetadata } from '../../types';
 import {
   generateModelAbstract, suggestTheme, suggestKeywords,
 } from '../../utils/aiService';
 import { useAiContext } from '../../hooks/useAiContext';
+import AiTrigger from '../ai/AiTrigger';
 
 interface MetadataSectionProps {
   model: DataModel;
@@ -169,10 +170,14 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ model, onUpdate, isOp
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{md.keywords}</label>
-                      <button type="button" onClick={handleSuggestKeywords} disabled={aiContext.isLoading} className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-teal-500 hover:text-teal-700 hover:bg-teal-50'} ${aiContext.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <Sparkles size={10} className={aiContext.currentOperation === 'keywords' ? 'animate-pulse' : ''} />
-                        {aiContext.currentOperation === 'keywords' ? (t.ai?.generating || 'Generating…') : (t.ai?.suggestKeywords || 'Suggest keywords')}
-                      </button>
+                      <AiTrigger
+                        onClick={handleSuggestKeywords}
+                        isLoading={aiContext.isLoading}
+                        isActive={aiContext.currentOperation === 'keywords'}
+                        hasError={!!aiContext.error}
+                        label={t.ai?.suggestKeywords || 'Suggest keywords'}
+                        t={t}
+                      />
                     </div>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {(meta.keywords || []).map((kw, i) => (
@@ -205,10 +210,14 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ model, onUpdate, isOp
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{md.theme}</label>
-                        <button type="button" onClick={handleSuggestTheme} disabled={aiContext.isLoading} className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-teal-500 hover:text-teal-700 hover:bg-teal-50'} ${aiContext.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                          <Sparkles size={10} className={aiContext.currentOperation === 'theme' ? 'animate-pulse' : ''} />
-                          {aiContext.currentOperation === 'theme' ? (t.ai?.generating || 'Generating…') : (t.ai?.suggestTheme || 'Suggest theme')}
-                        </button>
+                        <AiTrigger
+                          onClick={handleSuggestTheme}
+                          isLoading={aiContext.isLoading}
+                          isActive={aiContext.currentOperation === 'theme'}
+                          hasError={!!aiContext.error}
+                          label={t.ai?.suggestTheme || 'Suggest theme'}
+                          t={t}
+                        />
                       </div>
                       <select value={meta.theme} onChange={e => updateMeta({ theme: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[18px] px-4 py-3 text-sm font-bold appearance-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all cursor-pointer">
                         <option value="">—</option>
@@ -239,16 +248,14 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ model, onUpdate, isOp
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 block">{md.purpose}</label>
-                      <button
-                        type="button"
+                      <AiTrigger
                         onClick={handleGenerateAbstract}
-                        disabled={aiContext.isLoading}
-                        title={t.ai?.generateAbstract || 'Generate abstract'}
-                        className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-teal-500 hover:text-teal-700 hover:bg-teal-50'} ${aiContext.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <Sparkles size={11} className={aiContext.currentOperation === 'abstract' ? 'animate-pulse' : ''} />
-                        {aiContext.currentOperation === 'abstract' ? (t.ai?.generating || 'Generating…') : (t.ai?.generateAbstract || 'Generate abstract')}
-                      </button>
+                        isLoading={aiContext.isLoading}
+                        isActive={aiContext.currentOperation === 'abstract'}
+                        hasError={!!aiContext.error}
+                        label={t.ai?.generateAbstract || 'Generate abstract'}
+                        t={t}
+                      />
                     </div>
                     <textarea value={meta.purpose} onChange={e => updateMeta({ purpose: e.target.value })} placeholder={md.purposePlaceholder} className="w-full bg-slate-50 border border-slate-200 rounded-[18px] px-4 py-3 text-xs md:text-sm min-h-[60px] focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all resize-none leading-relaxed" />
                   </div>

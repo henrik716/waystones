@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { X, ArrowRight, Sparkles } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { DataModel, ModelMetadata } from '../../types';
 import { InferredDataSummary } from '../../utils/importUtils';
 import {
   generateModelAbstract, suggestTheme, suggestKeywords, hasApiKey,
 } from '../../utils/aiService';
 import { useAiContext } from '../../hooks/useAiContext';
+import AiTrigger from '../ai/AiTrigger';
 
 interface MetadataStepProps {
   model: DataModel;
@@ -106,19 +107,6 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
     });
   };
 
-  const AiBtn: React.FC<{ feature: QpFeature; label: string; onClick: () => void }> = ({ feature, label, onClick }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={aiContext.isLoading}
-      className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all ${
-        aiContext.error ? 'text-rose-400 bg-rose-50' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50'
-      } ${aiContext.isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      <Sparkles size={10} className={aiContext.currentOperation === feature ? 'animate-pulse' : ''} />
-      {aiContext.currentOperation === feature ? (t.ai?.generating || 'Generating…') : label}
-    </button>
-  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
@@ -141,7 +129,14 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.descriptionPlaceholder?.split('...')[0] || 'Description'}</label>
-          <AiBtn feature="description" label={t.ai?.generateAbstract || 'Generate description'} onClick={handleGenerateDesc} />
+          <AiTrigger
+            onClick={handleGenerateDesc}
+            isLoading={aiContext.isLoading}
+            isActive={aiContext.currentOperation === 'description'}
+            hasError={!!aiContext.error}
+            label={t.ai?.generateAbstract || 'Generate description'}
+            t={t}
+          />
         </div>
         <textarea
           value={model.description}
@@ -197,7 +192,14 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.theme}</label>
-            <AiBtn feature="theme" label={t.ai?.suggestTheme || 'Suggest theme'} onClick={handleSuggestTheme} />
+            <AiTrigger
+              onClick={handleSuggestTheme}
+              isLoading={aiContext.isLoading}
+              isActive={aiContext.currentOperation === 'theme'}
+              hasError={!!aiContext.error}
+              label={t.ai?.suggestTheme || 'Suggest theme'}
+              t={t}
+            />
           </div>
           <select value={meta.theme} onChange={e => updateMeta({ theme: e.target.value })} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold appearance-none outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all cursor-pointer">
             <option value="">—</option>
@@ -216,7 +218,14 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.keywords}</label>
-          <AiBtn feature="keywords" label={t.ai?.suggestKeywords || 'Suggest keywords'} onClick={handleSuggestKeywords} />
+          <AiTrigger
+            onClick={handleSuggestKeywords}
+            isLoading={aiContext.isLoading}
+            isActive={aiContext.currentOperation === 'keywords'}
+            hasError={!!aiContext.error}
+            label={t.ai?.suggestKeywords || 'Suggest keywords'}
+            t={t}
+          />
         </div>
         <div className="flex flex-wrap gap-2 min-h-[40px]">
           {meta.keywords.map((kw, i) => (
