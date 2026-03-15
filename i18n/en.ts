@@ -313,7 +313,7 @@ export const en = {
         connected: "Connected to GitHub",
         disconnect: "Disconnect GitHub",
         notConfigured: "OAuth Not Configured",
-        notConfiguredDesc: "Set VITE_GITHUB_CLIENT_ID and VITE_GITHUB_CLIENT_SECRET environment variables to enable OAuth authentication.",
+        notConfiguredDesc: "Set VITE_GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to enable OAuth authentication.",
         welcomeConnected: "Great! You're connected to GitHub",
         loadingRepos: "Loading your repositories...",
         connectToBrowseRepos: "Connect your GitHub account to browse repositories"

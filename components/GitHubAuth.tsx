@@ -9,9 +9,9 @@ interface GitHubAuthProps {
   t?: any;
 }
 
-const GitHubAuth: React.FC<GitHubAuthProps> = ({ 
-  onAuthChange, 
-  showUserInfo = true, 
+const GitHubAuth: React.FC<GitHubAuthProps> = ({
+  onAuthChange,
+  showUserInfo = true,
   compact = false,
   t
 }) => {
@@ -41,8 +41,8 @@ const GitHubAuth: React.FC<GitHubAuthProps> = ({
         {isAuthenticated ? (
           <div className="flex items-center gap-3 flex-1">
             {user?.avatar_url && (
-              <img 
-                src={user.avatar_url} 
+              <img
+                src={user.avatar_url}
                 alt={user.login}
                 className="w-8 h-8 rounded-full border-2 border-emerald-200"
               />
@@ -85,7 +85,7 @@ const GitHubAuth: React.FC<GitHubAuthProps> = ({
           <Github className="text-slate-600" size={20} />
           <h3 className="font-semibold text-slate-800">GitHub Integration</h3>
         </div>
-        
+
         {isAuthenticated && (
           <div className="flex items-center gap-1 text-green-600">
             <CheckCircle size={16} />
@@ -102,7 +102,7 @@ const GitHubAuth: React.FC<GitHubAuthProps> = ({
             <div className="text-sm">
               <p className="font-medium text-amber-800">{authTexts.notConfigured || 'OAuth Not Configured'}</p>
               <p className="text-amber-700 mt-1">
-                {authTexts.notConfiguredDesc || 'Set VITE_GITHUB_CLIENT_ID and VITE_GITHUB_CLIENT_SECRET environment variables to enable OAuth authentication.'}
+                {authTexts.notConfiguredDesc || 'Set VITE_GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to enable OAuth authentication.'}
               </p>
             </div>
           </div>
@@ -160,7 +160,7 @@ const GitHubAuth: React.FC<GitHubAuthProps> = ({
               <LogOut size={16} />
               Disconnect
             </button>
-            
+
             {!isConfigured && (
               <div className="flex items-center gap-2 px-4 py-2 text-slate-500">
                 <Settings size={16} />

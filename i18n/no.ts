@@ -313,7 +313,7 @@ export const no = {
         connected: "Tilkoblet GitHub",
         disconnect: "Koble fra GitHub",
         notConfigured: "OAuth ikke konfigurert",
-        notConfiguredDesc: "Sett VITE_GITHUB_CLIENT_ID og VITE_GITHUB_CLIENT_SECRET miljøvariabler for å aktivere OAuth-autentisering.",
+        notConfiguredDesc: "Sett VITE_GITHUB_CLIENT_ID og GITHUB_CLIENT_SECRET miljøvariabler for å aktivere OAuth-autentisering.",
         welcomeConnected: "Flott! Du er koblet til GitHub",
         loadingRepos: "Laster dine repositories...",
         connectToBrowseRepos: "Koble din GitHub-konto for å bla gjennom repositories"

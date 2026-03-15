@@ -102,13 +102,13 @@ export const useGitHubAuth = (): GitHubAuthState & GitHubAuthActions => {
     if (!state.isConfigured) {
       setState(prev => ({
         ...prev,
-        error: 'GitHub OAuth is not configured. Please set VITE_GITHUB_CLIENT_ID and VITE_GITHUB_CLIENT_SECRET environment variables.'
+        error: 'GitHub OAuth is not configured. Please set VITE_GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.'
       }));
       return;
     }
 
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       await initiateOAuth();
     } catch (error) {
@@ -141,7 +141,7 @@ export const useGitHubAuth = (): GitHubAuthState & GitHubAuthActions => {
     }
 
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       // This would need to be implemented in oauthService
       // For now, we'll just clear the session and require re-login
