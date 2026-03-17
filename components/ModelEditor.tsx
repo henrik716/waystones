@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus, Trash2, Layers, LayoutList, MapPin, Globe, Palette, MousePointer2,
   GitCommit, Square, Hash, Shapes, Package,
@@ -24,6 +24,7 @@ import MetadataSection from './editor/MetadataSection';
 import LayerConstraintsSection from './editor/LayerConstraintsSection';
 import SharedTypesTab from './editor/SharedTypesTab';
 import AiTrigger from './ai/AiTrigger';
+import { validateModel, groupIssuesByLayer } from '../utils/validationUtils';
 
 interface ModelEditorProps {
   model: DataModel;
@@ -105,9 +106,16 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   const [commitHistory, setCommitHistory] = useState<CommitInfo[]>([]);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [selectedSha, setSelectedSha] = useState<string>("");
+  const [isIssuesExpanded, setIsIssuesExpanded] = useState(false);
 
   const changes = reviewMode ? compareModels(baselineModel, model, t) : [];
   const structuredChanges = reviewMode ? getStructuredChanges(changes) : null;
+
+  // Validering — reaktiv, ikke-blokkerende
+  const validationIssues = useMemo(() => validateModel(model), [model]);
+  const issuesByLayer = useMemo(() => groupIssuesByLayer(validationIssues), [validationIssues]);
+  const errorCount = validationIssues.filter(i => i.severity === 'error').length;
+  const warningCount = validationIssues.filter(i => i.severity === 'warning').length;
 
   const stats = {
     added: changes.filter(c => c.type === 'added').length,
@@ -121,6 +129,39 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
       loadHistory();
     }
   }, [reviewMode, githubConfig]);
+
+  // Handle inline type promotion to shared type
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { fieldId, typeName, properties } = (e as CustomEvent).detail;
+      const newSharedType = {
+        id: crypto.randomUUID(),
+        name: typeName,
+        description: '',
+        properties: Array.isArray(properties) ? properties : [],
+      };
+      onUpdate({
+        ...model,
+        layers: model.layers.map(layer => {
+          if (layer.id !== activeLayerId) return layer;
+          return {
+            ...layer,
+            properties: layer.properties.map(p =>
+              p.id === fieldId
+                ? { ...p, fieldType: { kind: 'datatype-ref' as const, typeId: newSharedType.id } }
+                : p
+            ),
+          };
+        }),
+        sharedTypes: [...(model.sharedTypes || []), newSharedType],
+      });
+      // Switch to Shared Types tab and auto-select the new type
+      setActiveTab('types');
+      setActiveSharedTypeId(newSharedType.id);
+    };
+    window.addEventListener('promote-inline-type', handler);
+    return () => window.removeEventListener('promote-inline-type', handler);
+  }, [activeLayerId, model, onUpdate]);
 
   const loadHistory = async () => {
     setIsFetchingHistory(true);
@@ -200,15 +241,80 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
   };
 
   const handleUpdateProperty = (updatedProp: Field) => {
-    handleUpdateLayer({
-      properties: activeLayer.properties.map(p => p.id === updatedProp.id ? updatedProp : p)
-    });
+    const oldProp = activeLayer.properties.find(p => p.id === updatedProp.id);
+    const oldFt = oldProp?.fieldType.kind === 'feature-ref' ? oldProp.fieldType : undefined;
+    const newFt = updatedProp.fieldType.kind === 'feature-ref' ? updatedProp.fieldType : undefined;
+
+    const inverseChanged = oldFt?.inverseFieldId !== newFt?.inverseFieldId || oldFt?.layerId !== newFt?.layerId;
+
+    if (inverseChanged && (oldFt || newFt)) {
+      // Cross-layer sync needed for inverse relations
+      let updatedLayers = model.layers.map(l =>
+        l.id === activeLayer.id
+          ? { ...l, properties: l.properties.map(p => p.id === updatedProp.id ? updatedProp : p) }
+          : l
+      );
+
+      // Clear old back-pointer
+      if (oldFt?.inverseFieldId) {
+        updatedLayers = updatedLayers.map(l => ({
+          ...l,
+          properties: l.properties.map(p => {
+            if (p.id === oldFt.inverseFieldId && p.fieldType.kind === 'feature-ref' && p.fieldType.inverseFieldId === updatedProp.id) {
+              const { inverseFieldId, ...rest } = p.fieldType;
+              return { ...p, fieldType: rest };
+            }
+            return p;
+          })
+        }));
+      }
+
+      // Set new back-pointer
+      if (newFt?.inverseFieldId && newFt.layerId) {
+        updatedLayers = updatedLayers.map(l => ({
+          ...l,
+          properties: l.properties.map(p => {
+            if (p.id === newFt.inverseFieldId && p.fieldType.kind === 'feature-ref') {
+              return { ...p, fieldType: { ...p.fieldType, inverseFieldId: updatedProp.id } };
+            }
+            return p;
+          })
+        }));
+      }
+
+      onUpdate({ ...model, layers: updatedLayers });
+    } else {
+      handleUpdateLayer({
+        properties: activeLayer.properties.map(p => p.id === updatedProp.id ? updatedProp : p)
+      });
+    }
   };
 
   const handleDeleteProperty = (id: string) => {
-    handleUpdateLayer({
-      properties: activeLayer.properties.filter(p => p.id !== id)
-    });
+    const prop = activeLayer.properties.find(p => p.id === id);
+    const ft = prop?.fieldType.kind === 'feature-ref' ? prop.fieldType : undefined;
+
+    let updatedLayers = model.layers.map(l =>
+      l.id === activeLayer.id
+        ? { ...l, properties: l.properties.filter(p => p.id !== id) }
+        : l
+    );
+
+    // Clear back-pointer in target layer if this field had an inverse
+    if (ft?.inverseFieldId) {
+      updatedLayers = updatedLayers.map(l => ({
+        ...l,
+        properties: l.properties.map(p => {
+          if (p.id === ft.inverseFieldId && p.fieldType.kind === 'feature-ref' && p.fieldType.inverseFieldId === id) {
+            const { inverseFieldId, ...rest } = p.fieldType;
+            return { ...p, fieldType: rest };
+          }
+          return p;
+        })
+      }));
+    }
+
+    onUpdate({ ...model, layers: updatedLayers });
   };
 
   const handleMoveProperty = (id: string, direction: 'up' | 'down') => {
@@ -637,11 +743,71 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
               )}
             </div>
 
+            {/* Validation bar — vises over lag-listen om det finnes issues */}
+            {validationIssues.length > 0 && (
+              <div className="mb-4 bg-white border border-slate-200 rounded-[22px] overflow-hidden shadow-sm transition-all">
+                <button
+                  onClick={() => setIsIssuesExpanded(!isIssuesExpanded)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {errorCount > 0 && (
+                      <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-100 text-rose-700 rounded-lg px-2.5 py-1 text-[10px] font-black">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                        {errorCount} {lang === 'no' ? (errorCount === 1 ? 'feil' : 'feil') : (errorCount === 1 ? 'error' : 'errors')}
+                      </div>
+                    )}
+                    {warningCount > 0 && (
+                      <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 text-amber-700 rounded-lg px-2.5 py-1 text-[10px] font-black">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                        {warningCount} {lang === 'no' ? (warningCount === 1 ? 'advarsel' : 'advarsler') : (warningCount === 1 ? 'warning' : 'warnings')}
+                      </div>
+                    )}
+                    <span className="text-[10px] text-slate-400 font-bold self-center ml-1">
+                      {lang === 'no' ? 'Validering av modellen' : 'Model validation'}
+                    </span>
+                  </div>
+                  {isIssuesExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                </button>
+
+                {isIssuesExpanded && (
+                  <div className="px-4 pb-4 space-y-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-1 duration-200">
+                    <div className="pt-2 flex items-center justify-between mb-1 px-1">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        {lang === 'no' ? 'Detaljer' : 'Details'}
+                      </h4>
+                      <span className="text-[9px] text-slate-400 font-bold italic">
+                        {lang === 'no' ? '— blokkerer ikke lagring eller eksport' : '— does not block saving or export'}
+                      </span>
+                    </div>
+                    <div className="max-h-[200px] overflow-y-auto pr-2 space-y-1.5 custom-scrollbar">
+                      {validationIssues.map((issue, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-start gap-3 p-2.5 rounded-xl border text-[11px] leading-relaxed transition-all
+                            ${issue.severity === 'error' ? 'bg-rose-50/50 border-rose-100 text-rose-800' : 'bg-amber-50/50 border-amber-100 text-amber-800'}`}
+                        >
+                          <div className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${issue.severity === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} />
+                          <div className="flex-1">
+                            <span className="font-black uppercase text-[9px] opacity-60 mr-2 tracking-tighter">[{issue.code}]</span>
+                            {lang === 'no' ? issue.messageNo : issue.message}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Original layer tabs for compatibility */}
             <div className="flex flex-wrap gap-2 md:gap-3 px-1">
               {displayLayers.map(layer => {
                 const isGhost = (layer as any).isGhost;
                 const layerChange = changes.find(c => c.itemType === 'layer' && c.layerId === layer.id);
+                const layerIssues = issuesByLayer.get(layer.id) || [];
+                const layerErrors = layerIssues.filter(i => i.severity === 'error').length;
+                const layerWarnings = layerIssues.filter(i => i.severity === 'warning').length;
                 return (
                   <button
                     key={layer.id}
@@ -654,6 +820,12 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                   >
                     <div className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border border-white/30" style={{ backgroundColor: layer.style?.simpleColor || '#ccc' }} />
                     {layer.name || "Untitled Layer"}
+                    {!reviewMode && layerErrors > 0 && (
+                      <span className="absolute -top-2 -right-2 w-4 h-4 bg-rose-500 rounded-full flex items-center justify-center text-[8px] font-black text-white">{layerErrors}</span>
+                    )}
+                    {!reviewMode && layerErrors === 0 && layerWarnings > 0 && (
+                      <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center text-[8px] font-black text-white">{layerWarnings}</span>
+                    )}
                     {reviewMode && (layerChange || isGhost) && (
                       <span className={`absolute -top-2 -right-2 px-1.5 py-0.5 rounded-md text-[8px] font-black text-white shadow-sm ${isGhost ? 'bg-rose-600' : (layerChange?.type === 'added' ? 'bg-emerald-500' : 'bg-amber-500')}`}>
                         {isGhost ? t.review.deleted.toUpperCase() : (layerChange?.type === 'added' ? t.review.added.toUpperCase() : t.review.modified.toUpperCase())}
@@ -927,6 +1099,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
                             isLast={idx === displayProperties.length - 1}
                             t={t}
                             allLayers={model.layers.map(l => ({ id: l.id, name: l.name }))}
+                            allLayersFull={model.layers}
                             sharedTypes={sharedTypes}
                             sharedEnums={sharedEnums}
                             change={isGhost ? { type: 'deleted', itemType: 'property', itemName: prop.name } : propChange}
@@ -950,6 +1123,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({ model, baselineModel, githubC
       ) : (
         <SharedTypesTab
           model={model}
+          allLayersFull={model.layers}
           sharedTypes={sharedTypes}
           activeSharedType={activeSharedType}
           activeSharedTypeId={activeSharedTypeId}

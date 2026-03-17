@@ -29,7 +29,7 @@ const hasMeaningfulConstraints = (c?: PropertyConstraints): boolean => {
 const fieldTypeLabel = (f: Field, t: any): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
-    case 'primitive':       return (ft.baseType === 'date-time' ? t.types?.datetime : t.types?.[ft.baseType]) || ft.baseType;
+    case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;
     case 'codelist':        return t.types?.codelist || 'Codelist';
     case 'geometry':        return t.types?.geometry || 'Geometry';
     case 'feature-ref':     return t.types?.relation || 'Relation';

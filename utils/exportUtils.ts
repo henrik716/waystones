@@ -48,6 +48,15 @@ const buildPropertySchema = (f: Field, model: DataModel): any => {
             });
             propSchema.properties = subProps;
             if (subRequired.length > 0) propSchema.required = subRequired;
+            // Arv type-nivå-avgrensninger (felt-nivå overstyrer)
+            if (shared.constraints) {
+              const tc = shared.constraints;
+              if (tc.min !== undefined && f.constraints?.min === undefined) propSchema.minimum = Number(tc.min);
+              if (tc.max !== undefined && f.constraints?.max === undefined) propSchema.maximum = Number(tc.max);
+              if (tc.minLength !== undefined && f.constraints?.minLength === undefined) propSchema.minLength = Number(tc.minLength);
+              if (tc.maxLength !== undefined && f.constraints?.maxLength === undefined) propSchema.maxLength = Number(tc.maxLength);
+              if (tc.pattern && !f.constraints?.pattern) propSchema.pattern = tc.pattern;
+            }
         }
         break;
     }
@@ -83,12 +92,17 @@ const buildPropertySchema = (f: Field, model: DataModel): any => {
     case 'feature-ref':
       propSchema.type = 'string';
       {
-        const targetLayerName = model.layers.find(layer => layer.id === ft.layerId)?.name || ft.layerId;
+        const targetLayer = model.layers.find(layer => layer.id === ft.layerId);
+        const targetLayerName = targetLayer?.name || ft.layerId;
+        const inverseField = ft.inverseFieldId
+          ? targetLayer?.properties.find(p => p.id === ft.inverseFieldId)
+          : undefined;
         propSchema['x-relation'] = {
           targetLayer: targetLayerName,
           relationType: ft.relationType,
           cascadeDelete: ft.cascadeDelete,
-          multiplicity: f.multiplicity
+          multiplicity: f.multiplicity,
+          ...(inverseField ? { inverseTo: inverseField.name } : {}),
         };
       }
       break;
@@ -289,19 +303,30 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
   const SQL = await initSqlJs({ locateFile: () => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.12.0/sql-wasm.wasm` });
   const db = new SQL.Database();
   db.run("CREATE TABLE gpkg_contents (table_name TEXT PRIMARY KEY, data_type TEXT);");
-  
+
   for (const layer of model.layers) {
     if (layer.isAbstract) continue;
     const tbl = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    let sql = `CREATE TABLE ${tbl} (fid INTEGER PRIMARY KEY AUTOINCREMENT`;
     const effectiveProperties = getEffectiveProperties(layer, model.layers);
-    effectiveProperties.forEach(f => {
+    const pkFields = effectiveProperties.filter(f => f.constraints?.isPrimaryKey);
+    const hasDeclaredPk = pkFields.length > 0;
+
+    let sql = `CREATE TABLE ${tbl} (`;
+
+    // Only add auto-injected fid if no primary key is declared
+    if (!hasDeclaredPk) {
+      sql += `fid INTEGER PRIMARY KEY AUTOINCREMENT`;
+    }
+
+    effectiveProperties.forEach((f, idx) => {
       const ft = f.fieldType;
       if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
       const type = getSqliteType(ft);
-      let colDef = `, "${f.name}" ${type}`;
+      let colDef = hasDeclaredPk && idx === 0 ? '' : ',';
+      colDef += ` "${f.name}" ${type}`;
       if (isRequired(f)) colDef += ' NOT NULL';
-      if (f.constraints?.isUnique) colDef += ' UNIQUE';
+      if (f.constraints?.isPrimaryKey && pkFields.length === 1) colDef += ' PRIMARY KEY';
+      else if (f.constraints?.isUnique) colDef += ' UNIQUE';
       
       // Foreign Key logikk
       if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
@@ -330,6 +355,12 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
       sql += colDef;
     });
 
+    // Composite PK if multiple fields
+    if (pkFields.length > 1) {
+      const pkCols = pkFields.map(f => `"${f.name}"`).join(', ');
+      sql += `, CONSTRAINT "pk_${tbl}" PRIMARY KEY (${pkCols})`;
+    }
+
     if (layer.layerConstraints && layer.layerConstraints.length > 0) {
       layer.layerConstraints.forEach(c => {
         sql += `, CONSTRAINT "chk_${c.id.substring(0,6)}" CHECK ("${c.fieldA}" ${c.operator} "${c.fieldB}")`;
@@ -352,66 +383,149 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
 export const exportSQL = (model: DataModel, filename: string) => {
   let sql = `-- SQL Schema for ${model.name}\n-- Generated: ${new Date().toISOString()}\n\n`;
   sql += `CREATE EXTENSION IF NOT EXISTS postgis;\n\n`;
-  
+
   model.layers.filter(l => !l.isAbstract).forEach(l => {
     const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     const hasGeom = l.geometryType !== 'None';
-
-    sql += `CREATE TABLE ${tbl} (\n  fid SERIAL PRIMARY KEY`;
     const effectiveProperties = getEffectiveProperties(l, model.layers);
-    effectiveProperties.forEach(f => {
-      const ft = f.fieldType;
-      if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
-      const type = getSqlType(ft);
-      const c = f.constraints; 
-      let line = `,\n  "${f.name}" ${type}`;
-      
-      if (isRequired(f)) line += ' NOT NULL';
-      if (c?.isUnique || c?.isPrimaryKey) line += ' UNIQUE';
 
-      if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
-        const targetLayer = model.layers.find(lyr => lyr.id === ft.layerId);
-        if (targetLayer) {
-          const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          line += ` REFERENCES ${targetTbl}(fid)`;
-          if (ft.cascadeDelete) line += ' ON DELETE CASCADE';
-        }
-      }
+    // Check for declared primary key fields
+    const pkFields = effectiveProperties.filter(f => f.constraints?.isPrimaryKey);
+    const hasDeclaredPk = pkFields.length > 0;
 
-      if (ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref') {
-        const checkParts: string[] = [];
-        if (c?.min !== undefined && c.min !== null) checkParts.push(`"${f.name}" >= ${c.min}`);
-        if (c?.max !== undefined && c.max !== null) checkParts.push(`"${f.name}" <= ${c.max}`);
-        if (c?.minLength !== undefined && c.minLength !== null) checkParts.push(`length("${f.name}") >= ${c.minLength}`);
-        if (c?.maxLength !== undefined && c.maxLength !== null) checkParts.push(`length("${f.name}") <= ${c.maxLength}`);
-        if (c?.pattern) checkParts.push(`"${f.name}" ~ '${c.pattern.replace(/'/g, "''")}'`);
-        if (c?.enumeration && c.enumeration.length > 0) {
-          const enumVals = c.enumeration.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
-          checkParts.push(`"${f.name}" IN (${enumVals})`);
+    // Collect geometry fields from properties
+    const geomFields = effectiveProperties.filter(f => f.fieldType.kind === 'geometry');
+
+    sql += `CREATE TABLE ${tbl} (\n`;
+
+    // Only add auto-injected fid if no primary key is declared
+    if (!hasDeclaredPk) {
+      sql += `  fid SERIAL PRIMARY KEY`;
+    } else {
+      // Start with first column definition (no leading comma yet)
+      let firstCol = true;
+      effectiveProperties.forEach(f => {
+        const ft = f.fieldType;
+        if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
+        const type = getSqlType(ft);
+        const c = f.constraints;
+
+        if (firstCol) {
+          firstCol = false;
+          sql += `  "${f.name}" ${type}`;
+        } else {
+          sql += `,\n  "${f.name}" ${type}`;
         }
-        if (checkParts.length > 0) {
-          line += ` CHECK (${checkParts.join(' AND ')})`;
+
+        if (isRequired(f)) sql += ' NOT NULL';
+        if (c?.isPrimaryKey && pkFields.length === 1) sql += ' PRIMARY KEY';
+        else if (c?.isUnique) sql += ' UNIQUE';
+
+        // Constraints...
+        if (ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref') {
+          const checkParts: string[] = [];
+          if (c?.min !== undefined && c.min !== null) checkParts.push(`"${f.name}" >= ${c.min}`);
+          if (c?.max !== undefined && c.max !== null) checkParts.push(`"${f.name}" <= ${c.max}`);
+          if (c?.minLength !== undefined && c.minLength !== null) checkParts.push(`length("${f.name}") >= ${c.minLength}`);
+          if (c?.maxLength !== undefined && c.maxLength !== null) checkParts.push(`length("${f.name}") <= ${c.maxLength}`);
+          if (c?.pattern) checkParts.push(`"${f.name}" ~ '${c.pattern.replace(/'/g, "''")}'`);
+          if (c?.enumeration && c.enumeration.length > 0) {
+            const enumVals = c.enumeration.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
+            checkParts.push(`"${f.name}" IN (${enumVals})`);
+          }
+          if (checkParts.length > 0) {
+            sql += ` CHECK (${checkParts.join(' AND ')})`;
+          }
         }
+
+        // Foreign key
+        if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
+          const targetLayer = model.layers.find(lyr => lyr.id === ft.layerId);
+          if (targetLayer) {
+            const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            sql += ` REFERENCES ${targetTbl}(fid)`;
+            if (ft.cascadeDelete) sql += ' ON DELETE CASCADE';
+          }
+        }
+      });
+
+      // Composite PK if multiple fields
+      if (pkFields.length > 1) {
+        const pkCols = pkFields.map(f => `"${f.name}"`).join(', ');
+        sql += `,\n  CONSTRAINT "pk_${tbl}" PRIMARY KEY (${pkCols})`;
       }
-      
-      sql += line;
-    });
+    }
+
+    // When using auto fid, add all properties with commas
+    if (!hasDeclaredPk) {
+      effectiveProperties.forEach(f => {
+        const ft = f.fieldType;
+        if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
+        const type = getSqlType(ft);
+        const c = f.constraints;
+        let line = `,\n  "${f.name}" ${type}`;
+
+        if (isRequired(f)) line += ' NOT NULL';
+        if (c?.isUnique) line += ' UNIQUE';
+
+        if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
+          const targetLayer = model.layers.find(lyr => lyr.id === ft.layerId);
+          if (targetLayer) {
+            const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            line += ` REFERENCES ${targetTbl}(fid)`;
+            if (ft.cascadeDelete) line += ' ON DELETE CASCADE';
+          }
+        }
+
+        if (ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref') {
+          const checkParts: string[] = [];
+          if (c?.min !== undefined && c.min !== null) checkParts.push(`"${f.name}" >= ${c.min}`);
+          if (c?.max !== undefined && c.max !== null) checkParts.push(`"${f.name}" <= ${c.max}`);
+          if (c?.minLength !== undefined && c.minLength !== null) checkParts.push(`length("${f.name}") >= ${c.minLength}`);
+          if (c?.maxLength !== undefined && c.maxLength !== null) checkParts.push(`length("${f.name}") <= ${c.maxLength}`);
+          if (c?.pattern) checkParts.push(`"${f.name}" ~ '${c.pattern.replace(/'/g, "''")}'`);
+          if (c?.enumeration && c.enumeration.length > 0) {
+            const enumVals = c.enumeration.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
+            checkParts.push(`"${f.name}" IN (${enumVals})`);
+          }
+          if (checkParts.length > 0) {
+            line += ` CHECK (${checkParts.join(' AND ')})`;
+          }
+        }
+
+        sql += line;
+      });
+    }
 
     if (l.layerConstraints && l.layerConstraints.length > 0) {
       l.layerConstraints.forEach(c => {
         sql += `,\n  CONSTRAINT "chk_${c.id.substring(0,6)}" CHECK ("${c.fieldA}" ${c.operator} "${c.fieldB}")`;
       });
     }
-    
-    if (hasGeom) {
-        const geomCol = l.geometryColumnName || 'geom';
-        const geomType = l.geometryType.toUpperCase();
-        sql += `,\n  "${geomCol}" geometry(${geomType}, ${model.crs?.split(':')[1] || '4326'})`;
+
+    // Multi-geometry export: add geometry columns for all geometry fields
+    if (geomFields.length > 0) {
+      geomFields.forEach(f => {
+        const geomType = (f.fieldType.kind === 'geometry' ? f.fieldType.geometryType : 'Point').toUpperCase();
+        sql += `,\n  "${f.name}" geometry(${geomType}, ${model.crs?.split(':')[1] || '4326'})`;
+      });
+    } else if (hasGeom) {
+      // Fallback to layer-level geometry for backward compatibility
+      const geomCol = l.geometryColumnName || 'geom';
+      const geomType = l.geometryType.toUpperCase();
+      sql += `,\n  "${geomCol}" geometry(${geomType}, ${model.crs?.split(':')[1] || '4326'})`;
     }
     sql += `\n);\n\n`;
-    
-    if (hasGeom) {
-        sql += `CREATE INDEX "${tbl}_geom_idx" ON "${tbl}" USING GIST ("${l.geometryColumnName || 'geom'}");\n\n`;
+
+    // Create indices for all geometry fields
+    if (geomFields.length > 0) {
+      geomFields.forEach(f => {
+        sql += `CREATE INDEX "${tbl}_${f.name}_idx" ON "${tbl}" USING GIST ("${f.name}");\n`;
+      });
+      sql += '\n';
+    } else if (hasGeom) {
+      // Fallback for layer-level geometry
+      sql += `CREATE INDEX "${tbl}_geom_idx" ON "${tbl}" USING GIST ("${l.geometryColumnName || 'geom'}");\n\n`;
     }
   });
   
@@ -424,9 +538,18 @@ export const exportDatabricks = (model: DataModel, filename: string) => {
   let sql = `-- Databricks SQL for ${model.name}\n\n`;
   model.layers.filter(l => !l.isAbstract).forEach(l => {
     const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    sql += `CREATE TABLE ${tbl} (\n  fid BIGINT GENERATED ALWAYS AS IDENTITY`;
     const effectiveProperties = getEffectiveProperties(l, model.layers);
-    effectiveProperties.forEach(f => {
+    const pkFields = effectiveProperties.filter(f => f.constraints?.isPrimaryKey);
+    const hasDeclaredPk = pkFields.length > 0;
+
+    sql += `CREATE TABLE ${tbl} (\n`;
+
+    // Only add auto-injected fid if no primary key is declared
+    if (!hasDeclaredPk) {
+      sql += `  fid BIGINT GENERATED ALWAYS AS IDENTITY`;
+    }
+
+    effectiveProperties.forEach((f, idx) => {
       const ft = f.fieldType;
       if (ft.kind === 'feature-ref' && ft.relationType !== 'foreign_key') return;
       let type = 'STRING';
@@ -437,13 +560,21 @@ export const exportDatabricks = (model: DataModel, filename: string) => {
         else if (ft.baseType === 'date') type = 'DATE';
         else if (ft.baseType === 'date-time') type = 'TIMESTAMP';
       }
-      sql += `,\n  ${f.name} ${type}${isRequired(f) ? ' NOT NULL' : ''}`;
+      const colDef = (!hasDeclaredPk || idx > 0 ? ',\n  ' : ',\n  ') + f.name + ' ' + type + (isRequired(f) ? ' NOT NULL' : '');
+      sql += colDef;
     });
     
     if (l.geometryType !== 'None') {
         sql += `,\n  ${l.geometryColumnName || 'geom'} STRING -- WKT representation`;
     }
-    sql += `\n) USING DELTA;\n\n`;
+
+    // For Databricks: add a comment about primary key fields (not directly supported)
+    if (hasDeclaredPk) {
+      const pkCols = pkFields.map(f => f.name).join(', ');
+      sql += `\n) USING DELTA;\n-- Primary key: ${pkCols}\n\n`;
+    } else {
+      sql += `\n) USING DELTA;\n\n`;
+    }
   });
   const blob = new Blob([sql], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);

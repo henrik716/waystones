@@ -613,7 +613,7 @@ export const en = {
     tableHeader: { name: "Name", type: "Type", req: "Required", desc: "Description" },
     yes: "Yes", no: "No"
   },
-  types: { string: "Text", number: "Decimal", integer: "Integer", boolean: "Yes/No", date: "Date", datetime: "Date/Time", geometry: "Geometry", codelist: "Codelist", json: "JSON", relation: "Relation", object: "Object (composite)", array: "Array (list)", shared_type: "Shared type" },
+  types: { string: "Text", number: "Decimal", integer: "Integer", boolean: "Yes/No", date: "Date", "date-time": "Date/Time", geometry: "Geometry", codelist: "Codelist", json: "JSON", relation: "Relation", object: "Object (composite)", array: "Array (list)", shared_type: "Shared type" },
   geometryTypes: { Point: "Point", LineString: "LineString", Polygon: "Polygon", MultiPoint: "MultiPoint", MultiLineString: "MultiLineString", MultiPolygon: "MultiPolygon", GeometryCollection: "Geometry collection", None: "No geometry" },
   export: {
     gpkgTitle: "GeoPackage Template", gpkgDesc: "Generate an empty .gpkg file with all tables and metadata.",
@@ -853,5 +853,10 @@ export const en = {
     // AI Provider descriptions
     claudeDescription: 'Fast, reliable AI with excellent text generation',
     geminiDescription: 'Google\'s AI model with strong reasoning capabilities',
+  },
+  validation: {
+    FIELD_DUPLICATE_NAME: 'Duplicate field name',
+    FIELD_SHARED_ENUM_REF_MISSING: 'Missing shared codelist reference',
+    LAYER_EXTENDS_CIRCULAR_DEEP: 'Circular inheritance detected',
   },
 };

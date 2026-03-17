@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronUp, Trash2, Asterisk,
   ArrowUp, ArrowDown, Lock, Plus, Link, CornerDownRight
 } from 'lucide-react';
-import { Field, FieldType, FieldKind, PropertyConstraints, SharedType, Multiplicity } from '../types';
+import { Field, FieldType, FieldKind, PropertyConstraints, SharedType, Multiplicity, Layer } from '../types';
 import { getFieldConfig, createEmptyField } from '../constants';
 import { ModelChange } from '../utils/diffUtils';
 import ConstraintsEditor from './property/ConstraintsEditor';
@@ -42,8 +42,9 @@ const getTypeOptions = (t: any): TypeOption[] => [
   { value: 'integer', label: t.types?.integer || 'Heltall', toFieldType: () => ({ kind: 'primitive', baseType: 'integer' }) },
   { value: 'boolean', label: t.types?.boolean || 'Boolsk', toFieldType: () => ({ kind: 'primitive', baseType: 'boolean' }) },
   { value: 'date', label: t.types?.date || 'Dato', toFieldType: () => ({ kind: 'primitive', baseType: 'date' }) },
-  { value: 'date-time', label: t.types?.datetime || 'Dato/Tid', toFieldType: () => ({ kind: 'primitive', baseType: 'date-time' }) },
+  { value: 'date-time', label: t.types?.['date-time'] || 'Dato/Tid', toFieldType: () => ({ kind: 'primitive', baseType: 'date-time' }) },
   { value: 'json', label: t.types?.json || 'JSON', toFieldType: () => ({ kind: 'primitive', baseType: 'json' }) },
+  { value: 'geometry', label: t.types?.geometry || 'Geometri', toFieldType: () => ({ kind: 'geometry', geometryType: 'Point' }) },
   { value: 'codelist', label: t.types?.codelist || 'Kodeliste', toFieldType: () => ({ kind: 'codelist', mode: 'inline', values: [] }) },
   { value: 'feature-ref', label: t.types?.relation || 'Relasjon', toFieldType: () => ({ kind: 'feature-ref', layerId: '', relationType: 'foreign_key' }) },
   { value: 'datatype-inline', label: t.types?.object || 'Objekt', toFieldType: () => ({ kind: 'datatype-inline', properties: [] }) },
@@ -66,6 +67,7 @@ interface PropertyEditorProps {
   isLast: boolean;
   t: any;
   allLayers: { id: string, name: string }[];
+  allLayersFull?: Layer[]; // Brukes for invers-felt-velger
   sharedTypes?: SharedType[];
   sharedEnums?: import('../types').SharedEnum[];
   change?: ModelChange;
@@ -74,6 +76,7 @@ interface PropertyEditorProps {
   depth?: number;
   layerName?: string;
   lang?: string;
+  isSharedType?: boolean; // True when editing properties of a SharedType
 }
 
 type AiFeature = 'desc' | 'type' | 'constraints';
@@ -108,7 +111,7 @@ const PropDiffField: React.FC<{
 };
 
 const PropertyEditor: React.FC<PropertyEditorProps> = ({
-  prop, baselineProp, onUpdate, onDelete, onMove, isFirst, isLast, t, allLayers, sharedTypes = [], sharedEnums = [], change, isGhost, reviewMode, depth = 0, layerName = '', lang = 'no'
+  prop, baselineProp, onUpdate, onDelete, onMove, isFirst, isLast, t, allLayers, allLayersFull = [], sharedTypes = [], sharedEnums = [], change, isGhost, reviewMode, depth = 0, layerName = '', lang = 'no', isSharedType = false
 }) => {
   const [isOpen, setIsOpen] = useState(prop.name === "" || depth > 0);
   const config = getFieldConfig(prop.fieldType);
@@ -328,6 +331,9 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
             <div className="flex items-center gap-1.5">
               <span className={`text-sm md:text-base font-bold truncate ${prop.name ? 'text-slate-800' : 'text-slate-300 italic'} ${isGhost ? 'line-through text-rose-500' : ''}`}>{prop.name || 'felt_navn'}</span>
               {isRequired && <Asterisk size={11} className="text-indigo-500" />}
+              {prop.constraints?.isPrimaryKey && (
+                <span className="text-[9px] font-black text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 ml-1">PK</span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-0.5">
               <span>{fieldKindLabel(ft, t, sharedTypes)}</span>
@@ -365,7 +371,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <select value={fieldTypeToValue(ft)} onChange={e => { const opt = typeOptions.find(o => o.value === e.target.value); if (opt) handleUpdate({ fieldType: opt.toFieldType(), defaultValue: '', constraints: {} }); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12">
-                    {typeOptions.filter(o => o.value !== 'geometry').map(o => (
+                    {typeOptions.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
@@ -399,6 +405,23 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 </div>
               </PropDiffField>
             )}
+
+            {ft.kind === 'geometry' && (
+              <PropDiffField label={t.propGeometryType || 'Geometry Type'} currentValue={ft.geometryType} baselineValue={baselineProp?.fieldType.kind === 'geometry' ? baselineProp.fieldType.geometryType : undefined} reviewMode={!!reviewMode}>
+                <div className="relative">
+                  <select
+                    value={ft.geometryType || 'Point'}
+                    onChange={e => handleUpdate({ fieldType: { kind: 'geometry', geometryType: e.target.value as any } })}
+                    className="w-full bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-xl px-4 py-3.5 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12"
+                  >
+                    {Object.entries(t.geometryTypes || {}).map(([key, label]) => (
+                      <option key={key} value={key}>{label as string}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none" />
+                </div>
+              </PropDiffField>
+            )}
           </div>
 
           {ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref' && (
@@ -406,6 +429,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
               {renderDefaultInput()}
             </PropDiffField>
           )}
+
 
           <div className="space-y-2">
             <div className="flex items-center justify-end">
@@ -418,7 +442,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                 t={t}
               />
             </div>
-            <ConstraintsEditor prop={prop} onUpdate={onUpdate} t={t} />
+            <ConstraintsEditor prop={prop} onUpdate={onUpdate} t={t} isSharedType={isSharedType} />
             {constraintSuggestion && Object.keys(constraintSuggestion).length > 0 && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-3 animate-in slide-in-from-top-1 duration-200">
                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">{t.ai?.suggestedConstraints || 'Suggested constraints'}</p>
@@ -515,6 +539,54 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                   </PropDiffField>
                 </div>
               )}
+
+              {/* Invers-felt: felter i mållaget som peker tilbake hit */}
+              {ft.layerId && allLayersFull.length > 0 && (() => {
+                const targetLayer = allLayersFull.find(l => l.id === ft.layerId);
+                const inverseOptions = (targetLayer?.properties || []).filter(
+                  p => p.fieldType.kind === 'feature-ref'
+                );
+
+                return (
+                  <div className="pt-2 border-t border-slate-100 mt-2">
+                    <PropDiffField
+                      label={lang === 'no' ? 'Invers relasjon' : 'Inverse relation'}
+                      currentValue={ft.inverseFieldId}
+                      baselineValue={baselineProp?.fieldType.kind === 'feature-ref' ? baselineProp.fieldType.inverseFieldId : undefined}
+                      reviewMode={!!reviewMode}
+                    >
+                      {inverseOptions.length > 0 ? (
+                        <div className="relative mt-2">
+                          <select
+                            value={ft.inverseFieldId || ''}
+                            onChange={e => handleUpdate({ fieldType: { ...ft, inverseFieldId: e.target.value || undefined } })}
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer h-12"
+                          >
+                            <option value="">{lang === 'no' ? '— Ingen invers valgt —' : '— No inverse selected —'}</option>
+                            {inverseOptions.map(p => (
+                              <option key={p.id} value={p.id}>{p.name || p.id}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          <p className="text-[9px] text-slate-400 mt-2 leading-relaxed">
+                            {lang === 'no'
+                              ? 'Velg feltet i mållaget som representerer den andre enden av relasjonen.'
+                              : 'Select the field in the target layer that represents the other end of the relation.'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-2 p-3 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                          <p className="text-[10px] text-slate-500 italic leading-relaxed">
+                            {lang === 'no'
+                              ? `Ingen relasjonsfelt funnet i «${targetLayer?.name || 'mållaget'}». For å koble endene sammen, må du først legge til et relasjonsfelt i det andre laget.`
+                              : `No relation fields found in "${targetLayer?.name || 'target layer'}". To link the ends, you must first add a relation field in the other layer.`}
+                          </p>
+                        </div>
+                      )}
+                    </PropDiffField>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -540,6 +612,39 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
           >
             <textarea placeholder={t.propDescriptionPlaceholder} value={prop.description} onChange={e => handleUpdate({ description: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all min-h-[100px] resize-none leading-relaxed" />
           </PropDiffField>
+
+          {/* --- INLINE TYPE NAMING --- */}
+          {ft.kind === 'datatype-inline' && (
+            <div className="mb-6">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">
+                {lang === 'no' ? 'Typenavn' : 'Type Name'}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={ft.name || ''}
+                  placeholder={ft.isNameSynthetic ? (prop.name ? `${prop.name}_type` : 'type_name') : (lang === 'no' ? 'Skriv inn typenavn...' : 'Enter type name...')}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleUpdate({
+                    fieldType: { ...ft, name: e.target.value, isNameSynthetic: false }
+                  })}
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all h-12"
+                />
+                {!isGhost && (ft.name || prop.name) && (
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('promote-inline-type', {
+                        detail: { fieldId: prop.id, fieldName: prop.name, typeName: ft.name || `${prop.name}_type`, properties: ft.properties }
+                      }));
+                    }}
+                    className="px-4 py-3 bg-fuchsia-50 border border-fuchsia-200 text-fuchsia-700 rounded-xl text-[10px] font-black hover:bg-fuchsia-100 transition-all flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <ArrowUp size={14} />
+                    {lang === 'no' ? 'Gjør global' : 'Make shared'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* --- NESTED SUB-PROPERTIES (DATATYPE-INLINE) --- */}
           {ft.kind === 'datatype-inline' && (

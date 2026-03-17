@@ -613,7 +613,7 @@ export const no = {
     tableHeader: { name: "Navn", type: "Type", req: "Obligatorisk", desc: "Beskrivelse" },
     yes: "Ja", no: "Nei"
   },
-  types: { string: "Tekst", number: "Desimaltall", integer: "Heltall", boolean: "Ja/Nei", date: "Dato", datetime: "Dato/Tid", geometry: "Geometri", codelist: "Kodeliste", json: "JSON", relation: "Relasjon", object: "Objekt (sammensatt)", array: "Liste", shared_type: "Delt datatype" },
+  types: { string: "Tekst", number: "Desimaltall", integer: "Heltall", boolean: "Ja/Nei", date: "Dato", "date-time": "Dato/Tid", geometry: "Geometri", codelist: "Kodeliste", json: "JSON", relation: "Relasjon", object: "Objekt (sammensatt)", array: "Liste", shared_type: "Delt datatype" },
   geometryTypes: { Point: "Punkt", LineString: "Linje", Polygon: "Flate", MultiPoint: "Multipunkt", MultiLineString: "Multilinje", MultiPolygon: "Multiflate", GeometryCollection: "Geometrisamling", None: "Ingen geometri" },
   export: {
     gpkgTitle: "GeoPackage-mal", gpkgDesc: "Generer en tom .gpkg-fil med alle tabeller og metadata.",
@@ -853,5 +853,10 @@ export const no = {
     // AI Provider descriptions
     claudeDescription: 'Rask, pålitelig AI med utmerket tekstgenerering',
     geminiDescription: 'Googles AI-modell med sterke resonneringsevner',
+  },
+  validation: {
+    FIELD_DUPLICATE_NAME: 'Duplikat feltnavn',
+    FIELD_SHARED_ENUM_REF_MISSING: 'Manglende referanse til delt kodeliste',
+    LAYER_EXTENDS_CIRCULAR_DEEP: 'Sirkulær arv oppdaget',
   },
 };

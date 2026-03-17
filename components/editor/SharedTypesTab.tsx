@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Box, Hash } from 'lucide-react';
 import { DataModel, SharedType, SharedEnum, Field, CodeValue } from '../../types';
 import PropertyEditor from '../PropertyEditor';
+import ConstraintsEditor from '../property/ConstraintsEditor';
 import { createEmptyCodeValue } from '../../constants';
 
 interface SharedTypesTabProps {
   model: DataModel;
+  allLayersFull: Layer[];
   sharedTypes: SharedType[];
   activeSharedType: SharedType | undefined;
   activeSharedTypeId: string;
@@ -32,7 +34,7 @@ interface SharedTypesTabProps {
 }
 
 const SharedTypesTab: React.FC<SharedTypesTabProps> = ({
-  model, sharedTypes, activeSharedType, activeSharedTypeId,
+  model, allLayersFull = [], sharedTypes, activeSharedType, activeSharedTypeId,
   onSelectSharedType, onAddSharedType, onDeleteSharedType, onUpdateSharedType,
   onAddProperty, onUpdateProperty, onDeleteProperty, onMoveProperty,
   sharedEnums, activeSharedEnumId, onSelectSharedEnum, onAddSharedEnum,
@@ -104,7 +106,33 @@ const SharedTypesTab: React.FC<SharedTypesTabProps> = ({
                 <button onClick={() => onDeleteSharedType(activeSharedType.id)} className="ml-3 sm:ml-4 p-3 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all self-end"><Trash2 size={20} /></button>
               </div>
 
-              <textarea placeholder={t.sharedTypeDescriptionPlaceholder} value={activeSharedType.description} onChange={e => onUpdateSharedType({ description: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 md:px-5 md:py-4 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-fuchsia-500/10 focus:border-fuchsia-500 outline-none transition-all resize-none leading-relaxed mb-8" />
+              <textarea placeholder={t.sharedTypeDescriptionPlaceholder} value={activeSharedType.description} onChange={e => onUpdateSharedType({ description: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 md:px-5 md:py-4 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-fuchsia-500/10 focus:border-fuchsia-500 outline-none transition-all resize-none leading-relaxed mb-6" />
+
+              {/* Type-nivå-avgrensninger */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                    {lang === 'no' ? 'Avgrensninger på typen' : 'Type-level constraints'}
+                  </label>
+                  <span className="text-[9px] text-fuchsia-500 font-bold bg-fuchsia-50 px-2 py-0.5 rounded-full">
+                    {lang === 'no' ? 'Arves av felt som bruker denne typen' : 'Inherited by fields using this type'}
+                  </span>
+                </div>
+                <ConstraintsEditor
+                  prop={{
+                    id: activeSharedType.id,
+                    name: activeSharedType.name,
+                    title: '',
+                    description: '',
+                    multiplicity: '0..1',
+                    fieldType: { kind: 'primitive', baseType: 'string' },
+                    constraints: activeSharedType.constraints,
+                  }}
+                  onUpdate={(updatedProp) => onUpdateSharedType({ constraints: updatedProp.constraints })}
+                  t={t}
+                  hideMultiplicity={true}
+                />
+              </div>
 
               <div className="space-y-4 md:space-y-6">
                 <div className="flex items-center justify-between mb-2 px-2">
@@ -115,7 +143,20 @@ const SharedTypesTab: React.FC<SharedTypesTabProps> = ({
                 </div>
                 <div className="space-y-3 md:space-y-5">
                   {activeSharedType.properties.map((prop, idx) => (
-                    <PropertyEditor key={prop.id} prop={prop} onUpdate={onUpdateProperty} onDelete={onDeleteProperty} onMove={(dir) => onMoveProperty(prop.id, dir)} isFirst={idx === 0} isLast={idx === activeSharedType.properties.length - 1} t={t} allLayers={model.layers.map(l => ({ id: l.id, name: l.name }))} sharedTypes={sharedTypes.filter(st => st.id !== activeSharedType.id)} />
+                    <PropertyEditor
+                      key={prop.id}
+                      prop={prop}
+                      onUpdate={onUpdateProperty}
+                      onDelete={onDeleteProperty}
+                      onMove={(dir) => onMoveProperty(prop.id, dir)}
+                      isFirst={idx === 0}
+                      isLast={idx === activeSharedType.properties.length - 1}
+                      t={t}
+                      allLayers={model.layers.map(l => ({ id: l.id, name: l.name }))}
+                      allLayersFull={allLayersFull}
+                      sharedTypes={sharedTypes.filter(st => st.id !== activeSharedType.id)}
+                      isSharedType={true}
+                    />
                   ))}
                   <button onClick={onAddProperty} className="w-full py-6 md:py-8 border-2 border-dashed border-slate-200 rounded-[18px] md:rounded-[24px] text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:border-fuchsia-300 hover:text-fuchsia-600 hover:bg-fuchsia-50/50 transition-all flex items-center justify-center gap-3 active:scale-[0.99]"><Plus size={18} />{t.addProperty}</button>
                 </div>

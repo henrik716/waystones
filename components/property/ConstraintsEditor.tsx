@@ -6,9 +6,11 @@ interface ConstraintsEditorProps {
   prop: Field;
   onUpdate: (prop: Field) => void;
   t: any;
+  isSharedType?: boolean; // True when editing properties of a SharedType
+  hideMultiplicity?: boolean; // True when editing type-level constraints (multiplicity doesn't apply)
 }
 
-const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t }) => {
+const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t, isSharedType = false, hideMultiplicity = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [enumInputValue, setEnumInputValue] = useState('');
 
@@ -71,31 +73,35 @@ const ConstraintsEditor: React.FC<ConstraintsEditorProps> = ({ prop, onUpdate, t
       {isOpen && (
         <div className="bg-slate-50 p-5 rounded-xl border border-emerald-100 space-y-6 animate-in slide-in-from-top-1 duration-200">
           <div className="flex flex-wrap items-end gap-x-8 gap-y-5">
-            {/* Multiplicity */}
-            <div>
-              <label className="text-[9px] font-black text-slate-400 uppercase block mb-1.5">
-                {t.constraints.multiplicity}
-              </label>
-              <div className="inline-flex bg-slate-200/60 p-1 rounded-lg">
-                {(['1..1', '0..1', '1..*', '0..*'] as const).map(m => (
-                  <button
-                    key={m}
-                    onClick={() => handleUpdate({ multiplicity: m })}
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-bold font-mono transition-all ${prop.multiplicity === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-                  >
-                    {m}
-                  </button>
-                ))}
+            {/* Multiplicity — hidden for type-level constraints */}
+            {!hideMultiplicity && (
+              <div>
+                <label className="text-[9px] font-black text-slate-400 uppercase block mb-1.5">
+                  {t.constraints.multiplicity}
+                </label>
+                <div className="inline-flex bg-slate-200/60 p-1 rounded-lg">
+                  {(['1..1', '0..1', '1..*', '0..*'] as const).map(m => (
+                    <button
+                      key={m}
+                      onClick={() => handleUpdate({ multiplicity: m })}
+                      className={`px-3 py-1.5 rounded-md text-[10px] font-bold font-mono transition-all ${prop.multiplicity === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Checkboxes */}
             {ft.kind !== 'datatype-inline' && ft.kind !== 'datatype-ref' && (
               <div className="flex items-center gap-5 pb-1.5">
-                <label className="flex items-center gap-2 cursor-pointer select-none group">
-                  <input type="checkbox" checked={!!c.isPrimaryKey} onChange={e => handleConstraintUpdate({ isPrimaryKey: e.target.checked })} className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer" />
-                  <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-emerald-700 transition-colors">{t.constraints.primaryKey}</span>
-                </label>
+                {!isSharedType && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none group">
+                    <input type="checkbox" checked={!!c.isPrimaryKey} onChange={e => handleConstraintUpdate({ isPrimaryKey: e.target.checked })} className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer" />
+                    <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-emerald-700 transition-colors">{t.constraints.primaryKey}</span>
+                  </label>
+                )}
                 <label className="flex items-center gap-2 cursor-pointer select-none group">
                   <input type="checkbox" checked={!!c.isUnique} onChange={e => handleConstraintUpdate({ isUnique: e.target.checked })} className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer" />
                   <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-emerald-700 transition-colors">{t.constraints.unique}</span>

@@ -26,11 +26,14 @@ export type CodelistFieldType =
 export type GeometryFieldType = {
   kind: 'geometry';
   geometryType: GeometryType;
+  role?: 'primary' | 'secondary'; // 'primary' = correponds to layer-level geometry
 };
 
 export type DatatypeInlineFieldType = {
   kind: 'datatype-inline';
   properties: Field[];
+  name?: string; // user-assigned or synthetic name
+  isNameSynthetic?: boolean; // true when auto-generated from field name
 };
 
 export type DatatypeRefFieldType = {
@@ -43,6 +46,7 @@ export type FeatureRefFieldType = {
   layerId: string;
   relationType: 'foreign_key' | 'intersects' | 'contains' | 'within' | 'touches' | 'crosses';
   cascadeDelete?: boolean;
+  inverseFieldId?: string; // ID til feltet i mållaget som er den inverse enden
 };
 
 export type FieldType =
@@ -163,6 +167,7 @@ export interface SharedType {
   name: string;
   description: string;
   properties: Field[];
+  constraints?: PropertyConstraints; // Type-nivå-avgrensninger som arves av felt som bruker denne typen
 }
 
 export interface SharedEnum {
