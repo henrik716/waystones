@@ -1,8 +1,9 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { Trash2 } from 'lucide-react';
 
 const ConfirmDeleteDialog: React.FC<{
-  t: any,
+  t: Translations,
   onClose: () => void,
   onConfirm: () => void
 }> = ({ t, onClose, onConfirm }) => {

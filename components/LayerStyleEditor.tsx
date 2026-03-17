@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../i18n/index';
 import { Palette } from 'lucide-react';
 import { Layer, LayerStyle } from '../types';
 import StylePreview from './StylePreview';
@@ -8,7 +9,7 @@ const PRESET_COLORS = ['#6366F1', '#4F46E5', '#1A4B8C', '#1B6B4A', '#D97706', '#
 interface LayerStyleEditorProps {
   layer: Layer;
   onUpdate: (style: Partial<LayerStyle>) => void;
-  t: any;
+  t: Translations;
   /** 'dark' for ModelEditor accordion, 'light' for QuickPublish / standalone */
   variant?: 'dark' | 'light';
   /** Show the SVG preview panel */

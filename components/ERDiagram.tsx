@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
+import type { Translations } from '../i18n/index';
 import { DataModel, Layer, Field, SharedType } from '../types';
 import { COLORS, getFieldConfig } from '../constants';
 import { Download } from 'lucide-react';
 
 interface ERDiagramProps {
   model: DataModel;
-  t: any;
+  t: Translations;
 }
 
 interface FlatProp {
@@ -14,7 +15,7 @@ interface FlatProp {
   isFromSharedType?: boolean;
 }
 
-const fieldTypeDisplay = (f: Field, t: any): string => {
+const fieldTypeDisplay = (f: Field, t: Translations): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
     case 'primitive':       return (t.types?.[ft.baseType] || ft.baseType).toUpperCase();

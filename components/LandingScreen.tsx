@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
+import type { Translations } from '../i18n/index';
 import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe } from 'lucide-react';
 import { DataModel } from '../types';
 
 interface LandingScreenProps {
-  t: any;
+  t: Translations;
   models: DataModel[];
   onDropGpkg: (file: File) => void;
   onNewModel: () => void;

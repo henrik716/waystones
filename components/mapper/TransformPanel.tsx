@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import {
   Play, Check, RefreshCw, Download, ArrowRight, AlertTriangle,
   Terminal, Database, Server, Copy, ChevronDown,
   Settings2, Shield, Globe, ExternalLink
 } from 'lucide-react';
 import { DataModel } from '../../types';
+import { toTableName } from '../../utils/nameSanitizer';
 
 interface LayerMapping {
   sourceLayer: string;
@@ -21,7 +23,7 @@ interface TransformPanelProps {
   sourceUrl: string;
   sourceFilename: string;
   onTransformedData?: (blob: Blob, filename: string) => void;
-  t: any;
+  t: Translations;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -65,7 +67,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
       const modelLayer = model.layers.find(l => l.id === layerId);
       if (!modelLayer) return;
 
-      const targetLayerName = modelLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const targetLayerName = toTableName(modelLayer.name);
 
       const selectFields = modelLayer.properties
         .filter(p => mapping.fieldMappings[p.id])
@@ -127,7 +129,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
 
         const dataset = openResult.datasets[0];
 
-        const targetLayerName = modelLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const targetLayerName = toTableName(modelLayer.name);
         const selectFields = modelLayer.properties
           .filter(p => mapping.fieldMappings[p.id])
           .map(p => {

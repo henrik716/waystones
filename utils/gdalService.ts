@@ -15,6 +15,7 @@ import {
   DataModel, Layer, Field, FieldType, GeometryType, PropertyConstraints, ImportValidationResult, ImportWarning, ImportError
 } from '../types';
 import { createEmptyModel, createEmptyField, createEmptyLayer } from '../constants';
+import type { Translations } from '../i18n/index';
 import { normalizeGeometryType } from './geomUtils';
 import { InferredDataSummary, InferredLayerSummary } from './importUtils';
 import { sanitizeTechnicalName } from './nameSanitizer';
@@ -241,7 +242,7 @@ const getDatasetInfoJson = async (Gdal: any, dataset: any): Promise<GdalDatasetI
     if (parsed && parsed.layers) {
       return {
         driverName: parsed.driverShortName || parsed.driverName || 'unknown',
-        filename: parsed.description || dataset.path || '',
+        filename: parsed.description || dataset.name || '',
         layers: parsed.layers.map((l: any) => ({
           name: l.name,
           featureCount: l.featureCount ?? 0,

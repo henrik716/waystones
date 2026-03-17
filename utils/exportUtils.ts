@@ -1,9 +1,11 @@
 import { DataModel, GeometryType, Field, FieldType, SharedType } from '../types';
+import type { Translations } from '../i18n/index';
 import { getEffectiveProperties } from './modelUtils';
 import { COLORS } from '../constants';
 import { hexToRgb } from './colorUtils';
 import { getSqlType, getSqliteType } from './typeMapUtils';
 import { normalizeGeometryType } from './geomUtils';
+import { toTableName } from './nameSanitizer';
 
 export { hexToRgb } from './colorUtils';
 export { getSqlType, getSqliteType } from './typeMapUtils';
@@ -306,7 +308,7 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
 
   for (const layer of model.layers) {
     if (layer.isAbstract) continue;
-    const tbl = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const tbl = toTableName(layer.name);
     const effectiveProperties = getEffectiveProperties(layer, model.layers);
     const pkFields = effectiveProperties.filter(f => f.constraints?.isPrimaryKey);
     const hasDeclaredPk = pkFields.length > 0;
@@ -332,7 +334,7 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
       if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
         const targetLayer = model.layers.find(l => l.id === ft.layerId);
         if (targetLayer) {
-          const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const targetTbl = toTableName(targetLayer.name);
           colDef += ` REFERENCES ${targetTbl}(fid)`;
           if (ft.cascadeDelete) colDef += ' ON DELETE CASCADE';
         }
@@ -385,7 +387,7 @@ export const exportSQL = (model: DataModel, filename: string) => {
   sql += `CREATE EXTENSION IF NOT EXISTS postgis;\n\n`;
 
   model.layers.filter(l => !l.isAbstract).forEach(l => {
-    const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const tbl = toTableName(l.name);
     const hasGeom = l.geometryType !== 'None';
     const effectiveProperties = getEffectiveProperties(l, model.layers);
 
@@ -442,7 +444,7 @@ export const exportSQL = (model: DataModel, filename: string) => {
         if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
           const targetLayer = model.layers.find(lyr => lyr.id === ft.layerId);
           if (targetLayer) {
-            const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const targetTbl = toTableName(targetLayer.name);
             sql += ` REFERENCES ${targetTbl}(fid)`;
             if (ft.cascadeDelete) sql += ' ON DELETE CASCADE';
           }
@@ -471,7 +473,7 @@ export const exportSQL = (model: DataModel, filename: string) => {
         if (ft.kind === 'feature-ref' && ft.relationType === 'foreign_key') {
           const targetLayer = model.layers.find(lyr => lyr.id === ft.layerId);
           if (targetLayer) {
-            const targetTbl = targetLayer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const targetTbl = toTableName(targetLayer.name);
             line += ` REFERENCES ${targetTbl}(fid)`;
             if (ft.cascadeDelete) line += ' ON DELETE CASCADE';
           }
@@ -537,7 +539,7 @@ export const exportSQL = (model: DataModel, filename: string) => {
 export const exportDatabricks = (model: DataModel, filename: string) => {
   let sql = `-- Databricks SQL for ${model.name}\n\n`;
   model.layers.filter(l => !l.isAbstract).forEach(l => {
-    const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const tbl = toTableName(l.name);
     const effectiveProperties = getEffectiveProperties(l, model.layers);
     const pkFields = effectiveProperties.filter(f => f.constraints?.isPrimaryKey);
     const hasDeclaredPk = pkFields.length > 0;
@@ -631,7 +633,7 @@ const flattenPropertiesRecursive = (
 };
 
 /** Helper: get a display label for a field's type for docs */
-const fieldTypeDisplay = (f: Field, t: any): string => {
+const fieldTypeDisplay = (f: Field, t: Translations): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
     case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;
@@ -643,7 +645,7 @@ const fieldTypeDisplay = (f: Field, t: any): string => {
   }
 };
 
-export const exportDocumentationHTML = (model: DataModel, filename: string, lang: string, t: any) => {
+export const exportDocumentationHTML = (model: DataModel, filename: string, lang: string, t: Translations) => {
   const isNo = lang === 'no';
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${model.name}</title>
     <style>
@@ -737,7 +739,7 @@ export const exportDocumentationHTML = (model: DataModel, filename: string, lang
   const a = document.createElement('a'); a.href = url; a.download = `${filename}_dokumentasjon.html`; a.click();
 };
 
-export const exportDocumentation = (model: DataModel, filename: string, lang: string, t: any) => {
+export const exportDocumentation = (model: DataModel, filename: string, lang: string, t: Translations) => {
     let md = `# ${model.name}\n\nNamespace: \`${model.namespace}\` | Versjon: ${model.version}\n\n`;
     if (model.description) md += `${model.description}\n\n`;
     

@@ -1,10 +1,11 @@
 import React from 'react';
+import type { Translations } from '../i18n/index';
 import { Zap } from 'lucide-react';
 import { Layer } from '../types';
 
 interface StylePreviewProps {
   layer: Layer;
-  t: any;
+  t: Translations;
 }
 
 const getDashArray = (type: string, width: number) => {

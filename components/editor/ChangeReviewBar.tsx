@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { GitCommit, PlusCircle, Edit2, MinusCircle, Package, Layers } from 'lucide-react';
 import { ModelChange, StructuredChanges } from '../../utils/diffUtils';
 import { ChangeRow } from '../ChangeRow';
@@ -7,7 +8,7 @@ interface ChangeReviewBarProps {
   changes: ModelChange[];
   structuredChanges: StructuredChanges;
   stats: { added: number; modified: number; deleted: number; total: number };
-  t: any;
+  t: Translations;
 }
 
 const ChangeReviewBar: React.FC<ChangeReviewBarProps> = ({ changes, structuredChanges, stats, t }) => {

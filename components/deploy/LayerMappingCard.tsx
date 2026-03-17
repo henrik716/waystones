@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { Check, Table, Clock, ChevronDown, ChevronRight, ArrowRight, Info } from 'lucide-react';
 import { Layer, SourceType, LayerSourceMapping } from '../../types';
 import { Field } from './ConnectionForm';
@@ -11,7 +12,7 @@ interface LayerMappingCardProps {
   onToggle: () => void;
   onUpdateMapping: (updates: Partial<LayerSourceMapping>) => void;
   onFieldChange: (propId: string, val: string) => void;
-  t: any;
+  t: Translations;
 }
 
 const LayerMappingCard: React.FC<LayerMappingCardProps> = ({

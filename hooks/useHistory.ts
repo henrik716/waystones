@@ -9,6 +9,7 @@ export function useHistory(initialModels: DataModel[]) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const skipNextHistoryPush = useRef(false);
   const updateTimerRef = useRef<number | null>(null);
+  const historyIndexRef = useRef(-1);
 
   useEffect(() => {
     if (history.length === 0) {
@@ -17,11 +18,16 @@ export function useHistory(initialModels: DataModel[]) {
     }
   }, []);
 
+  // Keep the ref in sync with the state
+  useEffect(() => {
+    historyIndexRef.current = historyIndex;
+  }, [historyIndex]);
+
   const pushToHistory = useCallback((newModels: DataModel[], immediate = false) => {
     if (skipNextHistoryPush.current) { skipNextHistoryPush.current = false; return; }
     const doPush = () => {
       setHistory(prev => {
-        const newHistory = prev.slice(0, historyIndex + 1);
+        const newHistory = prev.slice(0, historyIndexRef.current + 1);
         newHistory.push(JSON.parse(JSON.stringify(newModels)));
         if (newHistory.length > MAX_HISTORY) newHistory.shift();
         return newHistory;
@@ -30,7 +36,7 @@ export function useHistory(initialModels: DataModel[]) {
     };
     if (updateTimerRef.current) window.clearTimeout(updateTimerRef.current);
     if (immediate) doPush(); else updateTimerRef.current = window.setTimeout(doPush, DEBOUNCE_MS);
-  }, [historyIndex]);
+  }, []);
 
   const undo = useCallback(() => {
     if (historyIndex > 0) {

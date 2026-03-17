@@ -1,4 +1,5 @@
 import { DataModel, Layer, Field, PropertyConstraints, LayerConstraint, SharedType } from '../types';
+import type { Translations } from '../i18n/index';
 
 export type ChangeType = 'added' | 'deleted' | 'modified';
 
@@ -17,7 +18,7 @@ export interface ModelChange {
 const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Helper: get a display label for a field's type */
-const fieldTypeLabel = (f: Field, t: any): string => {
+const fieldTypeLabel = (f: Field, t: Translations): string => {
   switch (f.fieldType.kind) {
     case 'primitive':       return t.types?.[f.fieldType.baseType] || f.fieldType.baseType;
     case 'codelist':        return t.types?.codelist || 'Codelist';
@@ -32,7 +33,7 @@ const fieldTypeLabel = (f: Field, t: any): string => {
  * Sammenligner to datamodeller og returnerer en liste over endringer.
  * Bruker rekursjon for å håndtere nøstede objekter og Shared Types.
  */
-export const compareModels = (baseline: DataModel | null, current: DataModel, t: any): ModelChange[] => {
+export const compareModels = (baseline: DataModel | null, current: DataModel, t: Translations): ModelChange[] => {
   const changes: ModelChange[] = [];
 
   if (!baseline) return [];
@@ -51,7 +52,7 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
       fields.push({ field: `${subPath} (${t.propRequired || 'Multiplicity'})`, oldValue: emptyLabel, newValue: sp.multiplicity });
       
       if (sp.description) fields.push({ field: `${subPath} (${t.propDescription || 'Description'})`, oldValue: emptyLabel, newValue: sp.description });
-      if (sp.defaultValue) fields.push({ field: `${subPath} (${t.propDefaultValue || 'Default Value'})`, oldValue: emptyLabel, newValue: sp.defaultValue });
+      if (sp.defaultValue) fields.push({ field: `${subPath} (${t.propDefault || 'Default Value'})`, oldValue: emptyLabel, newValue: sp.defaultValue });
       if (sp.constraints && Object.keys(sp.constraints).length > 0) fields.push({ field: `${subPath} (${t.constraints?.title || 'Constraints'})`, oldValue: emptyLabel, newValue: t.review?.added || 'Added' });
 
       if (sp.fieldType.kind === 'datatype-ref') {
@@ -90,7 +91,7 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
           { field: t.propType || 'Type', oldValue: emptyLabel, newValue: fieldTypeLabel(prop, t) },
           { field: t.propRequired || 'Multiplicity', oldValue: emptyLabel, newValue: prop.multiplicity }
         ];
-        if (prop.defaultValue) addedFields.push({ field: t.propDefaultValue || 'Default Value', oldValue: emptyLabel, newValue: prop.defaultValue });
+        if (prop.defaultValue) addedFields.push({ field: t.propDefault || 'Default Value', oldValue: emptyLabel, newValue: prop.defaultValue });
         if (prop.constraints && Object.keys(prop.constraints).length > 0) addedFields.push({ field: t.constraints?.title || 'Constraints', oldValue: emptyLabel, newValue: t.review?.added || 'Added' });
         
         if (prop.fieldType.kind === 'datatype-ref') {
@@ -157,7 +158,7 @@ export const compareModels = (baseline: DataModel | null, current: DataModel, t:
         if (baseProp.description !== prop.description) propModifiedFields.push({ field: t.propDescription || 'Description', oldValue: baseProp.description || emptyLabel, newValue: prop.description || emptyLabel });
         if (!isEqual(baseProp.fieldType, prop.fieldType)) propModifiedFields.push({ field: t.propType || 'Type', oldValue: fieldTypeLabel(baseProp, t), newValue: fieldTypeLabel(prop, t) });
         if (baseProp.multiplicity !== prop.multiplicity) propModifiedFields.push({ field: t.propRequired || 'Multiplicity', oldValue: baseProp.multiplicity || emptyLabel, newValue: prop.multiplicity || emptyLabel });
-        if (baseProp.defaultValue !== prop.defaultValue) propModifiedFields.push({ field: t.propDefaultValue || 'Default Value', oldValue: baseProp.defaultValue || emptyLabel, newValue: prop.defaultValue || emptyLabel });
+        if (baseProp.defaultValue !== prop.defaultValue) propModifiedFields.push({ field: t.propDefault || 'Default Value', oldValue: baseProp.defaultValue || emptyLabel, newValue: prop.defaultValue || emptyLabel });
         if (!isEqual(baseProp.constraints, prop.constraints)) propModifiedFields.push({ field: t.constraints?.title || 'Constraints', oldValue: t.review?.modified || 'Modified', newValue: t.review?.modified || 'Modified' });
         
         if (prop.fieldType.kind === 'datatype-ref' && baseProp.fieldType.kind === 'datatype-ref') {
@@ -329,7 +330,7 @@ export const getStructuredChanges = (changes: ModelChange[]): StructuredChanges 
   return structured;
 };
 
-export const generateChangelog = (changes: ModelChange[], t: any): string => {
+export const generateChangelog = (changes: ModelChange[], t: Translations): string => {
   if (changes.length === 0) return t.review?.noChanges || 'No changes';
 
   const sections: Record<string, string[]> = {

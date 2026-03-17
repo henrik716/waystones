@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import type { Translations } from '../../i18n/index';
 import {
   Check, Github, Layers, RefreshCw, ExternalLink, Info,
   GitPullRequest, Download, Cloud, Server, Package, AlertTriangle, ShieldAlert
@@ -16,7 +17,7 @@ interface PublishStepProps {
   selectedLayers: Set<string>;
   dataBlob?: { blob: Blob; filename: string } | null;
   lang: string;
-  t: any;
+  t: Translations;
   onBack?: () => void;
 }
 

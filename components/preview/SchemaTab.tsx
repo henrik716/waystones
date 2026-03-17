@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { DataModel } from '../../types';
 import { Check, Copy } from 'lucide-react';
 import { generateGeoJSONSchema, generateJSONFGSchema } from '../../utils/exportUtils';
@@ -7,7 +8,7 @@ type SchemaFormat = 'geojson' | 'json-fg';
 
 interface SchemaTabProps {
   model: DataModel;
-  t: any;
+  t: Translations;
 }
 
 const SchemaTab: React.FC<SchemaTabProps> = ({ model, t }) => {

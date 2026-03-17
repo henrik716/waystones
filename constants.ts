@@ -41,3 +41,27 @@ export const getFieldConfig = (fieldType: { kind: string; baseType?: string }) =
   }
   return TYPE_CONFIG[fieldType.kind as FieldKind] || TYPE_CONFIG['primitive'];
 };
+
+import {
+  MapPin, GitCommit, Square, Hash, Shapes, LayoutList, Package, Database
+} from 'lucide-react';
+
+export const COMMON_CRS = [
+  { code: 'EPSG:4326', name: 'WGS 84 (Global)' },
+  { code: 'EPSG:3857', name: 'Web Mercator (Online)' },
+  { code: 'EPSG:25832', name: 'EUREF89 UTM 32N (Sør)' },
+  { code: 'EPSG:25833', name: 'EUREF89 UTM 33N (Hele)' },
+  { code: 'EPSG:25835', name: 'EUREF89 UTM 35N (Øst)' },
+  { code: 'EPSG:4258', name: 'ETRS89 (Europa)' },
+];
+
+export const GEOM_ICONS: Record<string, any> = {
+  'Point': MapPin,
+  'LineString': GitCommit,
+  'Polygon': Square,
+  'MultiPoint': Hash,
+  'MultiLineString': Shapes,
+  'MultiPolygon': LayoutList,
+  'GeometryCollection': Package,
+  'None': Database // Brukes for atributtabeller
+};

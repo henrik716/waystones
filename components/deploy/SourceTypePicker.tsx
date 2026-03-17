@@ -1,11 +1,12 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { Database, Zap, Package, Cloud, DatabaseZap } from 'lucide-react';
 import { SourceType } from '../../types';
 
 interface SourceTypePickerProps {
   sourceType: SourceType | null;
   onSelect: (type: SourceType) => void;
-  t: any;
+  t: Translations;
 }
 
 const SOURCE_META: Record<SourceType, { icon: React.ReactNode; colorClass: string }> = {

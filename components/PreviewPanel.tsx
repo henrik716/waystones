@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import type { Translations } from '../i18n/index';
 import { 
   Eye, Code2, Share2, Database, Github, ChevronLeft, ChevronRight
 } from 'lucide-react';
@@ -17,7 +18,7 @@ interface PreviewPanelProps {
   onUpdate: (model: DataModel) => void;
   onSetBaseline: (model: DataModel) => void;
   onUpdateGithubConfig: (config: any) => void;
-  t: any;
+  t: Translations;
   lang: string;
 }
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { ChevronDown, ChevronUp, ShieldCheck, X, Plus } from 'lucide-react';
 import { Field, PropertyConstraints } from '../../types';
 
 interface ConstraintsEditorProps {
   prop: Field;
   onUpdate: (prop: Field) => void;
-  t: any;
+  t: Translations;
   isSharedType?: boolean; // True when editing properties of a SharedType
   hideMultiplicity?: boolean; // True when editing type-level constraints (multiplicity doesn't apply)
 }

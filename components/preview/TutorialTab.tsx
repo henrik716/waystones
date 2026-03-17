@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { DataModel } from '../../types';
 import { 
   Cloud, Terminal, Check, Copy, Monitor, DatabaseZap, Cpu, Box, Folder, Globe, Server, CloudRain, Database
@@ -7,7 +8,7 @@ import { CheckSquare } from 'lucide-react';
 
 interface TutorialTabProps {
   model: DataModel;
-  t: any;
+  t: Translations;
   lang: string;
 }
 

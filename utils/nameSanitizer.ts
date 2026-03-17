@@ -49,3 +49,11 @@ export const sanitizeTechnicalName = (name: string): string => {
 
     return sanitized;
 };
+
+/**
+ * SQL/filesystem-safe table name: converts to lowercase and replaces non-alphanumeric chars with underscores.
+ * Simpler than sanitizeTechnicalName (no NFD normalization, no Nordic char handling).
+ * Used for deploy targets and export utilities.
+ */
+export const toTableName = (name: string): string =>
+  name.toLowerCase().replace(/[^a-z0-9]/g, '_');

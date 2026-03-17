@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { Globe, X, CloudDownload, RefreshCw } from 'lucide-react';
 
 const UrlImportDialog: React.FC<{
-  t: any, 
+  t: Translations, 
   onClose: () => void, 
   onImport: (json: any, name: string, url: string) => Promise<void> | void 
 }> = ({ t, onClose, onImport }) => {

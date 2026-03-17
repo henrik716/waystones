@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { DataModel } from '../../types';
 import ERDiagram from '../ERDiagram';
 import DataCard from '../DataCard';
 
 interface VisualTabProps {
   model: DataModel;
-  t: any;
+  t: Translations;
 }
 
 const VisualTab: React.FC<VisualTabProps> = ({ model, t }) => {

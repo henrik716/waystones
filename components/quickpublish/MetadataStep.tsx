@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { X, ArrowRight } from 'lucide-react';
 import { DataModel, ModelMetadata } from '../../types';
 import { InferredDataSummary } from '../../utils/importUtils';
 import {
-  generateModelAbstract, suggestTheme, suggestKeywords, hasApiKey,
+  generateModelAbstract, suggestTheme, suggestKeywords,
 } from '../../utils/aiService';
-import { useAiContext } from '../../hooks/useAiContext';
+import { useAiContext } from '../../contexts/AiContext';
 import AiTrigger from '../ai/AiTrigger';
 
 interface MetadataStepProps {
@@ -14,7 +15,7 @@ interface MetadataStepProps {
   onUpdateModel: (model: DataModel) => void;
   onBack: () => void;
   onNext: () => void;
-  t: any;
+  t: Translations;
   lang?: string;
 }
 
@@ -57,12 +58,7 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
   }));
 
   const handleGenerateDesc = () => {
-    if (!hasApiKey()) {
-      window.dispatchEvent(new CustomEvent('ai-configure-required', {
-        detail: { operation: 'description' }
-      }));
-      return;
-    }
+    if (!aiContext.ensureApiKey('description')) return;
     
     aiContext.setLoading('description', 'Generating description…');
     generateModelAbstract({ modelName: model.name, layers: getLayers(), lang }).then(result => {
@@ -74,12 +70,7 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
   };
 
   const handleSuggestTheme = () => {
-    if (!hasApiKey()) {
-      window.dispatchEvent(new CustomEvent('ai-configure-required', {
-        detail: { operation: 'theme' }
-      }));
-      return;
-    }
+    if (!aiContext.ensureApiKey('theme')) return;
     
     aiContext.setLoading('theme', 'Suggesting theme…');
     suggestTheme({ modelName: model.name, layers: getLayers(), lang, validThemes: md.themes || {} }).then(result => {
@@ -91,12 +82,7 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
   };
 
   const handleSuggestKeywords = () => {
-    if (!hasApiKey()) {
-      window.dispatchEvent(new CustomEvent('ai-configure-required', {
-        detail: { operation: 'keywords' }
-      }));
-      return;
-    }
+    if (!aiContext.ensureApiKey('keywords')) return;
     
     aiContext.setLoading('keywords', 'Generating keywords…');
     suggestKeywords({ modelName: model.name, layers: getLayers(), lang }).then(keywords => {

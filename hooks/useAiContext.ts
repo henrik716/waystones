@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { AiAuthError, AiKeyMissingError, getApiKey, getProvider } from '../utils/aiService';
+import { AiAuthError, AiKeyMissingError, getApiKey, getProvider, hasApiKey } from '../utils/aiService';
 
 export type AiOperationType = 'description' | 'type' | 'constraints' | 'abstract' | 'theme' | 'keywords';
 
@@ -23,6 +23,7 @@ export interface AiContextType {
   setLoading: (operation: AiOperationType, message?: string) => void;
   setSuccess: () => void;
   setError: (error: Error | AiError, operation?: AiOperationType) => void;
+  ensureApiKey: (operation: AiOperationType) => boolean;
 }
 
 const operationMessages: Record<AiOperationType, { start: string; success: string }> = {
@@ -102,7 +103,7 @@ const createAiError = (error: Error, operation?: AiOperationType): AiError => {
   };
 };
 
-export const useAiContext = (): AiContextType => {
+export const useAiContextState = (): AiContextType => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentOperation, setCurrentOperation] = useState<AiOperationType | null>(null);
   const [currentMessage, setCurrentMessage] = useState<string | null>(null);
@@ -171,6 +172,14 @@ export const useAiContext = (): AiContextType => {
     return () => window.removeEventListener('ai-key-changed', handleAiKeyChange);
   }, [error, clearError]);
 
+  const ensureApiKey = useCallback((operation: AiOperationType): boolean => {
+    if (!hasApiKey()) {
+      window.dispatchEvent(new CustomEvent('ai-configure-required', { detail: { operation } }));
+      return false;
+    }
+    return true;
+  }, []);
+
   return {
     isLoading,
     currentOperation,
@@ -182,6 +191,7 @@ export const useAiContext = (): AiContextType => {
     clearError,
     setLoading,
     setSuccess,
-    setError
+    setError,
+    ensureApiKey
   };
 };

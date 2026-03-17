@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../i18n/index';
 import { AlertTriangle, Info, X, Check, AlertCircle, Lightbulb, ShieldAlert } from 'lucide-react';
 import { ImportWarning, ImportError, ImportValidationResult } from '../types';
 
@@ -6,7 +7,7 @@ interface ImportWarningsProps {
   validation: ImportValidationResult;
   onProceed?: () => void;
   onFixIssues?: () => void;
-  t: any;
+  t: Translations;
   lang: string;
 }
 

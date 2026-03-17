@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { Translations } from '../i18n/index';
 import {
   Database, Cloud, Zap, Server, ChevronRight, ChevronDown,
   Check, Clock, RefreshCw, Package, Table,
@@ -9,6 +10,7 @@ import {
   DataModel, SourceConnection, SourceType, DeployTarget,
   PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig, LayerSourceMapping, ImportValidationResult
 } from '../types';
+import { toTableName } from '../utils/nameSanitizer';
 import { generateDeployFiles, generatePygeoapiConfig, exportDeployKit } from '../utils/deployUtils';
 import { pushDeployKit, checkRepoAccess, DeployPushResult } from '../utils/githubService';
 import ImportWarnings from './ImportWarnings';
@@ -20,7 +22,7 @@ import GitHubRepoBrowser from './GitHubRepoBrowser';
 
 interface DeployPanelProps {
   model: DataModel;
-  t: any;
+  t: Translations;
   lang: string;
   onSourceChange?: (source: SourceConnection) => void;
   validation?: ImportValidationResult;
@@ -47,14 +49,14 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onSourceChang
     host: '', httpPath: '', token: '', catalog: 'main', schema: 'default',
   });
   const [gpkgConfig, setGpkgConfig] = useState<GeopackageConfig>({
-    filename: `${model.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gpkg`
+    filename: `${toTableName(model.name)}.gpkg`
   });
 
   // Layer mapping state
   const [layerMappings, setLayerMappings] = useState<Record<string, LayerSourceMapping>>(() => {
     const initial: Record<string, LayerSourceMapping> = {};
     model.layers.forEach(l => {
-      const tbl = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const tbl = toTableName(l.name);
       const fieldMappings: Record<string, string> = {};
       l.properties.forEach(p => { fieldMappings[p.id] = p.name; });
       initial[l.id] = { sourceTable: tbl, fieldMappings, timestampColumn: '', primaryKeyColumn: 'fid' };
@@ -551,7 +553,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onSourceChang
                   items.push({ file: 'data/output/stac/catalog.json', desc: d.files?.stacCatalog || 'Root STAC catalog', icon: <Layers size={16}/> });
                   const nonAbstract = model.layers.filter(l => !l.isAbstract);
                   if (nonAbstract.length > 0) {
-                    const example = nonAbstract[0].name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    const example = toTableName(nonAbstract[0].name);
                     items.push({
                       file: `data/output/stac/${example}/catalog.json (+${nonAbstract.length})`,
                       desc: d.files?.stacLayerCatalogs || `Per-layer STAC catalogs (${nonAbstract.length})`,

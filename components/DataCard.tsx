@@ -1,11 +1,12 @@
 import React, { Fragment } from 'react';
+import type { Translations } from '../i18n/index';
 import { DataModel, Layer, PropertyConstraints, Field } from '../types';
 import { COLORS, getFieldConfig } from '../constants';
 import { MapPin, Database, ChevronRight, Layers, Globe, Palette, GitCommit, Square, Hash, Shapes, LayoutList, MousePointer2, Lock, Key, ListChecks, Link, CornerDownRight, Box } from 'lucide-react';
 
 interface DataCardProps {
   model: DataModel;
-  t: any;
+  t: Translations;
 }
 
 const GEOM_ICONS: Record<string, any> = {
@@ -26,7 +27,7 @@ const hasMeaningfulConstraints = (c?: PropertyConstraints): boolean => {
 };
 
 /** Get a display label for a field's type */
-const fieldTypeLabel = (f: Field, t: any): string => {
+const fieldTypeLabel = (f: Field, t: Translations): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
     case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;

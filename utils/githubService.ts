@@ -80,7 +80,7 @@ export const checkRepoAccess = async (
 
   const isOwner = repoData.permissions?.push === true &&
     (repoData.owner.login === userData.login ||
-     repoData.permissions?.admin === true);
+      repoData.permissions?.admin === true);
 
   return {
     isOwner,

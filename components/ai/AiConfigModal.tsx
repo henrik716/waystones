@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import type { Translations } from '../../i18n/index';
 import { X, Sparkles, Check, AlertCircle, HelpCircle, ExternalLink } from 'lucide-react';
 import { AiProvider, getProvider, setProvider, getApiKey, saveApiKey, clearApiKey, getTrialUsesLeft } from '../../utils/aiService';
 import { AiOperationType } from '../../hooks/useAiContext';
@@ -8,7 +9,7 @@ interface AiConfigModalProps {
   onClose: () => void;
   initialOperation?: AiOperationType | null;
   onSuccess?: () => void;
-  t: any;
+  t: Translations;
   lang: string;
 }
 

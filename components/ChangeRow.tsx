@@ -1,11 +1,12 @@
 import React from 'react';
+import type { Translations } from '../i18n/index';
 import { PlusCircle, MinusCircle, Edit2, ArrowRight } from 'lucide-react';
 import { ModelChange } from '../utils/diffUtils';
 
 interface ChangeRowProps {
   change: ModelChange;
   isProperty?: boolean;
-  t: any;
+  t: Translations;
 }
 
 export const ChangeRow: React.FC<ChangeRowProps> = ({ change, isProperty, t }) => {

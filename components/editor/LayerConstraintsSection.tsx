@@ -1,11 +1,12 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { ShieldCheck, Plus, Trash2 } from 'lucide-react';
 import { Layer } from '../../types';
 
 interface LayerConstraintsSectionProps {
   layer: Layer;
   onUpdateLayer: (update: Partial<Layer>) => void;
-  t: any;
+  t: Translations;
 }
 
 const LayerConstraintsSection: React.FC<LayerConstraintsSectionProps> = ({ layer, onUpdateLayer, t }) => {

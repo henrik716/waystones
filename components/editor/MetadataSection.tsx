@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { FileText, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { DataModel, ModelMetadata } from '../../types';
 import {
   generateModelAbstract, suggestTheme, suggestKeywords,
 } from '../../utils/aiService';
-import { useAiContext } from '../../hooks/useAiContext';
+import { useAiContext } from '../../contexts/AiContext';
 import AiTrigger from '../ai/AiTrigger';
 
 interface MetadataSectionProps {
@@ -12,7 +13,7 @@ interface MetadataSectionProps {
   onUpdate: (model: DataModel) => void;
   isOpen: boolean;
   onToggle: () => void;
-  t: any;
+  t: Translations;
   lang: string;
 }
 

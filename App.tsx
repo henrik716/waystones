@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Plus, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { DataModel, ViewTab, Language, ImportValidationResult, ImportWarning } from './types';
 import { i18n, createEmptyModel } from './constants';
+import { AiProvider } from './contexts/AiContext';
 import ModelEditor from './components/ModelEditor';
 import Sidebar from './components/Sidebar';
 import PreviewPanel from './components/PreviewPanel';
@@ -273,6 +274,7 @@ const App: React.FC = () => {
   };
 
   return (
+    <AiProvider>
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden text-slate-900 font-sans selection:bg-indigo-500/20">
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".geojson,.json,.gpkg,.sqlite,.sql,.gml,.kml,.kmz,.shp,.fgb,.csv,.gpx,.tab,.mif,.dxf" className="hidden" />
       {showGuide && <Guide onClose={() => { setShowGuide(false); localStorage.setItem('guide_seen', 'true'); }} t={t} />}
@@ -487,6 +489,7 @@ const App: React.FC = () => {
       />
       )}
     </div>
+    </AiProvider>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import type { Translations } from '../i18n/index';
 import {
   Upload, Table, Check, Play,
   RefreshCw,
@@ -22,7 +23,7 @@ interface LayerMapping {
 
 interface DataMapperProps {
   model: DataModel;
-  t: any;
+  t: Translations;
   onTransformedData?: (blob: Blob, filename: string) => void;
 }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../i18n/index';
 import { Plus, Database, Layers, Github, Trash2, Link2, Globe, Rocket } from 'lucide-react';
 import { DataModel } from '../types';
 
@@ -13,7 +14,7 @@ interface SidebarProps {
   onDelete: (id: string) => void;
   onOpenMapper: () => void;
   onOpenDeploy: () => void;
-  t: any;
+  t: Translations;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 

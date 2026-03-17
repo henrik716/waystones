@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { Github, X, Download, RefreshCw } from 'lucide-react';
 import { DataModel } from '../../types';
 
 const GithubImportDialog: React.FC<{
-  t: any, 
+  t: Translations, 
   onClose: () => void, 
   onImport: (model: DataModel, meta?: { repo: string; path: string; branch: string }) => void 
 }> = ({ t, onClose, onImport }) => {

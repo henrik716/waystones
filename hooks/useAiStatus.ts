@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getApiKey, getProvider, hasApiKey, getTrialUsesLeft } from '../utils/aiService';
-import { AiOperationType, useAiContext } from './useAiContext';
+import { AiOperationType, useAiContextState } from './useAiContext';
 
 export interface AiStatusInfo {
   hasKey: boolean;
@@ -18,7 +18,7 @@ export interface AiStatusInfo {
 }
 
 export const useAiStatus = () => {
-  const aiContext = useAiContext();
+  const aiContext = useAiContextState();
   const [operationCount, setOperationCount] = useState(0);
   const [lastOperation, setLastOperation] = useState<AiStatusInfo['lastOperation']>(null);
 

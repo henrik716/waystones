@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { Translations } from '../../i18n/index';
 import { DataModel } from '../../types';
 import { 
   Github, Send, Check, CheckCircle2, AlertTriangle, X, HelpCircle, ExternalLink,
@@ -15,7 +16,7 @@ interface GithubTabProps {
   onSetBaseline: (model: DataModel) => void;
   onUpdate: (model: DataModel) => void;
   onUpdateGithubConfig: (config: any) => void;
-  t: any;
+  t: Translations;
 }
 
 interface OAuthState {

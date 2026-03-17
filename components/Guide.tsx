@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import type { Translations } from '../i18n/index';
 import { 
   X, Database, Layers, GitBranch, ArrowRight, 
   Share2, FileCode, Cloud, Link2, BookOpen, ShieldCheck, Github, Rocket
@@ -6,7 +7,7 @@ import {
 
 interface GuideProps {
   onClose: () => void;
-  t: any;
+  t: Translations;
 }
 
 const Guide: React.FC<GuideProps> = ({ onClose, t }) => {

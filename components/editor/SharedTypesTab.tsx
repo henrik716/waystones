@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { Plus, Trash2, Box, Hash } from 'lucide-react';
 import { DataModel, SharedType, SharedEnum, Field, CodeValue } from '../../types';
 import PropertyEditor from '../PropertyEditor';
@@ -29,7 +30,7 @@ interface SharedTypesTabProps {
   onAddEnumValue: () => void;
   onUpdateEnumValue: (value: CodeValue) => void;
   onDeleteEnumValue: (id: string) => void;
-  t: any;
+  t: Translations;
   lang?: string;
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import type { Translations } from '../i18n/index';
 import {
   ChevronDown, ChevronUp, Trash2, Asterisk,
   ArrowUp, ArrowDown, Lock, Plus, Link, CornerDownRight
@@ -10,16 +11,16 @@ import ConstraintsEditor from './property/ConstraintsEditor';
 import CodelistEditor from './property/CodelistEditor';
 import {
   AiProvider, AiConstraintSuggestion,
-  generatePropertyDescription, suggestFieldType, inferConstraints, hasApiKey,
+  generatePropertyDescription, suggestFieldType, inferConstraints,
 } from '../utils/aiService';
 import { sanitizeTechnicalName } from '../utils/nameSanitizer';
-import { useAiContext } from '../hooks/useAiContext';
+import { useAiContext } from '../contexts/AiContext';
 import AiLoadingSkeleton from './ai/AiLoadingSkeleton';
 import AiErrorHandler from './ai/AiErrorHandler';
 import AiTrigger from './ai/AiTrigger';
 
 // Helper: field kind display label for header
-const fieldKindLabel = (ft: FieldType, t: any, sharedTypes: SharedType[]): string => {
+const fieldKindLabel = (ft: FieldType, t: Translations, sharedTypes: SharedType[]): string => {
   switch (ft.kind) {
     case 'primitive': return t.types?.[ft.baseType] || ft.baseType;
     case 'codelist': return t.types?.codelist || 'Kodeliste';
@@ -36,7 +37,7 @@ const fieldKindLabel = (ft: FieldType, t: any, sharedTypes: SharedType[]): strin
 // Type options for the dropdown
 type TypeOption = { value: string; label: string; toFieldType: () => FieldType };
 
-const getTypeOptions = (t: any): TypeOption[] => [
+const getTypeOptions = (t: Translations): TypeOption[] => [
   { value: 'string', label: t.types?.string || 'Tekst', toFieldType: () => ({ kind: 'primitive', baseType: 'string' }) },
   { value: 'number', label: t.types?.number || 'Desimaltall', toFieldType: () => ({ kind: 'primitive', baseType: 'number' }) },
   { value: 'integer', label: t.types?.integer || 'Heltall', toFieldType: () => ({ kind: 'primitive', baseType: 'integer' }) },
@@ -65,7 +66,7 @@ interface PropertyEditorProps {
   onMove: (direction: 'up' | 'down') => void;
   isFirst: boolean;
   isLast: boolean;
-  t: any;
+  t: Translations;
   allLayers: { id: string, name: string }[];
   allLayersFull?: Layer[]; // Brukes for invers-felt-velger
   sharedTypes?: SharedType[];
@@ -124,12 +125,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   const isRequired = prop.multiplicity === '1..1' || prop.multiplicity === '1..*';
 
   const handleGenerateDescription = () => {
-    if (!hasApiKey()) {
-      window.dispatchEvent(new CustomEvent('ai-configure-required', {
-        detail: { operation: 'description' }
-      }));
-      return;
-    }
+    if (!aiContext.ensureApiKey('description')) return;
 
     aiContext.setLoading('description', `Generating description for "${prop.name}"…`);
     generatePropertyDescription({
@@ -146,12 +142,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   };
 
   const handleSuggestType = () => {
-    if (!hasApiKey()) {
-      window.dispatchEvent(new CustomEvent('ai-configure-required', {
-        detail: { operation: 'type' }
-      }));
-      return;
-    }
+    if (!aiContext.ensureApiKey('type')) return;
 
     aiContext.setLoading('type', `Analyzing "${prop.name}" to suggest type…`);
     suggestFieldType({
@@ -171,12 +162,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   };
 
   const handleInferConstraints = () => {
-    if (!hasApiKey()) {
-      window.dispatchEvent(new CustomEvent('ai-configure-required', {
-        detail: { operation: 'constraints' }
-      }));
-      return;
-    }
+    if (!aiContext.ensureApiKey('constraints')) return;
 
     aiContext.setLoading('constraints', `Inferring constraints for "${prop.name}"…`);
     inferConstraints({

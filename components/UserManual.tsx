@@ -1,10 +1,11 @@
 import React from 'react';
+import type { Translations } from '../i18n/index';
 import { 
   Layers, ShieldCheck, Link2, Palette, Rocket, Info, CheckCircle2, BookOpen, Github
 } from 'lucide-react';
 
 interface UserManualProps {
-  t: any;
+  t: Translations;
 }
 
 const UserManual: React.FC<UserManualProps> = ({ t }) => {

@@ -1,4 +1,5 @@
 import React, { useState, useId, useRef } from 'react';
+import type { Translations } from '../../i18n/index';
 import { Eye, EyeOff, Check, Upload, X } from 'lucide-react';
 import {
   SourceType, PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig
@@ -67,7 +68,7 @@ interface ConnectionFormProps {
   isConnectionValid: boolean;
   onBack: () => void;
   onNext: () => void;
-  t: any;
+  t: Translations;
 }
 
 const ConnectionForm: React.FC<ConnectionFormProps> = ({

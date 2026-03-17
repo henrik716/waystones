@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { Trash2, Plus, MessageSquare } from 'lucide-react';
 import { Field, CodeValue, SharedEnum, CodelistFieldType } from '../../types';
 import { createEmptyCodeValue } from '../../constants';
@@ -37,7 +38,7 @@ interface CodelistEditorProps {
   isGhost?: boolean;
   reviewMode?: boolean;
   sharedEnums?: SharedEnum[];
-  t: any;
+  t: Translations;
   lang?: string;
 }
 

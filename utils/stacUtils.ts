@@ -1,4 +1,5 @@
 import { DataModel, Layer, SourceConnection } from '../types';
+import { toTableName } from './nameSanitizer';
 
 // ---- Internal STAC type interfaces ----
 
@@ -78,10 +79,6 @@ interface StacItem {
 
 // ---- Helpers ----
 
-function getTableName(layer: Layer): string {
-  return layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-}
-
 function getEpsg(crs: string): number | null {
   const m = crs.match(/(\d{4,5})$/);
   return m ? parseInt(m[1], 10) : null;
@@ -127,7 +124,7 @@ export function generateStacCatalog(model: DataModel): string {
   ];
 
   for (const layer of activeLayers) {
-    const tbl = getTableName(layer);
+    const tbl = toTableName(layer.name);
     links.push({
       rel: 'child',
       href: `./${tbl}/catalog.json`,
@@ -208,7 +205,7 @@ export function generateStacCollection(model: DataModel, _source: SourceConnecti
  */
 export function generateStacLayerCatalog(layer: Layer, model: DataModel): string {
   const modelId = model.id || model.name.toLowerCase().replace(/\s+/g, '-');
-  const tbl = getTableName(layer);
+  const tbl = toTableName(layer.name);
 
   const catalog: StacCatalog = {
     type: 'Catalog',

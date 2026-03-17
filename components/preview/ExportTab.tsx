@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Translations } from '../../i18n/index';
 import { DataModel } from '../../types';
 import {
   BookOpen, FileText, Globe2, Database, Download, Cloud, FileCode, DatabaseZap, Zap, Braces
@@ -11,7 +12,7 @@ import { exportTypeScript } from '../../utils/exportTypeScript';
 
 interface ExportTabProps {
   model: DataModel;
-  t: any;
+  t: Translations;
   lang: string;
 }
 

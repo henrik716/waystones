@@ -1,6 +1,23 @@
 import { DataModel, Layer, Field, SharedType } from '../types';
 
-export type ValidationSeverity = 'error' | 'warning';
+// Type name translations for validation messages
+const typeNameTranslations: Record<string, { en: string; no: string }> = {
+  string: { en: 'Text', no: 'Tekst' },
+  number: { en: 'Decimal', no: 'Desimaltall' },
+  boolean: { en: 'Yes/No', no: 'Ja/Nei' },
+  date: { en: 'Date', no: 'Dato' },
+  'date-time': { en: 'Date/Time', no: 'Dato/Tid' },
+};
+
+const getTypeDisplayName = (baseType: string, lang: 'en' | 'no' = 'en'): string => {
+  const translation = typeNameTranslations[baseType];
+  if (translation) {
+    return lang === 'no' ? translation.no : translation.en;
+  }
+  return baseType;
+};
+
+export type ValidationSeverity = 'error' | 'warning' | 'hint';
 
 export interface ModelValidationIssue {
   severity: ValidationSeverity;
@@ -22,11 +39,18 @@ const RULES = {
   LAYER_ABSTRACT_UNUSED: 'LAYER_ABSTRACT_UNUSED',
   LAYER_EXTENDS_UNKNOWN: 'LAYER_EXTENDS_UNKNOWN',
   LAYER_EXTENDS_CIRCULAR_DEEP: 'LAYER_EXTENDS_CIRCULAR_DEEP',
+  LAYER_DUPLICATE_NAME: 'LAYER_DUPLICATE_NAME',
+  LAYER_NO_PROPERTIES: 'LAYER_NO_PROPERTIES',
+  LAYER_PK_MULTIPLICITY: 'LAYER_PK_MULTIPLICITY',
+  LAYER_PK_TYPE: 'LAYER_PK_TYPE',
+  LAYER_NO_DESCRIPTION: 'LAYER_NO_DESCRIPTION',
   FIELD_DUPLICATE_NAME: 'FIELD_DUPLICATE_NAME',
   FIELD_DATATYPE_REF_EMPTY: 'FIELD_DATATYPE_REF_EMPTY',
   FIELD_FEATURE_REF_EMPTY: 'FIELD_FEATURE_REF_EMPTY',
   FIELD_FEATURE_REF_INVERSE_MISMATCH: 'FIELD_FEATURE_REF_INVERSE_MISMATCH',
   FIELD_SHARED_ENUM_REF_MISSING: 'FIELD_SHARED_ENUM_REF_MISSING',
+  FIELD_NAME_TOO_LONG: 'FIELD_NAME_TOO_LONG',
+  FIELD_REF_TO_NONSPATIAL: 'FIELD_REF_TO_NONSPATIAL',
   MULTIPLICITY_ARRAY_ON_GEOMETRY: 'MULTIPLICITY_ARRAY_ON_GEOMETRY',
 } as const;
 
@@ -63,6 +87,18 @@ const validateFields = (
   fields.forEach(f => {
     const ft = f.fieldType;
 
+    // Check for field name too long (PostgreSQL 63-char limit)
+    if (f.name && f.name.length > 63) {
+      issues.push({
+        severity: 'warning',
+        layerId,
+        fieldId: f.id,
+        code: RULES.FIELD_NAME_TOO_LONG,
+        message: `Field "${f.name}" exceeds 63 characters. PostgreSQL will silently truncate it.`,
+        messageNo: `Feltet «${f.name}» er lengre enn 63 tegn. PostgreSQL vil stille det.`,
+      });
+    }
+
     if (ft.kind === 'datatype-ref' && !ft.typeId) {
       issues.push({
         severity: 'error',
@@ -85,13 +121,26 @@ const validateFields = (
       });
     }
 
-    if (ft.kind === 'feature-ref' && ft.inverseFieldId && ft.layerId) {
+    if (ft.kind === 'feature-ref' && ft.layerId) {
       const targetLayer = allLayers.find(l => l.id === ft.layerId);
-      if (targetLayer) {
+
+      // Check for hint: relation targeting non-spatial layer
+      if (targetLayer && targetLayer.geometryType === 'None') {
+        issues.push({
+          severity: 'hint',
+          layerId,
+          fieldId: f.id,
+          code: RULES.FIELD_REF_TO_NONSPATIAL,
+          message: `Field "${f.name}" references a non-spatial (attribute-only) layer. This is valid but unusual.`,
+          messageNo: `Feltet «${f.name}» refererer til et lag uten geometri. Dette er gyldig men uvanlig.`,
+        });
+      }
+
+      if (ft.inverseFieldId && targetLayer) {
         const inverseField = targetLayer.properties.find(p => p.id === ft.inverseFieldId);
         if (!inverseField) {
           issues.push({
-            severity: 'warning',
+            severity: 'hint',
             layerId,
             fieldId: f.id,
             code: RULES.FIELD_FEATURE_REF_INVERSE_MISMATCH,
@@ -100,7 +149,7 @@ const validateFields = (
           });
         } else if (inverseField.fieldType.kind !== 'feature-ref') {
           issues.push({
-            severity: 'warning',
+            severity: 'hint',
             layerId,
             fieldId: f.id,
             code: RULES.FIELD_FEATURE_REF_INVERSE_MISMATCH,
@@ -137,7 +186,7 @@ const validateFields = (
 
     if (ft.kind === 'geometry' && (f.multiplicity === '0..*' || f.multiplicity === '1..*')) {
       issues.push({
-        severity: 'warning',
+        severity: 'hint',
         layerId,
         fieldId: f.id,
         code: RULES.MULTIPLICITY_ARRAY_ON_GEOMETRY,
@@ -159,16 +208,56 @@ export const validateLayer = (layer: Layer, allLayers: Layer[], sharedTypes: Sha
 
   // Abstrakte lag har slakkere regler (de er maler, ikke faktiske tabeller)
   if (!layer.isAbstract) {
-    // Krav om primærnøkkel (minst ett felt med isPrimaryKey)
+    // Warn if layer has no properties
+    if (layer.properties.length === 0) {
+      issues.push({
+        severity: 'warning',
+        layerId: layer.id,
+        code: RULES.LAYER_NO_PROPERTIES,
+        message: `Layer "${layer.name}" has no properties. An empty layer is likely a mistake.`,
+        messageNo: `Laget «${layer.name}» har ingen egenskaper. Et tomt lag er sannsynligvis en feil.`,
+      });
+    }
+
+    // Primary key as warning (best practice, not blocking)
     const hasPk = layer.properties.some(p => p.constraints?.isPrimaryKey);
     if (!hasPk) {
       issues.push({
-        severity: 'error',
+        severity: 'warning',
         layerId: layer.id,
         code: RULES.LAYER_NO_PK,
-        message: `Layer "${layer.name}" has no primary key field. Add a field with isPrimaryKey = true.`,
-        messageNo: `Laget «${layer.name}» mangler primærnøkkel-felt. Legg til et felt med isPrimaryKey = true.`,
+        message: `Layer "${layer.name}" has no primary key field. Recommended for database export.`,
+        messageNo: `Laget «${layer.name}» mangler primærnøkkel-felt. Anbefalt for databaseeksport.`,
       });
+    }
+
+    // Check for PK multiplicity issues (nullable or array PK is invalid)
+    const pkField = layer.properties.find(p => p.constraints?.isPrimaryKey);
+    if (pkField && (pkField.multiplicity === '0..1' || pkField.multiplicity === '0..*')) {
+      issues.push({
+        severity: 'warning',
+        layerId: layer.id,
+        code: RULES.LAYER_PK_MULTIPLICITY,
+        message: `Layer "${layer.name}": primary key field "${pkField.name}" has invalid multiplicity (nullable or array).`,
+        messageNo: `Laget «${layer.name}»: primærnøkkel-feltet «${pkField.name}» har ugyldig multiplisitet (nullable eller array).`,
+      });
+    }
+
+    // Hint if PK is not an integer-like type
+    if (pkField && pkField.fieldType.kind === 'primitive') {
+      const baseType = pkField.fieldType.baseType;
+      const validPkTypes = ['integer', 'bigint', 'serial', 'int', 'long', 'uuid'];
+      if (!validPkTypes.includes(baseType)) {
+        const typeNameEn = getTypeDisplayName(baseType, 'en');
+        const typeNameNo = getTypeDisplayName(baseType, 'no');
+        issues.push({
+          severity: 'hint',
+          layerId: layer.id,
+          code: RULES.LAYER_PK_TYPE,
+          message: `Layer "${layer.name}": primary key field uses type "${typeNameEn}". Integer types are recommended for auto-increment.`,
+          messageNo: `Laget «${layer.name}»: primærnøkkel-feltet bruker type «${typeNameNo}». Heltallstyper anbefales for auto-increment.`,
+        });
+      }
     }
 
     // Warn if multiple primary key fields (composite PK)
@@ -195,12 +284,23 @@ export const validateLayer = (layer: Layer, allLayers: Layer[], sharedTypes: Sha
     }
   }
 
+  // Hint: layer has no description
+  if (!layer.description || layer.description.trim() === '') {
+    issues.push({
+      severity: 'hint',
+      layerId: layer.id,
+      code: RULES.LAYER_NO_DESCRIPTION,
+      message: `Layer "${layer.name}" has no description. Consider adding documentation.`,
+      messageNo: `Laget «${layer.name}» har ingen beskrivelse. Vurder å legge til dokumentasjon.`,
+    });
+  }
+
   // Abstrakt lag som ingen andre arver fra
   if (layer.isAbstract) {
     const hasChildren = allLayers.some(l => l.extends === layer.id);
     if (!hasChildren) {
       issues.push({
-        severity: 'warning',
+        severity: 'hint',
         layerId: layer.id,
         code: RULES.LAYER_ABSTRACT_UNUSED,
         message: `Layer "${layer.name}" is abstract but no layers inherit from it.`,
@@ -237,6 +337,29 @@ export const validateModel = (model: DataModel): ModelValidationIssue[] => {
   const issues: ModelValidationIssue[] = [];
   const sharedTypes = model.sharedTypes || [];
   const sharedEnums = model.sharedEnums || [];
+
+  // Check for duplicate layer names
+  const layerNames = new Map<string, string[]>();
+  model.layers.forEach(layer => {
+    const name = layer.name || '(unnamed)';
+    const ids = layerNames.get(name) || [];
+    ids.push(layer.id);
+    layerNames.set(name, ids);
+  });
+
+  layerNames.forEach((ids, name) => {
+    if (ids.length > 1) {
+      ids.forEach(id => {
+        issues.push({
+          severity: 'error',
+          layerId: id,
+          code: RULES.LAYER_DUPLICATE_NAME,
+          message: `Layer name "${name}" is duplicated. Each layer must have a unique name.`,
+          messageNo: `Lagnavnet «${name}» er duplisert. Hvert lag må ha et unikt navn.`,
+        });
+      });
+    }
+  });
 
   // Deep circular inheritance check using DFS
   model.layers.forEach(startLayer => {

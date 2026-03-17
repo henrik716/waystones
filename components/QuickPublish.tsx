@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { Translations } from '../i18n/index';
 import {
   ChevronLeft, ChevronDown, ChevronRight, Check, Database, Tag, Github, ArrowRight, Paintbrush, GripVertical, RotateCcw
 } from 'lucide-react';
@@ -15,7 +16,7 @@ interface QuickPublishProps {
   model: DataModel;
   summary: InferredDataSummary;
   validation?: ImportValidationResult;
-  t: any;
+  t: Translations;
   lang: string;
   onUpdateModel: (model: DataModel) => void;
   onBack: () => void;

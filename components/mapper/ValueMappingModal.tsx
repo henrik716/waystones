@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { X, ChevronDown } from 'lucide-react';
 import { Layer } from '../../types';
 
@@ -13,7 +14,7 @@ interface ValueMappingModalProps {
   activeLayer: Layer | undefined;
   activeMapping: LayerMapping;
   uniqueValues: Record<string, Record<string, string[]>>;
-  t: any;
+  t: Translations;
   onClose: () => void;
   onUpdateValueMapping: (propId: string, sourceVal: string, targetVal: string) => void;
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Translations } from '../../i18n/index';
 import { ArrowRightLeft, Wand2, ChevronDown } from 'lucide-react';
 import { Layer, Field } from '../../types';
 import { getFieldConfig } from '../../constants';
@@ -13,14 +14,14 @@ interface FieldMappingTableProps {
   activeLayer: Layer | undefined;
   activeMapping: LayerMapping;
   allFields: Record<string, string[]>;
-  t: any;
+  t: Translations;
   onAutoMap: () => void;
   onUpdateFieldMapping: (propId: string, sourceField: string) => void;
   onOpenValueMap: (propId: string) => void;
 }
 
 /** Helper: get a display label for field kind */
-const fieldKindLabel = (f: Field, t: any): string => {
+const fieldKindLabel = (f: Field, t: Translations): string => {
   const ft = f.fieldType;
   switch (ft.kind) {
     case 'primitive':       return t.types?.[ft.baseType] || ft.baseType;
