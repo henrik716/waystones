@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronUp, ChevronDown, AlertCircle, AlertTriangle, Lightbulb, Layers } from 'lucide-react';
 import type { ModelValidationIssue } from '../../utils/validationUtils';
 import type { DataModel, Field } from '../../types';
@@ -9,8 +9,6 @@ interface ValidationBarProps {
   isExpanded: boolean;
   onToggle: () => void;
   lang: string;
-  showHints?: boolean;
-  onToggleHints?: () => void;
 }
 
 const ValidationBar: React.FC<ValidationBarProps> = ({
@@ -19,12 +17,15 @@ const ValidationBar: React.FC<ValidationBarProps> = ({
   isExpanded,
   onToggle,
   lang,
-  showHints = false,
-  onToggleHints = () => {},
 }) => {
   if (validationIssues.length === 0) {
     return null;
   }
+
+  // Internal filter state
+  const [showErrors, setShowErrors] = useState(true);
+  const [showWarnings, setShowWarnings] = useState(true);
+  const [showHints, setShowHints] = useState(false);
 
   // Compute counts internally
   const errorCount = useMemo(() => validationIssues.filter((i) => i.severity === 'error').length, [validationIssues]);
@@ -110,6 +111,8 @@ const ValidationBar: React.FC<ValidationBarProps> = ({
 
   const renderIssueGroup = (severityIssues: ModelValidationIssue[], severity: 'error' | 'warning' | 'hint') => {
     if (severityIssues.length === 0) return null;
+    if (severity === 'error' && !showErrors) return null;
+    if (severity === 'warning' && !showWarnings) return null;
     if (severity === 'hint' && !showHints) return null;
 
     const severityLabels = {
@@ -149,84 +152,92 @@ const ValidationBar: React.FC<ValidationBarProps> = ({
 
   return (
     <div className="mb-4 bg-white border border-slate-200 rounded-[22px] overflow-hidden shadow-sm transition-all">
-      <div className="w-full hover:bg-slate-50 transition-colors">
-        <div className="flex items-center w-full px-4 py-3 gap-2">
-          {/* Badge container — errors and warnings */}
-          <div className="flex flex-wrap gap-2">
-            {errorCount > 0 && (
-              <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-100 text-rose-700 rounded-lg px-2.5 py-1 text-[10px] font-black">
-                <AlertCircle size={11} className="text-rose-600 shrink-0" />
-                {errorCount}{' '}
-                {lang === 'no'
-                  ? errorCount === 1
-                    ? 'feil'
-                    : 'feil'
-                  : errorCount === 1
-                    ? 'error'
-                    : 'errors'}
-              </div>
-            )}
-            {warningCount > 0 && (
-              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 text-amber-700 rounded-lg px-2.5 py-1 text-[10px] font-black">
-                <AlertTriangle size={11} className="text-amber-600 shrink-0" />
-                {warningCount}{' '}
-                {lang === 'no'
-                  ? warningCount === 1
-                    ? 'advarsel'
-                    : 'advarsler'
-                  : warningCount === 1
-                    ? 'warning'
-                    : 'warnings'}
-              </div>
-            )}
-            <span className="text-[10px] text-slate-400 font-bold self-center ml-1">
-              {lang === 'no' ? 'Validering av modellen' : 'Model validation'}
-            </span>
-          </div>
+      {/* Entire header is clickable to expand/collapse */}
+      <div
+        onClick={onToggle}
+        role="button"
+        aria-expanded={isExpanded}
+        aria-controls="validation-issue-list"
+        className="w-full flex items-center px-4 py-3 gap-3 hover:bg-slate-50 transition-colors cursor-pointer"
+      >
+        {/* Label on the left */}
+        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest shrink-0">
+          {lang === 'no' ? 'Validering av modellen' : 'Model validation'}
+        </span>
 
-          {/* Spacer */}
-          <div className="flex-1" />
+        {/* Spacer */}
+        <div className="flex-1" />
 
-          {/* Hints toggle — expands panel AND toggles hints visibility */}
+        {/* Category toggle badges on the right */}
+        <div className="flex items-center gap-2">
+          {/* Errors badge */}
+          {errorCount > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isExpanded) onToggle();
+                setShowErrors(!showErrors);
+              }}
+              aria-pressed={showErrors}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-black transition-all ${
+                showErrors
+                  ? 'bg-rose-100 border border-rose-200 text-rose-700'
+                  : 'bg-slate-100 border border-slate-200 text-slate-400 line-through'
+              }`}
+            >
+              <AlertCircle size={11} className="shrink-0" />
+              {errorCount}
+            </button>
+          )}
+
+          {/* Warnings badge */}
+          {warningCount > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isExpanded) onToggle();
+                setShowWarnings(!showWarnings);
+              }}
+              aria-pressed={showWarnings}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-black transition-all ${
+                showWarnings
+                  ? 'bg-amber-100 border border-amber-200 text-amber-700'
+                  : 'bg-slate-100 border border-slate-200 text-slate-400 line-through'
+              }`}
+            >
+              <AlertTriangle size={11} className="shrink-0" />
+              {warningCount}
+            </button>
+          )}
+
+          {/* Hints badge */}
           {hintCount > 0 && (
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (!isExpanded) onToggle();
-                onToggleHints();
+                setShowHints(!showHints);
               }}
               aria-pressed={showHints}
               className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-black transition-all ${
                 showHints
                   ? 'bg-sky-100 border border-sky-200 text-sky-700'
-                  : 'bg-sky-50 border border-sky-100 text-sky-600'
+                  : 'bg-slate-100 border border-slate-200 text-slate-400 line-through'
               }`}
             >
               <Lightbulb size={11} className="shrink-0" />
-              {hintCount}{' '}
-              {lang === 'no'
-                ? hintCount === 1
-                  ? 'tips'
-                  : 'tips'
-                : hintCount === 1
-                  ? 'hint'
-                  : 'hints'}
+              {hintCount}
             </button>
           )}
+        </div>
 
-          {/* Expand/collapse chevron and label — clickable to toggle expand */}
-          <button
-            onClick={onToggle}
-            aria-expanded={isExpanded}
-            aria-controls="validation-issue-list"
-            className="ml-2 flex items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-            title={isExpanded ? 'Collapse' : 'Expand'}
-          >
-            {isExpanded ? (
-              <ChevronUp size={18} className="shrink-0" />
-            ) : (
-              <ChevronDown size={18} className="shrink-0" />
-            )}
-          </button>
+        {/* Chevron on the far right */}
+        <div className="text-slate-400 shrink-0">
+          {isExpanded ? (
+            <ChevronUp size={18} />
+          ) : (
+            <ChevronDown size={18} />
+          )}
         </div>
       </div>
 

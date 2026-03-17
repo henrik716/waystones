@@ -55,7 +55,6 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isRenderingOrderOpen, setIsRenderingOrderOpen] = useState(false);
   const [isIssuesExpanded, setIsIssuesExpanded] = useState(false);
-  const [showValidationHints, setShowValidationHints] = useState(false);
   const [isInheritedPropertiesExpanded, setIsInheritedPropertiesExpanded] = useState(false);
 
   // --- Extracted hooks for state management
@@ -330,8 +329,6 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
               isExpanded={isIssuesExpanded}
               onToggle={() => setIsIssuesExpanded(!isIssuesExpanded)}
               lang={lang}
-              showHints={showValidationHints}
-              onToggleHints={() => setShowValidationHints(!showValidationHints)}
             />
 
             {/* Layer tab buttons strip */}
