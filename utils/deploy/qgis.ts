@@ -293,21 +293,17 @@ export const generateQgisDockerfile = (
   model: DataModel,
   source: SourceConnection
 ): string => {
-  return `FROM kartoza/qgis-server:latest
+  const isGpkg = source.type === 'geopackage';
+  return `FROM qgis/qgis-server:ltr
 
-COPY project.qgs /io/project.qgs
-COPY data /data
+COPY project.qgs /data/project.qgs
+${isGpkg ? 'COPY data/ /data/' : ''}
+RUN chmod -R 777 /data
 
-ENV QGIS_PROJECT_FILE=/io/project.qgs
+ENV QGIS_PROJECT_FILE=/data/project.qgs
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \\
-  CMD curl -f http://localhost:80/wms \\
-      --data-urlencode SERVICE=WMS \\
-      --data-urlencode VERSION=1.1.1 \\
-      --data-urlencode REQUEST=GetCapabilities || exit 1
-
+# QGIS_SERVER_SERVICE_URL is set at runtime via .env / Railway / Fly variables
+ENV QGIS_SERVER_SERVICE_URL=
 EXPOSE 80
 `;
 };
@@ -319,35 +315,32 @@ export const generateFlyQgisToml = (
   model: DataModel,
   source: SourceConnection
 ): string => {
-  const modelName = model.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  return `app = "${modelName}-qgis"
-primary_region = "arn"
+  const slug = model.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return `app = "${slug}-qgis"
+primary_region = "ams"
 
 [build]
-dockerfile = "Dockerfile.qgis"
+  dockerfile = "Dockerfile.qgis"
 
 [env]
-QGIS_PROJECT_FILE = "/io/project.qgs"
+  QGIS_SERVER_SERVICE_URL = "https://${slug}-qgis.fly.dev/ows/"
 
-[[services]]
-internal_port = 80
-processes = ["app"]
-auto_stop_machines = true
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
 
-  [services.concurrency]
-  type = "connections"
-  hard_limit = 1000
-  soft_limit = 100
-
-  [[services.ports]]
-  port = 80
-  handlers = ["http"]
-
-  [[services.tcp_checks]]
-  grace_period = "30s"
-  interval = "15s"
-  timeout = "5s"
-`;
+[[vm]]
+  memory = "1024mb"
+  cpu_kind = "shared"
+  cpus = 1
+${source.type === 'geopackage' ? `
+[mounts]
+  source = "geodata"
+  destination = "/data"
+` : ''}`;
 };
 
 // ============================================================
