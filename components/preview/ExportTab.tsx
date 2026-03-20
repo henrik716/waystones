@@ -158,7 +158,7 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
               <Download size={12} /> GeoJSON
             </button>
             <button onClick={handleJsonFGSchemaExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
-              <Download size={12} /> OGC FG
+              <Download size={12} /> JSON-FG
             </button>
           </div>
         </div>
