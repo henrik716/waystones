@@ -8,7 +8,7 @@ import {
   exportGeoPackage, exportSQL, exportDatabricks,
   exportDocumentation, exportDocumentationHTML,
   generateGeoJSONSchema, generateJSONFGSchema,
-  exportModelAsYaml
+  exportModelAsYaml, exportModelSchema
 } from '../../utils/exportUtils';
 import { exportTypeScript } from '../../utils/exportTypeScript';
 
@@ -134,31 +134,51 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
           </button>
         </div>
 
-        {/* 6. JSON SCHEMA & MODEL */}
+        {/* 6. DATAMODELL — JSON / YAML */}
         <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
           <div>
             <Braces className="text-cyan-600 mb-3 md:mb-4" size={32}/>
             <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
-              {lang === 'no' ? 'JSON & YAML' : 'JSON & YAML Formats'}
+              {lang === 'no' ? 'Datamodell' : 'Data Model'}
             </h3>
             <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
               {lang === 'no'
-                ? 'Eksporter datamodellen i JSON- eller YAML-format og valideringsskemaer for integrasjon.'
-                : 'Export data model in JSON or YAML format and validation schemas for integration.'}
+                ? 'Eksporter datamodellen i JSON- eller YAML-format for integrasjon og dokumentasjon.'
+                : 'Export data model in JSON or YAML format for integration and documentation.'}
             </p>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            <button onClick={handleModelJsonExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
-              <Download size={12} /> JSON
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={handleModelJsonExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+              <Download size={14} /> JSON
             </button>
-            <button onClick={handleModelYamlExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
-              <Download size={12} /> YAML
+            <button onClick={handleModelYamlExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+              <Download size={14} /> YAML
             </button>
-            <button onClick={handleJsonSchemaExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
+          </div>
+        </div>
+
+        {/* 7. JSON SCHEMA */}
+        <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
+          <div>
+            <FileCode className="text-sky-600 mb-3 md:mb-4" size={32}/>
+            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
+              {lang === 'no' ? 'JSON Schema' : 'JSON Schema'}
+            </h3>
+            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
+              {lang === 'no'
+                ? 'Skjemaer for validering av kartdata og datamodell.'
+                : 'Validation schemas for feature data and model format.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={handleJsonSchemaExport} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'GeoJSON Feature Schema (Draft 2020-12)' : 'GeoJSON Feature Schema (Draft 2020-12)'}>
               <Download size={12} /> GeoJSON
             </button>
-            <button onClick={handleJsonFGSchemaExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
+            <button onClick={handleJsonFGSchemaExport} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'OGC JSON Features for Geographic (OGC 21-045)' : 'OGC JSON Features for Geographic (OGC 21-045)'}>
               <Download size={12} /> JSON-FG
+            </button>
+            <button onClick={() => exportModelSchema(modelFilename)} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'Meta-schema som beskriver model.json-format' : 'Meta-schema describing model.json format'}>
+              <Download size={12} /> Model
             </button>
           </div>
         </div>
