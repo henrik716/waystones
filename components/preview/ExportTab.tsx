@@ -6,7 +6,9 @@ import {
 } from 'lucide-react';
 import {
   exportGeoPackage, exportSQL, exportDatabricks,
-  exportDocumentation, exportDocumentationHTML
+  exportDocumentation, exportDocumentationHTML,
+  generateGeoJSONSchema, generateJSONFGSchema,
+  exportModelAsYaml
 } from '../../utils/exportUtils';
 import { exportTypeScript } from '../../utils/exportTypeScript';
 
@@ -24,6 +26,37 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
     setIsExporting(true);
     await exportGeoPackage(model, modelFilename);
     setIsExporting(false);
+  };
+
+  const downloadJson = (data: any, filename: string) => {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleJsonSchemaExport = () => {
+    const schema = generateGeoJSONSchema(model);
+    downloadJson(schema, modelFilename + '.geojson-schema.json');
+  };
+
+  const handleJsonFGSchemaExport = () => {
+    const schema = generateJSONFGSchema(model);
+    downloadJson(schema, modelFilename + '.jsonfg-schema.json');
+  };
+
+  const handleModelJsonExport = () => {
+    downloadJson(model, modelFilename + '.model.json');
+  };
+
+  const handleModelYamlExport = () => {
+    exportModelAsYaml(model, modelFilename);
   };
 
   return (
@@ -99,6 +132,35 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
           <button onClick={() => exportTypeScript(model, modelFilename)} className="bg-violet-600 hover:bg-violet-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
             <Download size={16} /> .ts
           </button>
+        </div>
+
+        {/* 6. JSON SCHEMA & MODEL */}
+        <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
+          <div>
+            <Braces className="text-cyan-600 mb-3 md:mb-4" size={32}/>
+            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
+              {lang === 'no' ? 'JSON & YAML' : 'JSON & YAML Formats'}
+            </h3>
+            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
+              {lang === 'no'
+                ? 'Eksporter datamodellen i JSON- eller YAML-format og valideringsskemaer for integrasjon.'
+                : 'Export data model in JSON or YAML format and validation schemas for integration.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <button onClick={handleModelJsonExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
+              <Download size={12} /> JSON
+            </button>
+            <button onClick={handleModelYamlExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
+              <Download size={12} /> YAML
+            </button>
+            <button onClick={handleJsonSchemaExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
+              <Download size={12} /> GeoJSON
+            </button>
+            <button onClick={handleJsonFGSchemaExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95">
+              <Download size={12} /> OGC FG
+            </button>
+          </div>
         </div>
 
       </div>

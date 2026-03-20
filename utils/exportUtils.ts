@@ -787,3 +787,59 @@ export const exportDocumentation = (model: DataModel, filename: string, lang: st
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `${filename}_dokumentasjon.md`; a.click();
 };
+
+// Simple JSON to YAML converter (handles DataModel structure)
+const jsonToYaml = (obj: any, indent: number = 0): string => {
+  const spaces = ' '.repeat(indent);
+  if (obj === null || obj === undefined) return 'null';
+  if (typeof obj === 'boolean') return obj.toString();
+  if (typeof obj === 'number') return obj.toString();
+  if (typeof obj === 'string') {
+    // Quote strings that contain special chars
+    if (obj.includes(':') || obj.includes('#') || obj.includes('\"') || obj.includes("'") || obj.includes('\n')) {
+      return JSON.stringify(obj);
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return '[]';
+    return '\n' + obj.map(item => {
+      const itemYaml = jsonToYaml(item, indent + 2);
+      const isComplex = typeof item === 'object' && item !== null;
+      return spaces + '- ' + (isComplex ? itemYaml.slice(indent + 2) : itemYaml);
+    }).join('\n');
+  }
+  if (typeof obj === 'object') {
+    const entries = Object.entries(obj).filter(([_, v]) => v !== undefined);
+    if (entries.length === 0) return '{}';
+    return entries.map(([key, value]) => {
+      const valueYaml = jsonToYaml(value, indent + 2);
+      const isComplex = typeof value === 'object' && value !== null;
+      if (isComplex && !Array.isArray(value)) {
+        return `${spaces}${key}:${valueYaml}`;
+      } else if (Array.isArray(value) && value.length > 0) {
+        return `${spaces}${key}:${valueYaml}`;
+      } else {
+        return `${spaces}${key}: ${valueYaml}`;
+      }
+    }).join('\n');
+  }
+  return String(obj);
+};
+
+export const exportModelAsYaml = (model: DataModel, filename: string) => {
+  const yaml = `# Data Model: ${model.name}
+# Namespace: ${model.namespace}
+# Version: ${model.version}
+# Generated: ${new Date().toISOString()}
+
+${jsonToYaml(model)}`;
+
+  const blob = new Blob([yaml], { type: 'text/yaml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.model.yaml`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
