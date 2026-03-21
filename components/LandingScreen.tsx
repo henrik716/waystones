@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { Translations } from '../i18n/index';
-import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, ChevronDown } from 'lucide-react';
+import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe } from 'lucide-react';
 import { DataModel } from '../types';
 
 interface LandingScreenProps {
@@ -21,7 +21,6 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
 }) => {
   const l = t.landing || {};
   const [isDragOver, setIsDragOver] = useState(false);
-  const [showWhatCanIDo, setShowWhatCanIDo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -202,28 +201,19 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
           </div>
         </div>
 
-        {/* What can I do? accordion */}
-        <div className="max-w-2xl mx-auto w-full">
-          <button
-            onClick={() => setShowWhatCanIDo(v => !v)}
-            className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors py-1"
-            aria-expanded={showWhatCanIDo}
-          >
-            {l.whatCanIDoTitle}
-            <ChevronDown size={14} className={`transition-transform duration-200 ${showWhatCanIDo ? 'rotate-180' : ''}`} />
-          </button>
-          {showWhatCanIDo && (
-            <ul className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-              {[l.whatCanIDo1, l.whatCanIDo2, l.whatCanIDo3, l.whatCanIDo4, l.whatCanIDo5].map((item, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
-                  <span className="mt-0.5 w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                    <ArrowRight size={10} />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          )}
+        {/* What can I do? */}
+        <div className="max-w-2xl mx-auto w-full space-y-3">
+          <p className="text-xs font-bold text-slate-400 text-center">{l.whatCanIDoTitle}</p>
+          <ul className="space-y-2">
+            {[l.whatCanIDo1, l.whatCanIDo2, l.whatCanIDo3, l.whatCanIDo4, l.whatCanIDo5].map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
+                <span className="mt-0.5 w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ArrowRight size={10} />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Existing models */}
