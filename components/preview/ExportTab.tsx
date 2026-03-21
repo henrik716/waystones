@@ -8,7 +8,7 @@ import {
   exportGeoPackage, exportSQL, exportDatabricks,
   exportDocumentation, exportDocumentationHTML,
   generateGeoJSONSchema, generateJSONFGSchema,
-  exportModelAsYaml, exportModelSchema
+  exportModelAsYaml, exportModelSchema, exportModelSchemaAsYaml
 } from '../../utils/exportUtils';
 import { exportTypeScript } from '../../utils/exportTypeScript';
 
@@ -57,6 +57,10 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
 
   const handleModelYamlExport = () => {
     exportModelAsYaml(model, modelFilename);
+  };
+
+  const handleModelSchemaYamlExport = () => {
+    exportModelSchemaAsYaml(modelFilename);
   };
 
   return (
@@ -157,12 +161,12 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
           </div>
         </div>
 
-        {/* 7. JSON SCHEMA */}
+        {/* 7. SCHEMAS */}
         <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
           <div>
             <FileCode className="text-sky-600 mb-3 md:mb-4" size={32}/>
             <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
-              {lang === 'no' ? 'JSON Schema' : 'JSON Schema'}
+              {lang === 'no' ? 'Skjemaer' : 'Schemas'}
             </h3>
             <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
               {lang === 'no'
@@ -170,7 +174,7 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
                 : 'Validation schemas for feature data and model format.'}
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <button onClick={handleJsonSchemaExport} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'GeoJSON Feature Schema (Draft 2020-12)' : 'GeoJSON Feature Schema (Draft 2020-12)'}>
               <Download size={12} /> GeoJSON
             </button>
@@ -178,7 +182,10 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
               <Download size={12} /> JSON-FG
             </button>
             <button onClick={() => exportModelSchema(modelFilename)} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'Meta-schema som beskriver model.json-format' : 'Meta-schema describing model.json format'}>
-              <Download size={12} /> Model
+              <Download size={12} /> Model JSON
+            </button>
+            <button onClick={handleModelSchemaYamlExport} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'Meta-schema som beskriver model.json-format' : 'Meta-schema describing model.json format'}>
+              <Download size={12} /> Model YAML
             </button>
           </div>
         </div>

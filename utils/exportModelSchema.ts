@@ -346,3 +346,15 @@ export const exportModelSchema = (filename: string) => {
   a.click();
   URL.revokeObjectURL(url);
 };
+
+export const exportModelSchemaAsYaml = (filename: string) => {
+  const schema = generateModelSchema();
+  const content = yaml.dump(schema, { indent: 2, lineWidth: -1 });
+  const blob = new Blob([content], { type: 'text/yaml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.model-schema.yaml`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
