@@ -92,7 +92,7 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
             <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">{t.export.gpkgDesc}</p>
           </div>
           <button onClick={handleGpkgExport} disabled={isExporting} className="bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
-            {isExporting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Download size={16} />} {t.export.download}
+            {isExporting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Download size={16} />} {isExporting ? t.export.generating : t.export.download}
           </button>
         </div>
 
@@ -124,14 +124,8 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
         <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
           <div>
             <Braces className="text-violet-600 mb-3 md:mb-4" size={32}/>
-            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
-              {lang === 'no' ? 'TypeScript' : 'TypeScript Interfaces'}
-            </h3>
-            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
-              {lang === 'no'
-                ? 'Generer .ts-fil med typede grensesnitt for alle lag. Lag med arv bruker extends.'
-                : 'Generate .ts file with typed interfaces for all layers. Inherited layers use extends.'}
-            </p>
+            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">{t.export.tsTitle}</h3>
+            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">{t.export.tsDesc}</p>
           </div>
           <button onClick={() => exportTypeScript(model, modelFilename)} className="bg-violet-600 hover:bg-violet-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
             <Download size={16} /> .ts
@@ -142,14 +136,8 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
         <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
           <div>
             <Braces className="text-cyan-600 mb-3 md:mb-4" size={32}/>
-            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
-              {lang === 'no' ? 'Datamodell' : 'Data Model'}
-            </h3>
-            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
-              {lang === 'no'
-                ? 'Eksporter datamodellen i JSON- eller YAML-format for integrasjon og dokumentasjon.'
-                : 'Export data model in JSON or YAML format for integration and documentation.'}
-            </p>
+            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">{t.export.modelTitle}</h3>
+            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">{t.export.modelDesc}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button onClick={handleModelJsonExport} className="bg-cyan-600 hover:bg-cyan-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-4 md:px-5 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
@@ -165,16 +153,10 @@ const ExportTab: React.FC<ExportTabProps> = ({ model, t, lang }) => {
         <div className="bg-white p-5 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm flex flex-col justify-between gap-5 transition-transform hover:scale-[1.02] min-h-[220px]">
           <div>
             <FileCode className="text-sky-600 mb-3 md:mb-4" size={32}/>
-            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">
-              {lang === 'no' ? 'Skjemaer' : 'Schemas'}
-            </h3>
-            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">
-              {lang === 'no'
-                ? 'Skjemaer for validering av kartdata og datamodell.'
-                : 'Validation schemas for feature data and model format.'}
-            </p>
+            <h3 className="text-sm md:text-base font-black text-slate-800 mb-1.5">{t.export.schemasTitle}</h3>
+            <p className="text-[10px] md:text-[11px] text-slate-500 font-medium leading-relaxed opacity-80">{t.export.schemasDesc}</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button onClick={handleJsonSchemaExport} className="bg-sky-600 hover:bg-sky-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider whitespace-nowrap px-2 py-3.5 rounded-xl md:rounded-2xl flex items-center justify-center gap-1 transition-all shadow-lg active:scale-95" title={lang === 'no' ? 'GeoJSON Feature Schema (Draft 2020-12)' : 'GeoJSON Feature Schema (Draft 2020-12)'}>
               <Download size={12} /> GeoJSON
             </button>
