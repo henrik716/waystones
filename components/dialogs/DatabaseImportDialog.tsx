@@ -14,7 +14,7 @@ interface DatabaseImportDialogProps {
 type SourceType = 'supabase' | 'postgis';
 
 const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose, onImport }) => {
-  const [sourceType, setSourceType] = useState<SourceType>('supabase');
+  const [sourceType, setSourceType] = useState<SourceType>('postgis');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,16 +114,6 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
             {/* Source Type Toggle */}
             <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
               <button
-                onClick={() => setSourceType('supabase')}
-                className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                  sourceType === 'supabase'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {labels.sourceSupabase || 'Supabase'}
-              </button>
-              <button
                 onClick={() => setSourceType('postgis')}
                 className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
                   sourceType === 'postgis'
@@ -132,6 +122,16 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                 }`}
               >
                 {labels.sourcePostgis || 'PostGIS'}
+              </button>
+              <button
+                onClick={() => setSourceType('supabase')}
+                className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
+                  sourceType === 'supabase'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {labels.sourceSupabase || 'Supabase'}
               </button>
             </div>
 
