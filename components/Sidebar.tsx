@@ -10,6 +10,7 @@ interface SidebarProps {
   onNew: () => void;
   onImportGis: () => void;
   onImportUrl: () => void;
+  onImportDatabase: () => void;
   onGithubImport: () => void;
   onDelete: (id: string) => void;
   onOpenMapper: () => void;
@@ -17,8 +18,8 @@ interface SidebarProps {
   t: Translations;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  models, selectedId, onSelect, onNew, onImportGis, onImportUrl, onGithubImport, onDelete, onOpenMapper, onOpenDeploy, t 
+const Sidebar: React.FC<SidebarProps> = ({
+  models, selectedId, onSelect, onNew, onImportGis, onImportUrl, onImportDatabase, onGithubImport, onDelete, onOpenMapper, onOpenDeploy, t
 }) => {
   return (
     <div className="flex flex-col w-full h-full bg-white">
@@ -41,12 +42,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <Globe size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
-            <button 
+            <button
               onClick={onImportGis}
               className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100 transition-all shadow-sm shrink-0"
               title={t.importGis}
             >
               <Layers size={16} className="md:w-[18px] md:h-[18px]" />
+            </button>
+            <button
+              onClick={onImportDatabase}
+              className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100 transition-all shadow-sm shrink-0"
+              title={t.importDatabase || 'Import from database'}
+            >
+              <Database size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
             <button 
               onClick={onNew}
