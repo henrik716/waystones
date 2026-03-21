@@ -383,7 +383,7 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
   db.run(`CREATE TABLE gpkg_data_columns (
     table_name TEXT NOT NULL,
     column_name TEXT NOT NULL,
-    column_type TEXT,
+    name TEXT UNIQUE,
     title TEXT,
     description TEXT,
     mime_type TEXT,
@@ -531,10 +531,12 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
       }
     });
 
-    // Register codelist fields with enum constraints for QGIS dropdown support
+    // Register constrained fields for QGIS support via gpkg metadata tables
     effectiveProperties.forEach(f => {
+      let codeValues: string[] = [];
+
+      // Case 1 & 2: Enumeration (from codelist or constraints.enumeration)
       if (f.fieldType.kind === 'codelist') {
-        let codeValues: string[] = [];
         const ft = f.fieldType;
         if (ft.mode === 'inline' && ft.values?.length > 0) {
           codeValues = ft.values.map((v: CodeValue) => v.code);
@@ -545,32 +547,54 @@ export const exportGeoPackage = async (model: DataModel, filename: string) => {
             codeValues = shared.values.map((v: CodeValue) => v.code);
           }
         }
+      } else if (f.constraints?.enumeration?.length > 0) {
+        codeValues = f.constraints.enumeration;
+      }
 
-        if (codeValues.length > 0) {
-          // Create unique constraint name
-          const constraintName = `${tbl}_${f.name}_enum`;
+      if (codeValues.length > 0) {
+        const constraintName = `${tbl}_${f.name}_enum`;
 
-          // Insert one row per enum value into gpkg_data_column_constraints
-          // QGIS reads one row per value to build the dropdown list
-          codeValues.forEach(code => {
-            db.run(
-              `INSERT INTO gpkg_data_column_constraints (constraint_name, constraint_type, value) VALUES (?, ?, ?)`,
-              [constraintName, 'enum', code]
-            );
-          });
-
-          // Insert into gpkg_data_columns to link the constraint to the column
+        // Insert one row per enum value into gpkg_data_column_constraints
+        // QGIS reads one row per value to build the dropdown list
+        codeValues.forEach(code => {
           db.run(
-            `INSERT INTO gpkg_data_columns (table_name, column_name, column_type, title, description, constraint_name) VALUES (?, ?, ?, ?, ?, ?)`,
-            [tbl, f.name, 'TEXT', f.title || f.name, f.description || '', constraintName]
+            `INSERT INTO gpkg_data_column_constraints (constraint_name, constraint_type, value) VALUES (?, ?, ?)`,
+            [constraintName, 'enum', code]
           );
+        });
 
-          // Register this constrained column in gpkg_extensions
-          db.run(
-            `INSERT OR IGNORE INTO gpkg_extensions (table_name, column_name, extension_name, definition, scope) VALUES (?, ?, ?, ?, ?)`,
-            [tbl, f.name, 'gpkg_schema', 'http://www.geopackage.org/spec120/#extension_schema', 'read-write']
-          );
-        }
+        // Insert into gpkg_data_columns to link the constraint to the column
+        db.run(
+          `INSERT INTO gpkg_data_columns (table_name, column_name, name, title, description, mime_type, constraint_name) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [tbl, f.name, null, f.title || f.name, f.description || '', null, constraintName]
+        );
+
+        // Register this constrained column in gpkg_extensions
+        db.run(
+          `INSERT OR IGNORE INTO gpkg_extensions (table_name, column_name, extension_name, definition, scope) VALUES (?, ?, ?, ?, ?)`,
+          [tbl, f.name, 'gpkg_schema', 'http://www.geopackage.org/spec120/#extension_schema', 'read-write']
+        );
+      }
+
+      // Case 3: Min/Max range constraint
+      const c = f.constraints;
+      const isNumeric = f.fieldType.kind === 'primitive' && (f.fieldType.baseType === 'number' || f.fieldType.baseType === 'integer');
+      const hasRange = isNumeric && ((c?.min !== undefined && c.min !== null) || (c?.max !== undefined && c.max !== null));
+
+      if (hasRange) {
+        const constraintName = `${tbl}_${f.name}_range`;
+        db.run(
+          `INSERT INTO gpkg_data_column_constraints (constraint_name, constraint_type, value, min, min_is_inclusive, max, max_is_inclusive) VALUES (?, ?, NULL, ?, 1, ?, 1)`,
+          [constraintName, 'range', c.min ?? null, c.max ?? null]
+        );
+        db.run(
+          `INSERT INTO gpkg_data_columns (table_name, column_name, name, title, description, mime_type, constraint_name) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [tbl, f.name, null, f.title || f.name, f.description || '', null, constraintName]
+        );
+        db.run(
+          `INSERT OR IGNORE INTO gpkg_extensions (table_name, column_name, extension_name, definition, scope) VALUES (?, ?, ?, ?, ?)`,
+          [tbl, f.name, 'gpkg_schema', 'http://www.geopackage.org/spec120/#extension_schema', 'read-write']
+        );
       }
     });
   }
