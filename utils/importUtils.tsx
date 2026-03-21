@@ -516,7 +516,7 @@ export const processAnyFile = async (
 // ============================================================
 
 /** Helper: Check if an object is a valid DataModel */
-const isDataModel = (obj: unknown): obj is DataModel => {
+export const isDataModel = (obj: unknown): obj is DataModel => {
   return (
     typeof obj === 'object' &&
     obj !== null &&

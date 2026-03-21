@@ -28,6 +28,7 @@ import {
   processAnyFile,
   processModelJsonFile,
   processModelYamlFile,
+  isDataModel,
   InferredDataSummary,
 } from './utils/importUtils';
 
@@ -158,17 +159,31 @@ const App: React.FC = () => {
     setIsImporting(true);
 
     try {
-      if (file.name.endsWith('.model.json')) {
-        const model = await processModelJsonFile(file);
-        handleImportModel(model);
-      } else if (file.name.endsWith('.model.yaml') || file.name.endsWith('.model.yml')) {
+      const name = file.name.toLowerCase();
+
+      // Handle YAML files (including browser-renamed ones like model(1).yaml)
+      if (name.endsWith('.yaml') || name.endsWith('.yml')) {
         const model = await processModelYamlFile(file);
         handleImportModel(model);
-      } else if (file.name.endsWith('.sql')) {
+      }
+      // Handle JSON files (try as model first, fall back to GeoJSON/GDAL if not a DataModel)
+      else if (name.endsWith('.json') && !name.endsWith('.geojson')) {
+        try {
+          const model = await processModelJsonFile(file);
+          handleImportModel(model);
+        } catch {
+          // Not a DataModel, try as GeoJSON via GDAL
+          const { model } = await processAnyFile(file);
+          handleImportModel(model);
+        }
+      }
+      // SQL DDL files
+      else if (name.endsWith('.sql')) {
         const text = await file.text();
         handleImportModel(processSqlToModel(text, file.name));
-      } else {
-        // La processAnyFile håndtere GPKG, GeoJSON, GML, XML, KML, Shapefile, etc!
+      }
+      // Everything else (GPKG, GeoJSON, GML, KML, Shapefile, etc)
+      else {
         const { model } = await processAnyFile(file);
         handleImportModel(model);
       }
