@@ -26,6 +26,8 @@ import {
   processOgcCollectionsToModel,
   processSqlToModel,
   processAnyFile,
+  processModelJsonFile,
+  processModelYamlFile,
   InferredDataSummary,
 } from './utils/importUtils';
 
@@ -154,9 +156,15 @@ const App: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsImporting(true);
-    
+
     try {
-      if (file.name.endsWith('.sql')) {
+      if (file.name.endsWith('.model.json')) {
+        const model = await processModelJsonFile(file);
+        handleImportModel(model);
+      } else if (file.name.endsWith('.model.yaml') || file.name.endsWith('.model.yml')) {
+        const model = await processModelYamlFile(file);
+        handleImportModel(model);
+      } else if (file.name.endsWith('.sql')) {
         const text = await file.text();
         handleImportModel(processSqlToModel(text, file.name));
       } else {
@@ -276,7 +284,7 @@ const App: React.FC = () => {
   return (
     <AiProvider>
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden text-slate-900 font-sans selection:bg-indigo-500/20">
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".geojson,.json,.gpkg,.sqlite,.sql,.gml,.kml,.kmz,.shp,.fgb,.csv,.gpx,.tab,.mif,.dxf" className="hidden" />
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".geojson,.json,.gpkg,.sqlite,.sql,.gml,.kml,.kmz,.shp,.fgb,.csv,.gpx,.tab,.mif,.dxf,.yaml,.yml" className="hidden" />
       {showGuide && <Guide onClose={() => { setShowGuide(false); localStorage.setItem('guide_seen', 'true'); }} t={t} />}
       {showGithubImport && <GithubImportDialog t={t} onClose={() => setShowGithubImport(false)} onImport={handleImportModel} />}
       {showUrlImport && <UrlImportDialog t={t} onClose={() => setShowUrlImport(false)} onImport={handleUrlImportSuccess} />}

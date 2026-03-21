@@ -3,6 +3,7 @@ import { createEmptyModel, createEmptyField, createEmptyLayer } from '../constan
 import { normalizeGeometryType } from './geomUtils';
 import { mapSqlTypeToFieldType } from './typeMapUtils';
 import { sanitizeTechnicalName } from './nameSanitizer';
+import yaml from 'js-yaml';
 
 export { normalizeGeometryType } from './geomUtils';
 export { mapSqlTypeToFieldType } from './typeMapUtils';
@@ -508,4 +509,43 @@ export const processAnyFile = async (
   }
 
   throw new Error(`Unsupported file format: .${ext}. Supported formats: GeoPackage (.gpkg), Shapefile (.shp), GeoJSON, GML, KML, FlatGeobuf, and more (requires GDAL).`);
+};
+
+// ============================================================
+// Model file detection and import
+// ============================================================
+
+/** Helper: Check if an object is a valid DataModel */
+const isDataModel = (obj: unknown): obj is DataModel => {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'layers' in obj &&
+    'namespace' in obj
+  );
+};
+
+/** Import a .model.json file */
+export const processModelJsonFile = async (file: File): Promise<DataModel> => {
+  const text = await file.text();
+  const parsed = JSON.parse(text);
+
+  if (!isDataModel(parsed)) {
+    throw new Error('File is not a valid Waystones model (missing id, layers, or namespace)');
+  }
+
+  return parsed;
+};
+
+/** Import a .model.yaml or .model.yml file */
+export const processModelYamlFile = async (file: File): Promise<DataModel> => {
+  const text = await file.text();
+  const parsed = yaml.load(text);
+
+  if (!isDataModel(parsed)) {
+    throw new Error('File is not a valid Waystones model (missing id, layers, or namespace)');
+  }
+
+  return parsed as DataModel;
 };

@@ -1,53 +1,15 @@
 import { DataModel } from '../types';
-
-// Simple JSON to YAML converter (handles DataModel structure)
-const jsonToYaml = (obj: any, indent: number = 0): string => {
-  const spaces = ' '.repeat(indent);
-  if (obj === null || obj === undefined) return 'null';
-  if (typeof obj === 'boolean') return obj.toString();
-  if (typeof obj === 'number') return obj.toString();
-  if (typeof obj === 'string') {
-    // Quote strings that contain special chars
-    if (obj.includes(':') || obj.includes('#') || obj.includes('"') || obj.includes("'") || obj.includes('\n')) {
-      return JSON.stringify(obj);
-    }
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    if (obj.length === 0) return '[]';
-    return '\n' + obj.map(item => {
-      const itemYaml = jsonToYaml(item, indent + 2);
-      const isComplex = typeof item === 'object' && item !== null;
-      return spaces + '- ' + (isComplex ? itemYaml.slice(indent + 2) : itemYaml);
-    }).join('\n');
-  }
-  if (typeof obj === 'object') {
-    const entries = Object.entries(obj).filter(([_, v]) => v !== undefined);
-    if (entries.length === 0) return '{}';
-    return entries.map(([key, value]) => {
-      const valueYaml = jsonToYaml(value, indent + 2);
-      const isComplex = typeof value === 'object' && value !== null;
-      if (isComplex && !Array.isArray(value)) {
-        return `${spaces}${key}:${valueYaml}`;
-      } else if (Array.isArray(value) && value.length > 0) {
-        return `${spaces}${key}:${valueYaml}`;
-      } else {
-        return `${spaces}${key}: ${valueYaml}`;
-      }
-    }).join('\n');
-  }
-  return String(obj);
-};
+import yaml from 'js-yaml';
 
 export const exportModelAsYaml = (model: DataModel, filename: string) => {
-  const yaml = `# Data Model: ${model.name}
+  const yamlContent = `# Data Model: ${model.name}
 # Namespace: ${model.namespace}
 # Version: ${model.version}
 # Generated: ${new Date().toISOString()}
 
-${jsonToYaml(model)}`;
+${yaml.dump(model, { indent: 2, lineWidth: -1 })}`;
 
-  const blob = new Blob([yaml], { type: 'text/yaml' });
+  const blob = new Blob([yamlContent], { type: 'text/yaml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -60,8 +22,8 @@ ${jsonToYaml(model)}`;
 export const generateModelSchema = (): Record<string, any> => {
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    title: 'GeoForge Data Model',
-    description: 'Schema describing the structure of a GeoForge data model (model.json)',
+    title: 'Waystones Data Model',
+    description: 'Schema describing the structure of a Waystones data model (model.json)',
     type: 'object',
     required: ['id', 'name', 'namespace', 'version', 'layers', 'crs', 'createdAt', 'updatedAt'],
     properties: {
