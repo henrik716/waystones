@@ -52,7 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onImportDatabase}
               className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100 transition-all shadow-sm shrink-0"
-              title={t.importDatabase || 'Import from database'}
+              title={t.importDatabase.title}
             >
               <Database size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
