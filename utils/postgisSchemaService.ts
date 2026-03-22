@@ -14,16 +14,27 @@ interface SchemaRow {
   column_name: string;
   data_type: string;
   udt_name?: string;
-  is_nullable: boolean;
+  is_nullable: boolean | string;
   column_default?: string;
   constraint_type?: string;
+}
+
+/**
+ * Validates that a row from the server has all required fields.
+ */
+function isValidSchemaRow(row: unknown): row is SchemaRow {
+  if (!row || typeof row !== 'object') return false;
+  const r = row as Record<string, unknown>;
+  return typeof r.table_name === 'string' && r.table_name.length > 0
+      && typeof r.column_name === 'string' && r.column_name.length > 0
+      && typeof r.data_type === 'string';
 }
 
 /**
  * Call the /api/pg-schema endpoint and convert the result to a DataModel.
  *
  * This is a browser-side client for the PostGIS proxy. Requires:
- * - A running Waystones server with POST /api/pg-schema endpoint
+ * - A running GeoForge server with POST /api/pg-schema endpoint
  * - Optional: SUPABASE_JWT_SECRET env var set on the server for auth
  *
  * @param connectionString - PostgreSQL connection string (e.g., "postgresql://user:pass@host:5432/db")
@@ -71,13 +82,18 @@ export const processPostgisSchemaToModel = async (
 
   // Convert the response to a DataModel using the same logic as supabaseSchemaService
   const model = createEmptyModel();
-  model.name = connectionString.split('/').pop() || 'postgis_model';
+  const rawDbName = connectionString.split('/').pop()?.split('?')[0] || 'postgis_model';
+  model.name = sanitizeTechnicalName(rawDbName) || 'postgis_model';
   model.crs = 'EPSG:25833'; // default; could be inferred from server response
   model.layers = [];
 
   // Group rows by table
   const tableMap: Record<string, SchemaRow[]> = {};
   for (const row of result.layers) {
+    if (!isValidSchemaRow(row)) {
+      console.warn('Skipping invalid schema row:', row);
+      continue;
+    }
     if (!tableMap[row.table_name]) {
       tableMap[row.table_name] = [];
     }
@@ -86,7 +102,7 @@ export const processPostgisSchemaToModel = async (
 
   for (const [tableName, rows] of Object.entries(tableMap)) {
     const layer = createEmptyLayer(tableName);
-    layer.name = tableName;
+    layer.name = sanitizeTechnicalName(tableName);
 
     const properties: Field[] = [];
     let geometryColumnName = '';
@@ -111,12 +127,13 @@ export const processPostgisSchemaToModel = async (
         constraints.isPrimaryKey = true;
       }
 
+      const sanitizedName = sanitizeTechnicalName(colName);
       properties.push({
         ...createEmptyField(),
-        name: sanitizeTechnicalName(colName),
-        title: colName.charAt(0).toUpperCase() + colName.slice(1).replace(/_/g, ' '),
+        name: sanitizedName,
+        title: sanitizedName.charAt(0).toUpperCase() + sanitizedName.slice(1).replace(/_/g, ' '),
         fieldType,
-        multiplicity: row.is_nullable ? '0..1' : '1..1',
+        multiplicity: (row.is_nullable === true || row.is_nullable === 'YES') ? '0..1' : '1..1',
         defaultValue: row.column_default ? String(row.column_default) : '',
         constraints,
       });
