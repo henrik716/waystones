@@ -114,14 +114,19 @@ async function handlePostgisSchema(req, res) {
     }
 
     // SSRF protection: check hostname
-    let pgUrl;
+    let finalConnectionString = connectionString;
     try {
-      pgUrl = new URL(connectionString.includes('://') ? connectionString : `postgresql://${connectionString}`);
+      const pgUrl = new URL(connectionString.includes('://') ? connectionString : `postgresql://${connectionString}`);
       if (isPrivateIp(pgUrl.hostname)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Private IP addresses are not allowed' }));
         return;
       }
+      // Set sslmode=prefer if not already specified (use SSL if available, fall back to non-SSL)
+      if (!pgUrl.searchParams.get('sslmode')) {
+        pgUrl.searchParams.set('sslmode', 'prefer');
+      }
+      finalConnectionString = pgUrl.toString();
     } catch {
       // If we can't parse the connection string, try simple pattern matching
       if (isPrivateIp(connectionString.split('@')[1]?.split(':')[0] || connectionString)) {
@@ -131,20 +136,14 @@ async function handlePostgisSchema(req, res) {
       }
     }
 
-    // Force sslmode=require if not already specified
-    if (pgUrl && !pgUrl.searchParams.get('sslmode')) {
-      pgUrl.searchParams.set('sslmode', 'require');
-    }
-
     // Dynamically import pg (node-postgres)
     const { Pool } = await import('pg');
     const targetSchema = schema || 'public';
 
     const pool = new Pool({
-      connectionString: pgUrl ? pgUrl.toString() : connectionString,
+      connectionString: finalConnectionString,
       connectionTimeoutMillis: 5000,   // 5 s to connect
-      query_timeout: 10000,            // 10 s per query
-      statement_timeout: 10000,
+      statement_timeout: 10000,        // 10 s per query
     });
 
     try {

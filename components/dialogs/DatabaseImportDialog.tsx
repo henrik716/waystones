@@ -92,8 +92,6 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
     setSelectedLayerIds(new Set());
   };
 
-  // Check if connection string is missing sslmode
-  const isMissingSslmode = postgisConnectionString && !postgisConnectionString.includes('sslmode');
 
 
   return (
@@ -208,11 +206,6 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                     disabled={loading}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-slate-50 font-mono"
                   />
-                  {isMissingSslmode && (
-                    <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1.5">
-                      <span>⚠</span> Missing <code className="font-mono">sslmode=require</code>
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -232,10 +225,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                 {/* Info */}
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 space-y-1">
                   <p>
-                    <strong>Security:</strong> SSL is required. <code className="font-mono">sslmode=require</code> will be added automatically if not present.
-                  </p>
-                  <p>
-                    <strong>Privacy:</strong> Your connection string will be used only to read schema information and is not stored.
+                    <strong>Note:</strong> Your connection string will be used only to read schema information and is not stored.
                   </p>
                 </div>
               </div>
