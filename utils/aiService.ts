@@ -10,9 +10,9 @@ export interface AiConstraintSuggestion {
   enumeration?: string[];
 }
 
-const PROVIDER_KEY = 'waystones-ai-provider';
-const API_KEY_PREFIX = 'waystones-ai-key-';
-const TRIAL_USES_KEY = 'waystones-ai-trial-uses';
+const PROVIDER_KEY = 'geoforge-ai-provider';
+const API_KEY_PREFIX = 'geoforge-ai-key-';
+const TRIAL_USES_KEY = 'geoforge-ai-trial-uses';
 export const MAX_TRIAL_USES = 10;
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -99,19 +99,34 @@ export function clearApiKey(p?: AiProvider): void {
   }));
 }
 
+function getWeekKey(): string {
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+
 export function getTrialUsesLeft(): number {
-  const usesInfo = localStorage.getItem(TRIAL_USES_KEY);
-  if (!usesInfo) return MAX_TRIAL_USES;
-  const uses = parseInt(usesInfo, 10);
-  if (isNaN(uses)) return MAX_TRIAL_USES;
-  return Math.max(0, MAX_TRIAL_USES - uses);
+  const raw = localStorage.getItem(TRIAL_USES_KEY);
+  if (!raw) return MAX_TRIAL_USES;
+  try {
+    const { uses, week } = JSON.parse(raw);
+    if (week !== getWeekKey()) return MAX_TRIAL_USES; // new week → fresh
+    return Math.max(0, MAX_TRIAL_USES - (uses || 0));
+  } catch {
+    return MAX_TRIAL_USES; // malformed data → fresh
+  }
 }
 
 export function incrementTrialUses(): void {
-  const usesInfo = localStorage.getItem(TRIAL_USES_KEY);
-  const currentUses = usesInfo ? parseInt(usesInfo, 10) || 0 : 0;
-  const newUses = currentUses + 1;
-  localStorage.setItem(TRIAL_USES_KEY, newUses.toString());
+  const raw = localStorage.getItem(TRIAL_USES_KEY);
+  let uses = 0;
+  try {
+    const parsed = JSON.parse(raw || '{}');
+    if (parsed.week === getWeekKey()) uses = parsed.uses || 0;
+  } catch { /* start fresh */ }
+  const newUses = uses + 1;
+  localStorage.setItem(TRIAL_USES_KEY, JSON.stringify({ uses: newUses, week: getWeekKey() }));
   window.dispatchEvent(new CustomEvent('ai-trial-updated', {
     detail: { usesLeft: Math.max(0, MAX_TRIAL_USES - newUses) }
   }));
