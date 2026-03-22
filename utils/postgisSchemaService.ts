@@ -84,7 +84,7 @@ export const processPostgisSchemaToModel = async (
   const model = createEmptyModel();
   const rawDbName = connectionString.split('/').pop()?.split('?')[0] || 'postgis_model';
   model.name = sanitizeTechnicalName(rawDbName) || 'postgis_model';
-  model.crs = 'EPSG:25833'; // default; could be inferred from server response
+  model.crs = 'EPSG:4326'; // WGS 84 - widely used geographic CRS; user can change if needed
   model.layers = [];
 
   // Group rows by table
