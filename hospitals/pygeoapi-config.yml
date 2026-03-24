@@ -1,0 +1,217 @@
+# pygeoapi configuration for Hospitals
+# Generated: 2026-03-24T14:39:50.073Z
+# Source: geopackage
+
+server:
+  bind:
+    host: 0.0.0.0
+    port: ${PORT:-80}
+  url: ${PYGEOAPI_SERVER_URL}
+  mimetype: application/json; charset=UTF-8
+  encoding: utf-8
+  languages:
+    - nb-NO
+  map:
+    url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  limits:
+    default_items: 10
+    max_items: 10000
+  templates:
+    path: /pygeoapi/local-templates
+
+logging:
+  level: INFO
+
+metadata:
+  identification:
+    title: Hospitals
+    description: Dette datasettet, "Hospitals", presenterer punktgeometrier som representerer sykehusfasiliteter. Hovedformålet er å tilby en detaljert geografisk oversikt over medisinske institusjoner for å støtte planlegging, navigasjon og analyse innen helsesektoren. Hvert sykehuspunkt inkluderer viktige attributter som sykehusets navn, type (f.eks. generelt, spesialisert) og informasjon om hvorvidt det har et akuttmottak. Datasettet er essensielt for å identifisere og lokalisere viktige helsetjenester på et kart.
+    url: https://example.com/dataset
+    terms_of_service: https://example.com/terms
+    keywords:
+      - geospatial
+      - data
+  license:
+    name: CC-BY-4.0
+    url: https://creativecommons.org/licenses/by/4.0/
+
+resources:
+  hospitalpoints:
+    type: collection
+    title: hospitalpoints
+    description: Spatial collection
+    keywords:
+      - data
+      - hospitalpoints
+    extents:
+      spatial:
+        bbox: [5.661964614014777, 58.01289713711848, 38.86783938382364, 77.15419161001824]
+        crs: http://www.opengis.net/def/crs/OGC/1.3/CRS84
+    providers:
+      - type: feature
+        name: SQLiteGPKG
+        data: /data/Hospitals.gpkg
+        table: hospitalpoints
+        id_field: fid
+        geom_field: geom
+        storage_crs: http://www.opengis.net/def/crs/EPSG/0/25833
+        extensions:
+          filters:
+            - cql2-text
+            - cql2-json
+            - cql-text
+
+    schema:
+      # Resolved properties for hospitalpoints (Local: 34, Total: 34)
+      # Generator Version: 1.0.2
+      title: "hospitalpoints"
+      type: object
+      properties:
+        "geoforge_ping":
+          title: "GeoForge Connection Check"
+          type: string
+        "id":
+          title: "Id"
+          type: number
+        "dataset":
+          title: "Dataset"
+          type: string
+        "featuretype":
+          title: "FeatureType"
+          type: string
+        "name":
+          title: "Name"
+          type: string
+        "type":
+          title: "Type"
+          type: string
+        "emergencydepartment":
+          title: "EmergencyDepartment"
+          type: string
+        "doctors":
+          title: "Doctors"
+          type: number
+        "nurses":
+          title: "Nurses"
+          type: number
+        "operationrooms":
+          title: "OperationRooms"
+          type: number
+        "beds":
+          title: "Beds"
+          type: number
+        "employees":
+          title: "Employees"
+          type: number
+        "address":
+          title: "Address"
+          type: string
+        "telephonenumber":
+          title: "TelephoneNumber"
+          type: number
+        "email":
+          title: "Email"
+          type: string
+        "website":
+          title: "Website"
+          type: string
+        "latitude":
+          title: "Latitude"
+          type: number
+        "longitude":
+          title: "Longitude"
+          type: number
+        "mgrs":
+          title: "Mgrs"
+          type: string
+        "classification":
+          title: "Classification"
+          type: string
+        "origin":
+          title: "Origin"
+          type: string
+        "datawithdrawaldate":
+          title: "DataWithdrawalDate"
+          type: string
+          format: date
+        "datacapturedate":
+          title: "DataCaptureDate"
+          type: string
+          format: date
+        "updatedate":
+          title: "UpdateDate"
+          type: string
+          format: date
+        "datasetttype":
+          title: "DatasettType"
+          type: string
+        "gradering":
+          title: "Gradering"
+          type: string
+        "opphav":
+          title: "Opphav"
+          type: string
+        "dgiffeaturealpha":
+          title: "DgifFeatureAlpha"
+          type: string
+        "dgiffeature531":
+          title: "DgifFeature531"
+          type: string
+        "dgifattributealpha":
+          title: "DgifAttributeAlpha"
+          type: string
+        "dgifattribute531":
+          title: "DgifAttribute531"
+          type: string
+        "dgifvaluealpha":
+          title: "DgifValueAlpha"
+          type: string
+        "dgifvalue531":
+          title: "DgifValue531"
+          type: number
+        "dgifccode":
+          title: "DgifCCode"
+          type: string
+        "uuid":
+          title: "Uuid"
+          type: string
+
+  areas:
+    type: collection
+    title: areas
+    description: Spatial collection
+    keywords:
+      - data
+      - areas
+    extents:
+      spatial:
+        bbox: [5.661964614014777, 58.01289713711848, 38.86783938382364, 77.15419161001824]
+        crs: http://www.opengis.net/def/crs/OGC/1.3/CRS84
+    providers:
+      - type: feature
+        name: SQLiteGPKG
+        data: /data/Hospitals.gpkg
+        table: areas
+        id_field: fid
+        geom_field: geom
+        storage_crs: http://www.opengis.net/def/crs/EPSG/0/25833
+        extensions:
+          filters:
+            - cql2-text
+            - cql2-json
+            - cql-text
+
+    schema:
+      # Resolved properties for areas (Local: 1, Total: 1)
+      # Generator Version: 1.0.2
+      title: "areas"
+      type: object
+      properties:
+        "geoforge_ping":
+          title: "GeoForge Connection Check"
+          type: string
+        "id":
+          title: "Id"
+          type: number
+
