@@ -11,7 +11,7 @@ const INVERT_BRAND_COLORS = true;
 export function deriveBrandColor(_model: DataModel): string {
   // Always use GeoForge's primary indigo brand color for the API interface
   // rather than inheriting random feature layer styling.
-  return '#6366f1'; // GeoForge Indigo
+  return '#4338ca'; // GeoForge Indigo
 }
 
 function darken(hex: string, amount = 30): string {
@@ -81,7 +81,7 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
       gap: 0.5rem;
     }
     .nav-link { 
-      color: #6366f1 !important; 
+      color: #4338ca !important; 
       font-weight: 600;
       padding: 0.5rem 1rem !important;
       border-radius: 9999px;
@@ -110,7 +110,7 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
       font-weight: 700;
       padding: 1.25rem 1.5rem;
       font-size: 1.1rem;
-      color: #6366f1;
+      color: #4338ca;
     }
     .card-body { padding: 1.5rem; }
     
@@ -198,18 +198,18 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
               <radialGradient id="cosmicCore" cx="46%" cy="44%" r="58%">
                 <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
                 <stop offset="8%"   stop-color="#c7d2fe" stop-opacity="0.95"/>
-                <stop offset="22%"  stop-color="#6366f1" stop-opacity="0.75"/>
+                <stop offset="22%"  stop-color="#4338ca" stop-opacity="0.75"/>
                 <stop offset="42%"  stop-color="#4338ca" stop-opacity="0.5"/>
                 <stop offset="65%"  stop-color="#eef0ff" stop-opacity="0.7"/>
                 <stop offset="100%" stop-color="#f5f5ff" stop-opacity="1"/>
               </radialGradient>
               <radialGradient id="nebula1" cx="60%" cy="38%" r="50%">
-                <stop offset="0%"   stop-color="#6366f1" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                <stop offset="0%"   stop-color="#4338ca" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#4338ca" stop-opacity="0"/>
               </radialGradient>
               <radialGradient id="nebula2" cx="35%" cy="65%" r="45%">
-                <stop offset="0%"   stop-color="#818cf8" stop-opacity="0.25"/>
-                <stop offset="100%" stop-color="#818cf8" stop-opacity="0"/>
+                <stop offset="0%"   stop-color="#4338ca" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#4338ca" stop-opacity="0"/>
               </radialGradient>
 
               <filter id="bigBloom" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
@@ -245,51 +245,51 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
             <polygon points="100,14 171,55 171,137 100,178 29,137 29,55" fill="url(#stoneFace)"/>
 
             <g clip-path="url(#hexClip)" fill="none" stroke-linecap="round">
-              <path d="M 46,68 Q 40,82 45,98"       stroke="#6366f1" stroke-width="1.1" opacity="0.35"/>
-              <path d="M 154,68 Q 160,82 155,98"    stroke="#6366f1" stroke-width="1.1" opacity="0.35"/>
-              <path d="M 40,108 Q 36,124 42,138"    stroke="#6366f1" stroke-width="0.9" opacity="0.25"/>
-              <path d="M 160,108 Q 164,124 158,138" stroke="#6366f1" stroke-width="0.9" opacity="0.25"/>
-              <path d="M 80,28 Q 76,38 80,48"       stroke="#6366f1" stroke-width="0.8" opacity="0.3"/>
-              <path d="M 120,28 Q 124,38 120,48"    stroke="#6366f1" stroke-width="0.8" opacity="0.3"/>
-              <path d="M 80,152 Q 76,162 80,172"    stroke="#6366f1" stroke-width="0.8" opacity="0.25"/>
-              <path d="M 120,152 Q 124,162 120,172" stroke="#6366f1" stroke-width="0.8" opacity="0.25"/>
+              <path d="M 46,68 Q 40,82 45,98"       stroke="#4338ca" stroke-width="1.1" opacity="0.35"/>
+              <path d="M 154,68 Q 160,82 155,98"    stroke="#4338ca" stroke-width="1.1" opacity="0.35"/>
+              <path d="M 40,108 Q 36,124 42,138"    stroke="#4338ca" stroke-width="0.9" opacity="0.25"/>
+              <path d="M 160,108 Q 164,124 158,138" stroke="#4338ca" stroke-width="0.9" opacity="0.25"/>
+              <path d="M 80,28 Q 76,38 80,48"       stroke="#4338ca" stroke-width="0.8" opacity="0.3"/>
+              <path d="M 120,28 Q 124,38 120,48"    stroke="#4338ca" stroke-width="0.8" opacity="0.3"/>
+              <path d="M 80,152 Q 76,162 80,172"    stroke="#4338ca" stroke-width="0.8" opacity="0.25"/>
+              <path d="M 120,152 Q 124,162 120,172" stroke="#4338ca" stroke-width="0.8" opacity="0.25"/>
             </g>
 
             <polygon points="100,14 171,55 171,137 100,178 29,137 29,55"
-                     fill="none" stroke="#6366f1" stroke-width="1.5" opacity="0.45" filter="url(#glow)"/>
+                     fill="none" stroke="#4338ca" stroke-width="1.5" opacity="0.45" filter="url(#glow)"/>
 
             <polygon points="84,18 90,6 97,0 103,0 110,6 116,18 108,26 100,24 92,26" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="86,18 91,8 97,2 103,2 109,8 114,18 107,25 100,23 93,25" fill="#eef0ff"/>
             <path d="M 94,14 L 100,10 L 106,14" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="96,-4 99,-6 102,-4 99,-2" fill="#eef0ff" opacity="0.85"/>
-            <path d="M 97,-4 L 101,-5" stroke="#6366f1" stroke-width="0.7" opacity="0.7"/>
+            <path d="M 97,-4 L 101,-5" stroke="#4338ca" stroke-width="0.7" opacity="0.7"/>
             <circle cx="88" cy="8"  r="1.1" fill="#dde0ff" opacity="0.9"/>
             <circle cx="112" cy="8" r="1"   fill="#dde0ff" opacity="0.85"/>
 
             <polygon points="165,42 172,33 180,30 187,36 192,46 188,58 178,64 170,60 166,50" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="166,43 173,35 180,32 186,38 190,47 186,57 177,63 170,59 167,50" fill="#eef0ff"/>
             <path d="M 174,40 L 180,38 L 184,44" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="192,38 195,34 198,38 195,41" fill="#eef0ff" opacity="0.85"/>
-            <path d="M 193,39 L 196,35" stroke="#6366f1" stroke-width="0.7" opacity="0.7"/>
+            <path d="M 193,39 L 196,35" stroke="#4338ca" stroke-width="0.7" opacity="0.7"/>
             <circle cx="184" cy="32" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <polygon points="165,150 170,132 178,128 188,134 192,146 188,158 180,164 172,160 166,152" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="166,149 171,133 178,130 187,136 190,146 186,157 179,163 172,159 167,151" fill="#eef0ff"/>
             <path d="M 174,152 L 180,154 L 184,148" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="192,154 196,158 193,162 190,158" fill="#eef0ff" opacity="0.85"/>
             <circle cx="184" cy="162" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <polygon points="84,174 92,166 100,168 108,166 116,174 110,186 103,192 97,192 90,186" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="85,174 93,167 100,169 107,167 115,174 109,185 103,190 97,190 91,185" fill="#eef0ff"/>
             <path d="M 94,178 L 100,182 L 106,178" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="97,194 100,198 103,194 100,191" fill="#eef0ff" opacity="0.85"/>
             <circle cx="88" cy="186" r="1.1" fill="#dde0ff" opacity="0.85"/>
             <circle cx="112" cy="186" r="1"   fill="#dde0ff" opacity="0.8"/>
@@ -297,22 +297,22 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
             <polygon points="22,128 30,128 34,132 35,150 30,160 20,164 12,158 8,146 12,136" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="23,129 30,129 33,133 34,150 29,159 20,162 13,157 9,146 13,137" fill="#eef0ff"/>
             <path d="M 16,140 L 22,138 L 26,144" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="8,152 4,156 6,161 10,157" fill="#eef0ff" opacity="0.85"/>
             <circle cx="16" cy="162" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <polygon points="22,64 12,58 8,46 13,36 21,30 30,32 35,42 34,54 28,62" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="23,63 13,57 9,47 14,38 21,32 30,34 34,43 33,53 27,61" fill="#eef0ff"/>
             <path d="M 16,52 L 22,54 L 26,48" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="8,40 4,36 6,32 10,36" fill="#eef0ff" opacity="0.85"/>
             <circle cx="16" cy="34" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <ellipse cx="100" cy="96" rx="50" ry="60" fill="#f5f6ff"/>
 
-            <g clip-path="url(#portalClip)" fill="#6366f1">
+            <g clip-path="url(#portalClip)" fill="#4338ca">
               <circle cx="72"  cy="54"  r="0.8" opacity="0.7"/>
               <circle cx="88"  cy="46"  r="0.6" opacity="0.55"/>
               <circle cx="118" cy="50"  r="0.9" opacity="0.65"/>
@@ -334,40 +334,40 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
             <ellipse cx="100" cy="96" rx="49" ry="59" fill="url(#nebula2)" clip-path="url(#portalClip)"/>
             <ellipse cx="100" cy="96" rx="49" ry="59" fill="url(#cosmicCore)"/>
 
-            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#6366f1" stroke-width="18" opacity="0.12" filter="url(#bigBloom)"/>
-            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
-            <ellipse cx="100" cy="96" rx="37" ry="45" fill="none" stroke="#818cf8" stroke-width="1.2" opacity="0.5" filter="url(#glow)"/>
-            <ellipse cx="100" cy="96" rx="25" ry="31" fill="none" stroke="#6366f1" stroke-width="0.8" opacity="0.2"/>
+            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#4338ca" stroke-width="18" opacity="0.12" filter="url(#bigBloom)"/>
+            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#4338ca" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
+            <ellipse cx="100" cy="96" rx="37" ry="45" fill="none" stroke="#4338ca" stroke-width="1.2" opacity="0.5" filter="url(#glow)"/>
+            <ellipse cx="100" cy="96" rx="25" ry="31" fill="none" stroke="#4338ca" stroke-width="0.8" opacity="0.2"/>
 
             <path d="M 100,96 C 106,88 116,87 121,95 C 127,104 122,118 110,122 C 97,127 82,120 77,106 C 71,91 78,73 94,69 C 113,65 130,78 132,99 C 135,123 119,140 100,141 C 77,143 59,124 58,101"
                   fill="none" stroke="#e8eaff" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
             <path d="M 100,96 C 106,88 116,87 121,95 C 127,104 122,118 110,122 C 97,127 82,120 77,106 C 71,91 78,73 94,69 C 113,65 130,78 132,99 C 135,123 119,140 100,141 C 77,143 59,124 58,101"
-                  fill="none" stroke="#6366f1" stroke-width="6" stroke-linecap="round" opacity="0.25" filter="url(#bigBloom)"/>
+                  fill="none" stroke="#4338ca" stroke-width="6" stroke-linecap="round" opacity="0.25" filter="url(#bigBloom)"/>
             <path d="M 100,96 C 106,88 116,87 121,95 C 127,104 122,118 110,122 C 97,127 82,120 77,106 C 71,91 78,73 94,69 C 113,65 130,78 132,99 C 135,123 119,140 100,141 C 77,143 59,124 58,101"
-                  fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" filter="url(#glow)"/>
+                  fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" filter="url(#glow)"/>
 
             <g filter="url(#softGlow)">
-              <circle cx="100" cy="36"  r="1.8" fill="#818cf8" opacity="0.6"/>
-              <circle cx="155" cy="44"  r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="162" cy="58"  r="1.3" fill="#4f46e5" opacity="0.5"/>
-              <circle cx="158" cy="132" r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="162" cy="146" r="1.3" fill="#4f46e5" opacity="0.5"/>
-              <circle cx="100" cy="158" r="1.8" fill="#6366f1" opacity="0.55"/>
-              <circle cx="42"  cy="132" r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="38"  cy="146" r="1.3" fill="#4f46e5" opacity="0.5"/>
-              <circle cx="42"  cy="58"  r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="38"  cy="46"  r="1.3" fill="#4f46e5" opacity="0.5"/>
+              <circle cx="100" cy="36"  r="1.8" fill="#4338ca" opacity="0.6"/>
+              <circle cx="155" cy="44"  r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="162" cy="58"  r="1.3" fill="#4338ca" opacity="0.5"/>
+              <circle cx="158" cy="132" r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="162" cy="146" r="1.3" fill="#4338ca" opacity="0.5"/>
+              <circle cx="100" cy="158" r="1.8" fill="#4338ca" opacity="0.55"/>
+              <circle cx="42"  cy="132" r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="38"  cy="146" r="1.3" fill="#4338ca" opacity="0.5"/>
+              <circle cx="42"  cy="58"  r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="38"  cy="46"  r="1.3" fill="#4338ca" opacity="0.5"/>
             </g>
 
-            <ellipse cx="100" cy="96" rx="56" ry="66" fill="#6366f1" opacity="0.08"/>
-            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
+            <ellipse cx="100" cy="96" rx="56" ry="66" fill="#4338ca" opacity="0.08"/>
+            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#4338ca" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
 
-            <circle cx="100" cy="22"  r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="176" cy="46"  r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="176" cy="146" r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="100" cy="170" r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="24"  cy="146" r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="24"  cy="46"  r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="100" cy="22"  r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="176" cy="46"  r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="176" cy="146" r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="100" cy="170" r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="24"  cy="146" r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="24"  cy="46"  r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
 
           </svg>
         </span>
@@ -435,18 +435,18 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
               <radialGradient id="cosmicCore" cx="46%" cy="44%" r="58%">
                 <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
                 <stop offset="8%"   stop-color="#c7d2fe" stop-opacity="0.95"/>
-                <stop offset="22%"  stop-color="#6366f1" stop-opacity="0.75"/>
+                <stop offset="22%"  stop-color="#4338ca" stop-opacity="0.75"/>
                 <stop offset="42%"  stop-color="#4338ca" stop-opacity="0.5"/>
                 <stop offset="65%"  stop-color="#eef0ff" stop-opacity="0.7"/>
                 <stop offset="100%" stop-color="#f5f5ff" stop-opacity="1"/>
               </radialGradient>
               <radialGradient id="nebula1" cx="60%" cy="38%" r="50%">
-                <stop offset="0%"   stop-color="#6366f1" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                <stop offset="0%"   stop-color="#4338ca" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#4338ca" stop-opacity="0"/>
               </radialGradient>
               <radialGradient id="nebula2" cx="35%" cy="65%" r="45%">
-                <stop offset="0%"   stop-color="#818cf8" stop-opacity="0.25"/>
-                <stop offset="100%" stop-color="#818cf8" stop-opacity="0"/>
+                <stop offset="0%"   stop-color="#4338ca" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#4338ca" stop-opacity="0"/>
               </radialGradient>
 
               <filter id="bigBloom" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
@@ -482,51 +482,51 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
             <polygon points="100,14 171,55 171,137 100,178 29,137 29,55" fill="url(#stoneFace)"/>
 
             <g clip-path="url(#hexClip)" fill="none" stroke-linecap="round">
-              <path d="M 46,68 Q 40,82 45,98"       stroke="#6366f1" stroke-width="1.1" opacity="0.35"/>
-              <path d="M 154,68 Q 160,82 155,98"    stroke="#6366f1" stroke-width="1.1" opacity="0.35"/>
-              <path d="M 40,108 Q 36,124 42,138"    stroke="#6366f1" stroke-width="0.9" opacity="0.25"/>
-              <path d="M 160,108 Q 164,124 158,138" stroke="#6366f1" stroke-width="0.9" opacity="0.25"/>
-              <path d="M 80,28 Q 76,38 80,48"       stroke="#6366f1" stroke-width="0.8" opacity="0.3"/>
-              <path d="M 120,28 Q 124,38 120,48"    stroke="#6366f1" stroke-width="0.8" opacity="0.3"/>
-              <path d="M 80,152 Q 76,162 80,172"    stroke="#6366f1" stroke-width="0.8" opacity="0.25"/>
-              <path d="M 120,152 Q 124,162 120,172" stroke="#6366f1" stroke-width="0.8" opacity="0.25"/>
+              <path d="M 46,68 Q 40,82 45,98"       stroke="#4338ca" stroke-width="1.1" opacity="0.35"/>
+              <path d="M 154,68 Q 160,82 155,98"    stroke="#4338ca" stroke-width="1.1" opacity="0.35"/>
+              <path d="M 40,108 Q 36,124 42,138"    stroke="#4338ca" stroke-width="0.9" opacity="0.25"/>
+              <path d="M 160,108 Q 164,124 158,138" stroke="#4338ca" stroke-width="0.9" opacity="0.25"/>
+              <path d="M 80,28 Q 76,38 80,48"       stroke="#4338ca" stroke-width="0.8" opacity="0.3"/>
+              <path d="M 120,28 Q 124,38 120,48"    stroke="#4338ca" stroke-width="0.8" opacity="0.3"/>
+              <path d="M 80,152 Q 76,162 80,172"    stroke="#4338ca" stroke-width="0.8" opacity="0.25"/>
+              <path d="M 120,152 Q 124,162 120,172" stroke="#4338ca" stroke-width="0.8" opacity="0.25"/>
             </g>
 
             <polygon points="100,14 171,55 171,137 100,178 29,137 29,55"
-                     fill="none" stroke="#6366f1" stroke-width="1.5" opacity="0.45" filter="url(#glow)"/>
+                     fill="none" stroke="#4338ca" stroke-width="1.5" opacity="0.45" filter="url(#glow)"/>
 
             <polygon points="84,18 90,6 97,0 103,0 110,6 116,18 108,26 100,24 92,26" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="86,18 91,8 97,2 103,2 109,8 114,18 107,25 100,23 93,25" fill="#eef0ff"/>
             <path d="M 94,14 L 100,10 L 106,14" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 84,18 L 92,26 L 100,24 L 108,26 L 116,18" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="96,-4 99,-6 102,-4 99,-2" fill="#eef0ff" opacity="0.85"/>
-            <path d="M 97,-4 L 101,-5" stroke="#6366f1" stroke-width="0.7" opacity="0.7"/>
+            <path d="M 97,-4 L 101,-5" stroke="#4338ca" stroke-width="0.7" opacity="0.7"/>
             <circle cx="88" cy="8"  r="1.1" fill="#dde0ff" opacity="0.9"/>
             <circle cx="112" cy="8" r="1"   fill="#dde0ff" opacity="0.85"/>
 
             <polygon points="165,42 172,33 180,30 187,36 192,46 188,58 178,64 170,60 166,50" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="166,43 173,35 180,32 186,38 190,47 186,57 177,63 170,59 167,50" fill="#eef0ff"/>
             <path d="M 174,40 L 180,38 L 184,44" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 165,42 L 166,50 L 170,60 L 178,64" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="192,38 195,34 198,38 195,41" fill="#eef0ff" opacity="0.85"/>
-            <path d="M 193,39 L 196,35" stroke="#6366f1" stroke-width="0.7" opacity="0.7"/>
+            <path d="M 193,39 L 196,35" stroke="#4338ca" stroke-width="0.7" opacity="0.7"/>
             <circle cx="184" cy="32" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <polygon points="165,150 170,132 178,128 188,134 192,146 188,158 180,164 172,160 166,152" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="166,149 171,133 178,130 187,136 190,146 186,157 179,163 172,159 167,151" fill="#eef0ff"/>
             <path d="M 174,152 L 180,154 L 184,148" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 165,150 L 166,152 L 170,132 L 178,128" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="192,154 196,158 193,162 190,158" fill="#eef0ff" opacity="0.85"/>
             <circle cx="184" cy="162" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <polygon points="84,174 92,166 100,168 108,166 116,174 110,186 103,192 97,192 90,186" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="85,174 93,167 100,169 107,167 115,174 109,185 103,190 97,190 91,185" fill="#eef0ff"/>
             <path d="M 94,178 L 100,182 L 106,178" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 84,174 L 92,166 L 100,168 L 108,166 L 116,174" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="97,194 100,198 103,194 100,191" fill="#eef0ff" opacity="0.85"/>
             <circle cx="88" cy="186" r="1.1" fill="#dde0ff" opacity="0.85"/>
             <circle cx="112" cy="186" r="1"   fill="#dde0ff" opacity="0.8"/>
@@ -534,22 +534,22 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
             <polygon points="22,128 30,128 34,132 35,150 30,160 20,164 12,158 8,146 12,136" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="23,129 30,129 33,133 34,150 29,159 20,162 13,157 9,146 13,137" fill="#eef0ff"/>
             <path d="M 16,140 L 22,138 L 26,144" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 22,128 L 30,128 L 34,132 L 35,150" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="8,152 4,156 6,161 10,157" fill="#eef0ff" opacity="0.85"/>
             <circle cx="16" cy="162" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <polygon points="22,64 12,58 8,46 13,36 21,30 30,32 35,42 34,54 28,62" fill="#dde0ff" stroke="#c7d2fe" stroke-width="0.5"/>
             <polygon points="23,63 13,57 9,47 14,38 21,32 30,34 34,43 33,53 27,61" fill="#eef0ff"/>
             <path d="M 16,52 L 22,54 L 26,48" fill="none" stroke="#c7d2fe" stroke-width="0.7" opacity="0.7"/>
-            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
-            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#a5b4fc" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
+            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" opacity="0.9" filter="url(#rockGlow)"/>
+            <path d="M 22,64 L 34,54 L 35,42 L 30,32" fill="none" stroke="#4338ca" stroke-width="0.9" stroke-linecap="round" opacity="0.9"/>
             <polygon points="8,40 4,36 6,32 10,36" fill="#eef0ff" opacity="0.85"/>
             <circle cx="16" cy="34" r="1.1" fill="#dde0ff" opacity="0.9"/>
 
             <ellipse cx="100" cy="96" rx="50" ry="60" fill="#f5f6ff"/>
 
-            <g clip-path="url(#portalClip)" fill="#6366f1">
+            <g clip-path="url(#portalClip)" fill="#4338ca">
               <circle cx="72"  cy="54"  r="0.8" opacity="0.7"/>
               <circle cx="88"  cy="46"  r="0.6" opacity="0.55"/>
               <circle cx="118" cy="50"  r="0.9" opacity="0.65"/>
@@ -571,40 +571,40 @@ function generateBaseHtml(brand: string, brandDark: string, title: string): stri
             <ellipse cx="100" cy="96" rx="49" ry="59" fill="url(#nebula2)" clip-path="url(#portalClip)"/>
             <ellipse cx="100" cy="96" rx="49" ry="59" fill="url(#cosmicCore)"/>
 
-            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#6366f1" stroke-width="18" opacity="0.12" filter="url(#bigBloom)"/>
-            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
-            <ellipse cx="100" cy="96" rx="37" ry="45" fill="none" stroke="#818cf8" stroke-width="1.2" opacity="0.5" filter="url(#glow)"/>
-            <ellipse cx="100" cy="96" rx="25" ry="31" fill="none" stroke="#6366f1" stroke-width="0.8" opacity="0.2"/>
+            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#4338ca" stroke-width="18" opacity="0.12" filter="url(#bigBloom)"/>
+            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#4338ca" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
+            <ellipse cx="100" cy="96" rx="37" ry="45" fill="none" stroke="#4338ca" stroke-width="1.2" opacity="0.5" filter="url(#glow)"/>
+            <ellipse cx="100" cy="96" rx="25" ry="31" fill="none" stroke="#4338ca" stroke-width="0.8" opacity="0.2"/>
 
             <path d="M 100,96 C 106,88 116,87 121,95 C 127,104 122,118 110,122 C 97,127 82,120 77,106 C 71,91 78,73 94,69 C 113,65 130,78 132,99 C 135,123 119,140 100,141 C 77,143 59,124 58,101"
                   fill="none" stroke="#e8eaff" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
             <path d="M 100,96 C 106,88 116,87 121,95 C 127,104 122,118 110,122 C 97,127 82,120 77,106 C 71,91 78,73 94,69 C 113,65 130,78 132,99 C 135,123 119,140 100,141 C 77,143 59,124 58,101"
-                  fill="none" stroke="#6366f1" stroke-width="6" stroke-linecap="round" opacity="0.25" filter="url(#bigBloom)"/>
+                  fill="none" stroke="#4338ca" stroke-width="6" stroke-linecap="round" opacity="0.25" filter="url(#bigBloom)"/>
             <path d="M 100,96 C 106,88 116,87 121,95 C 127,104 122,118 110,122 C 97,127 82,120 77,106 C 71,91 78,73 94,69 C 113,65 130,78 132,99 C 135,123 119,140 100,141 C 77,143 59,124 58,101"
-                  fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" filter="url(#glow)"/>
+                  fill="none" stroke="#4338ca" stroke-width="2.2" stroke-linecap="round" filter="url(#glow)"/>
 
             <g filter="url(#softGlow)">
-              <circle cx="100" cy="36"  r="1.8" fill="#818cf8" opacity="0.6"/>
-              <circle cx="155" cy="44"  r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="162" cy="58"  r="1.3" fill="#4f46e5" opacity="0.5"/>
-              <circle cx="158" cy="132" r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="162" cy="146" r="1.3" fill="#4f46e5" opacity="0.5"/>
-              <circle cx="100" cy="158" r="1.8" fill="#6366f1" opacity="0.55"/>
-              <circle cx="42"  cy="132" r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="38"  cy="146" r="1.3" fill="#4f46e5" opacity="0.5"/>
-              <circle cx="42"  cy="58"  r="1.6" fill="#6366f1" opacity="0.55"/>
-              <circle cx="38"  cy="46"  r="1.3" fill="#4f46e5" opacity="0.5"/>
+              <circle cx="100" cy="36"  r="1.8" fill="#4338ca" opacity="0.6"/>
+              <circle cx="155" cy="44"  r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="162" cy="58"  r="1.3" fill="#4338ca" opacity="0.5"/>
+              <circle cx="158" cy="132" r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="162" cy="146" r="1.3" fill="#4338ca" opacity="0.5"/>
+              <circle cx="100" cy="158" r="1.8" fill="#4338ca" opacity="0.55"/>
+              <circle cx="42"  cy="132" r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="38"  cy="146" r="1.3" fill="#4338ca" opacity="0.5"/>
+              <circle cx="42"  cy="58"  r="1.6" fill="#4338ca" opacity="0.55"/>
+              <circle cx="38"  cy="46"  r="1.3" fill="#4338ca" opacity="0.5"/>
             </g>
 
-            <ellipse cx="100" cy="96" rx="56" ry="66" fill="#6366f1" opacity="0.08"/>
-            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
+            <ellipse cx="100" cy="96" rx="56" ry="66" fill="#4338ca" opacity="0.08"/>
+            <ellipse cx="100" cy="96" rx="49" ry="59" fill="none" stroke="#4338ca" stroke-width="2.5" opacity="0.8" filter="url(#glow)"/>
 
-            <circle cx="100" cy="22"  r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="176" cy="46"  r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="176" cy="146" r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="100" cy="170" r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="24"  cy="146" r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
-            <circle cx="24"  cy="46"  r="3.5" fill="#6366f1" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="100" cy="22"  r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="176" cy="46"  r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="176" cy="146" r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="100" cy="170" r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="24"  cy="146" r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
+            <circle cx="24"  cy="46"  r="3.5" fill="#4338ca" filter="url(#glow)" opacity="0.85"/>
 
           </svg>
         </span>
@@ -655,7 +655,7 @@ export function generateCollectionsHtml(model: DataModel): string {
     font-size: 2rem;
   }
   .col-body { flex: 1; padding: 1.1rem 1.3rem; min-width: 0; }
-  .col-title { font-size: 1.05rem; font-weight: 700; color: #6366f1; text-decoration: none; }
+  .col-title { font-size: 1.05rem; font-weight: 700; color: #4338ca; text-decoration: none; }
   .col-title:hover { text-decoration: underline; }
   .col-count { font-size: 0.78rem; background: #e0e7ff; color: #4338ca; border-radius: 999px; padding: 0.15rem 0.65rem; font-weight: 600; margin-left: 0.5rem; vertical-align: middle; }
   .col-desc { font-size: 0.875rem; color: var(--brand); opacity: 0.7; margin: 0.3rem 0 0.6rem; }
@@ -671,8 +671,8 @@ export function generateCollectionsHtml(model: DataModel): string {
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 style="font-weight:800;font-size:1.5rem;letter-spacing:-0.02em;color:#6366f1;">Collections</h2>
-  <a href="?f=json" class="btn btn-sm" style="background:#eef2ff;color:#6366f1;font-size:0.8rem;border:1px solid #c7d2fe;">JSON</a>
+  <h2 style="font-weight:800;font-size:1.5rem;letter-spacing:-0.02em;color:#4338ca;">Collections</h2>
+  <a href="?f=json" class="btn btn-sm" style="background:#eef2ff;color:#4338ca;font-size:0.8rem;border:1px solid #c7d2fe;">JSON</a>
 </div>
 
 <div id="collections-map"></div>
@@ -729,7 +729,7 @@ export function generateCollectionsHtml(model: DataModel): string {
         (function() {
           var bbox = {{ col.extent.spatial.bbox[0] | to_json }};
           var sw = [bbox[1], bbox[0]], ne = [bbox[3], bbox[2]];
-          L.rectangle([sw, ne], { color: '#6366f1', weight: 2, fillOpacity: 0.07 })
+          L.rectangle([sw, ne], { color: '#4338ca', weight: 2, fillOpacity: 0.07 })
             .addTo(map)
             .bindPopup('<b>{{ col.title }}</b><br><a href="{{ config.server.url }}/collections/{{ col.id }}">View &rarr;</a>');
           bounds.extend([sw, ne]);
@@ -761,8 +761,8 @@ export function generateItemsHtml(model: DataModel): string {
   .feature-table td { padding:0.7rem 1rem; font-size:0.875rem; color:#334155; border-color:#f1f5f9; vertical-align:middle; }
   .feature-table tbody tr { transition:background 0.12s; }
   .feature-table tbody tr:hover { background:#f8fafc; }
-  .id-link { font-weight:700; font-family:monospace; font-size:0.95rem; color:#4f46e5; display:inline-flex; align-items:center; gap:0.4rem; text-decoration:underline; text-decoration-color:#c7d2fe; text-underline-offset:4px; text-decoration-thickness:2px; transition:all 0.2s; }
-  .id-link:hover { color:#3730a3; text-decoration-color:#4f46e5; }
+  .id-link { font-weight:700; font-family:monospace; font-size:0.95rem; color:#4338ca; display:inline-flex; align-items:center; gap:0.4rem; text-decoration:underline; text-decoration-color:#c7d2fe; text-underline-offset:4px; text-decoration-thickness:2px; transition:all 0.2s; }
+  .id-link:hover { color:#3730a3; text-decoration-color:#4338ca; }
   .chip { display:inline-block; font-size:0.72rem; padding:0.15rem 0.6rem; border-radius:999px; background:#e0e7ff; color:#4338ca; font-weight:600; }
   .items-meta-bar { display:flex; gap:1.5rem; flex-wrap:wrap; align-items:center; margin-bottom:0.75rem; padding:0.85rem 1.1rem; background:#fff; border:1px solid #e2e8f0; border-radius: var(--radius); box-shadow:var(--shadow-sm); }
   .items-meta-bar .meta-item { display:flex; flex-direction:column; }
@@ -778,16 +778,16 @@ export function generateItemsHtml(model: DataModel): string {
   .filter-row-val { flex: 2; min-width: 0; }
   .filter-row label { display:block; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:#94a3b8; font-weight:700; margin-bottom:0.3rem; }
   .filter-row select, .filter-row input { width:100%; font-size:0.85rem; padding:0.455rem 0.65rem; border:1px solid #cbd5e1; border-radius:0.4rem; color:#334155; background:#f8fafc; transition:all 0.15s; outline:none; }
-  .filter-row select:focus, .filter-row input:focus { border-color:#6366f1; background:#fff; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+  .filter-row select:focus, .filter-row input:focus { border-color:#4338ca; background:#fff; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
   .btn-remove-row { background:none; border:none; color:#cbd5e1; padding:0.45rem; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
   .btn-remove-row:hover { color:#ef4444; background:#fef2f2; border-radius:0.35rem; }
   .btn-add-filter { display:inline-flex; align-items:center; gap:0.45rem; background:#fff; border:1px solid #e2e8f0; color:#64748b; font-size:0.8rem; font-weight:700; padding:0.55rem 1.1rem; border-radius:0.5rem; cursor:pointer; transition:all 0.15s; width: 100%; justify-content: center; margin-bottom: 1.5rem; box-shadow:var(--shadow-sm); }
-  .btn-add-filter:hover { border-color:#6366f1; color:#6366f1; background:#f8fafc; box-shadow:var(--shadow-md); }
+  .btn-add-filter:hover { border-color:#4338ca; color:#4338ca; background:#f8fafc; box-shadow:var(--shadow-md); }
   .filter-section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; font-weight:800; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
   .filter-section-title::after { content:""; flex:1; height:1px; background:#f1f5f9; }
   .filter-actions { display:flex; gap:0.75rem; align-items:center; }
-  .btn-filter-apply { background:#6366f1; color:#fff; border:none; border-radius:0.5rem; font-size:0.82rem; font-weight:700; padding:0.55rem 1.4rem; cursor:pointer; transition:all 0.2s; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2); }
-  .btn-filter-apply:hover { background:#4f46e5; transform:translateY(-1px); box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.3); }
+  .btn-filter-apply { background:#4338ca; color:#fff; border:none; border-radius:0.5rem; font-size:0.82rem; font-weight:700; padding:0.55rem 1.4rem; cursor:pointer; transition:all 0.2s; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2); }
+  .btn-filter-apply:hover { background:#4338ca; transform:translateY(-1px); box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.3); }
   .btn-filter-apply:active { transform:translateY(0); }
   .btn-filter-clear { background:#fff; border:1px solid #e2e8f0; border-radius:0.5rem; font-size:0.82rem; font-weight:700; padding:0.55rem 1.4rem; color:#64748b; cursor:pointer; transition:all 0.2s; }
   .btn-filter-clear:hover { border-color:#94a3b8; color:#334155; background:#f8fafc; }
@@ -798,7 +798,7 @@ export function generateItemsHtml(model: DataModel): string {
   .active-chip button { background:none; border:none; cursor:pointer; color:#4338ca; padding:0; line-height:1; font-size:0.9rem; display:flex; align-items:center; opacity:0.6; transition:opacity 0.15s; }
   .active-chip button:hover { opacity:1; }
   .btn-filter-toggle { display:inline-flex; align-items:center; gap:0.45rem; font-size:0.82rem; font-weight:700; padding:0.38rem 0.85rem; border-radius:0.45rem; cursor:pointer; background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; transition:all 0.15s; white-space:nowrap; }
-  .btn-filter-toggle:hover, .btn-filter-toggle.active { background:#eef2ff; border-color:#c7d2fe; color:#6366f1; }
+  .btn-filter-toggle:hover, .btn-filter-toggle.active { background:#eef2ff; border-color:#c7d2fe; color:#4338ca; }
 </style>
 
 <div class="items-header">{{ data.title | default('Collection') }}</div>
@@ -835,7 +835,7 @@ export function generateItemsHtml(model: DataModel): string {
       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
       Filter
     </button>
-    <a href="?f=json" class="btn btn-sm" style="background:#eef2ff;color:#6366f1;font-size:0.8rem;border:1px solid #c7d2fe;">JSON</a>
+    <a href="?f=json" class="btn btn-sm" style="background:#eef2ff;color:#4338ca;font-size:0.8rem;border:1px solid #c7d2fe;">JSON</a>
   </div>
 </div>
 
@@ -883,9 +883,9 @@ export function generateItemsHtml(model: DataModel): string {
     <div class="d-flex gap-2">
       {% for link in data.links %}
         {% if link.rel == 'prev' %}
-          <a href="{{ link.href }}" class="btn btn-sm" style="background:#fff;color:#6366f1;border:1px solid #c7d2fe;font-size:0.75rem;padding:0.25rem 0.6rem;">&larr; Prev</a>
+          <a href="{{ link.href }}" class="btn btn-sm" style="background:#fff;color:#4338ca;border:1px solid #c7d2fe;font-size:0.75rem;padding:0.25rem 0.6rem;">&larr; Prev</a>
         {% elif link.rel == 'next' %}
-          <a href="{{ link.href }}" class="btn btn-sm" style="background:#fff;color:#6366f1;border:1px solid #c7d2fe;font-size:0.75rem;padding:0.25rem 0.6rem;">Next &rarr;</a>
+          <a href="{{ link.href }}" class="btn btn-sm" style="background:#fff;color:#4338ca;border:1px solid #c7d2fe;font-size:0.75rem;padding:0.25rem 0.6rem;">Next &rarr;</a>
         {% endif %}
       {% endfor %}
     </div>
@@ -929,7 +929,7 @@ export function generateItemsHtml(model: DataModel): string {
     }).addTo(map);
     var featuresData = {{ data | to_json | safe }};
     if (featuresData && featuresData.features && featuresData.features.length > 0) {
-      var brandColor = '#6366f1';
+      var brandColor = '#4338ca';
       var layer = L.geoJSON(featuresData, {
         style: function() { return { color: brandColor, weight: 2, fillOpacity: 0.18 }; },
         pointToLayer: function(feature, latlng) {
@@ -945,7 +945,7 @@ export function generateItemsHtml(model: DataModel): string {
           // Header
           html += '<div style="padding:10px 0; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">';
           html += '<span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; font-weight:700;">Feature</span>';
-          html += '<span style="font-family:monospace; font-size:0.85rem; font-weight:700; color:#6366f1;">#' + feature.id + '</span>';
+          html += '<span style="font-family:monospace; font-size:0.85rem; font-weight:700; color:#4338ca;">#' + feature.id + '</span>';
           html += '</div>';
 
           // Properties Scroll Area
@@ -962,7 +962,7 @@ export function generateItemsHtml(model: DataModel): string {
           html += '</div>';
 
           // Action Button
-          html += '<a href="' + detailsUrl + '" style="display:block; text-align:center; background:#6366f1; color:#fff; text-decoration:none; padding:8px; border-radius:6px; font-size:0.8rem; font-weight:700; margin-top:12px;">';
+          html += '<a href="' + detailsUrl + '" style="display:block; text-align:center; background:#4338ca; color:#fff; text-decoration:none; padding:8px; border-radius:6px; font-size:0.8rem; font-weight:700; margin-top:12px;">';
           html += 'View full details &rarr;';
           html += '</a>';
           
@@ -1253,12 +1253,12 @@ export function generateCollectionHtml(_model: DataModel): string {
   .coll-hero { display:flex; gap:1.75rem; align-items:flex-start; margin-bottom:2rem; }
   #coll-map { width:200px; height:170px; flex-shrink:0; border-radius:calc(var(--radius) * 0.75); border:1px solid #e2e8f0; box-shadow:var(--shadow-sm); }
   .coll-hero-body { flex:1; min-width:0; }
-  .coll-hero-title { font-size:2rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:0.25rem; color:#6366f1; }
+  .coll-hero-title { font-size:2rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:0.25rem; color:#4338ca; }
   .coll-hero-desc { color:#475569; font-size:0.95rem; margin-bottom:0.85rem; line-height:1.6; }
   .coll-hero-tags { display:flex; flex-wrap:wrap; gap:0.35rem; }
   .coll-hero-tag { font-size:0.72rem; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:999px; padding:0.15rem 0.65rem; }
-  .browse-btn { display:inline-flex; align-items:center; gap:0.6rem; padding:0.85rem 1.5rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius); font-weight:700; font-size:0.95rem; color:#6366f1; text-decoration:none; transition:all 0.2s; margin-bottom:1.5rem; }
-  .browse-btn:hover { background:#f1f5f9; border-color:#cbd5e1; color:#6366f1; text-decoration:none; box-shadow:var(--shadow-sm); }
+  .browse-btn { display:inline-flex; align-items:center; gap:0.6rem; padding:0.85rem 1.5rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius); font-weight:700; font-size:0.95rem; color:#4338ca; text-decoration:none; transition:all 0.2s; margin-bottom:1.5rem; }
+  .browse-btn:hover { background:#f1f5f9; border-color:#cbd5e1; color:#4338ca; text-decoration:none; box-shadow:var(--shadow-sm); }
   .url-block { background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius); padding:1.25rem 1.5rem; margin-bottom:1.5rem; }
   .url-row { display:flex; align-items:center; gap:1rem; padding:0.6rem 0; border-bottom:1px solid #f1f5f9; }
   .url-row:last-child { border-bottom:none; }
@@ -1375,7 +1375,7 @@ export function generateCollectionHtml(_model: DataModel): string {
     {% if data.extent and data.extent.spatial and data.extent.spatial.bbox %}
       var bbox = {{ data.extent.spatial.bbox[0] | tojson }};
       var sw = [bbox[1], bbox[0]], ne = [bbox[3], bbox[2]];
-      var brandColor = '#6366f1';
+      var brandColor = '#4338ca';
       L.rectangle([sw, ne], { color: brandColor, weight: 2, fillOpacity: 0.15 }).addTo(map);
       map.fitBounds([sw, ne], { padding: [8, 8] });
     {% endif %}
@@ -1391,7 +1391,7 @@ export function generateIndexHtml(model: DataModel): string {
 <style>
   .hero-sec { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem; gap:2rem; }
   .hero-text { flex:1; max-width:700px; }
-  .hero-title { font-size:2.25rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:1rem; color:#6366f1; }
+  .hero-title { font-size:2.25rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:1rem; color:#4338ca; }
   .hero-desc { font-size:1.05rem; color:#475569; line-height:1.6; margin-bottom:1.5rem; }
   .hero-graphic { flex-shrink:0; width:160px; height:auto; opacity:0.8; }
   
@@ -1399,9 +1399,9 @@ export function generateIndexHtml(model: DataModel): string {
   .cta-card:hover { background:#e2e8f0; border-color:#94a3b8; box-shadow:0 4px 12px rgba(0,0,0,0.06); text-decoration:none; color:inherit; transform:translateY(-2px); }
   .cta-icon { width:52px; height:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#0f172a; }
   .cta-body { flex:1; }
-  .cta-title { font-weight:600; font-size:1.15rem; color:#6366f1; margin-bottom:0.15rem; }
+  .cta-title { font-weight:600; font-size:1.15rem; color:#4338ca; margin-bottom:0.15rem; }
   .cta-desc { font-size:0.95rem; color:#475569; }
-  .cta-arrow { color:#6366f1; opacity:0.6; }
+  .cta-arrow { color:#4338ca; opacity:0.6; }
   .cta-card:hover .cta-arrow { opacity:1; }
   
   .api-block { border:1px solid #cbd5e1; border-radius:var(--radius); padding:0; margin-bottom:2rem; overflow:hidden; }
@@ -1620,7 +1620,7 @@ export function generateItemHtml(_model: DataModel): string {
   .item-prop-table th { width:200px; background:#f8fafc; color:#64748b; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; padding:0.75rem 1.25rem; text-align:left; border-bottom:1px solid #f1f5f9; }
   .item-prop-table td { padding:0.75rem 1.25rem; font-size:0.875rem; color:#334155; border-bottom:1px solid #f1f5f9; word-break:break-word; }
   .item-prop-table tbody tr:hover { background:#f8fafc; }
-  .nav-btn { display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.85rem; background:#fff; color:#6366f1; border:1px solid #c7d2fe; border-radius:0.5rem; font-size:0.82rem; font-weight:600; text-decoration:none; transition:all 0.15s; }
+  .nav-btn { display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.85rem; background:#fff; color:#4338ca; border:1px solid #c7d2fe; border-radius:0.5rem; font-size:0.82rem; font-weight:600; text-decoration:none; transition:all 0.15s; }
   .nav-btn:hover { background:#eef2ff; text-decoration:none; }
 </style>
 
@@ -1727,7 +1727,7 @@ export function generateItemHtml(_model: DataModel): string {
 
     var itemData = {{ data | to_json | safe }};
     if (itemData && itemData.geometry) {
-      var brandColor = '#6366f1';
+      var brandColor = '#4338ca';
       var layer = L.geoJSON(itemData, {
         style: function() { return { color: brandColor, weight: 3, fillOpacity: 0.2 }; },
         pointToLayer: function(feature, latlng) {
