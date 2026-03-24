@@ -38,7 +38,9 @@ export const generatePygeoapiConfig = async (
   // items-per-page dropdown. Must be present or page throws UndefinedError.
   yaml += `  limits:\n`;
   yaml += `    default_items: 10\n`;
-  yaml += `    max_items: 10000\n\n`;
+  yaml += `    max_items: 10000\n`;
+  yaml += `  templates:\n`;
+  yaml += `    path: /pygeoapi/local-templates\n\n`;
   yaml += `logging:\n  level: INFO\n\n`;
 
   // Metadata — enriched from model.metadata if available
@@ -145,15 +147,10 @@ export const generatePygeoapiConfig = async (
       yaml += `            - \${POSTGRES_SCHEMA}\n`;
       yaml += `        id_field: ${mapping?.primaryKeyColumn || 'fid'}\n`;
       yaml += `        table: ${sourceTable}\n`;
-      yaml += `        geom_field: ${layer.geometryColumnName || 'geom'}\n\n`;
+      yaml += `        geom_field: ${layer.geometryColumnName || 'geom'}\n`;
+      yaml += getCQL2Extensions();
     } else {
       // GeoPackage file provider (Databricks, direct GeoPackage, or no source)
-      // storage_crs tells pygeoapi the native CRS of the GeoPackage so it
-      // can reproject correctly to CRS84 for API output.
-      // - If model.crs is set (e.g. from import or manual selection), use it.
-      // - If not set, omit storage_crs entirely: pygeoapi's SQLiteGPKG provider
-      //   reads CRS from gpkg_spatial_ref_sys automatically for well-formed files.
-      //   Fallback to 4326 only as last resort since a wrong CRS is worse than none.
       const rawCrs = model.crs;
       const storageCrsUri = rawCrs
         ? (rawCrs.startsWith('http')
@@ -170,9 +167,134 @@ export const generatePygeoapiConfig = async (
       if (storageCrsUri) {
         yaml += `        storage_crs: ${storageCrsUri}\n`;
       }
-      yaml += `\n`;
+      yaml += getCQL2Extensions();
     }
+
+    // Explicitly define schema to ensure all fields are available as queryables.
+    // We resolve inheritance to include properties from parent layers.
+    const allProperties = resolveLayerProperties(layer, model.layers);
+    
+    yaml += `    schema:\n`;
+    yaml += `      # Resolved properties for ${layer.name} (Local: ${layer.properties.length}, Total: ${allProperties.length})\n`;
+    yaml += `      # Generator Version: 1.0.2\n`;
+    yaml += `      title: "${layer.name}"\n`;
+    yaml += `      type: object\n`;
+    yaml += `      properties:\n`;
+    yaml += `        "geoforge_ping":\n`;
+    yaml += `          title: "GeoForge Connection Check"\n`;
+    yaml += `          type: string\n`;
+    allProperties.forEach(prop => {
+      const typeInfo = mapFieldToSchemaType(prop);
+      // Quote property names to avoid YAML parsing issues with reserved words or types
+      yaml += `        "${prop.name}":\n`;
+      yaml += `          title: "${prop.title || prop.name}"\n`;
+      yaml += `          type: ${typeInfo.type}\n`;
+      if (typeInfo.format) yaml += `          format: ${typeInfo.format}\n`;
+      if (typeInfo.enum) {
+        yaml += `          enum:\n`;
+        typeInfo.enum.forEach((e: string) => { yaml += `            - "${e}"\n`; });
+      }
+    });
+    yaml += `\n`;
   }
 
   return yaml;
 };
+
+/**
+ * Returns the standard OGC API CQL2 extensions block for pygeoapi providers.
+ * Activating both cql2-text and cql2-json ensures broad client compatibility.
+ */
+function getCQL2Extensions(): string {
+  let s = `        extensions:\n`;
+  s +=    `          filters:\n`;
+  s +=    `            - cql2-text\n`;
+  s +=    `            - cql2-json\n`;
+  s +=    `            - cql-text\n\n`;
+  return s;
+}
+
+/**
+ * Resolves all properties for a layer, including inherited ones.
+ */
+function resolveLayerProperties(layer: any, allLayers: any[]): any[] {
+  const propertyMap = new Map<string, any>();
+  const visitedIds = new Set<string>();
+  let current = layer;
+  
+  const layersToProcess: any[] = [];
+  while (current) {
+    layersToProcess.unshift(current); // Base layers (top-most parent) first
+    
+    const parentRef = current.extends;
+    if (!parentRef || visitedIds.has(parentRef)) break;
+    
+    visitedIds.add(parentRef);
+    // Try lookup by ID first, then by name as fallback
+    current = allLayers.find(l => l.id === parentRef || l.name === parentRef);
+  }
+
+  layersToProcess.forEach(l => {
+    if (l.properties && Array.isArray(l.properties)) {
+      l.properties.forEach(p => {
+        propertyMap.set(p.name, p);
+      });
+    }
+  });
+
+  return Array.from(propertyMap.values());
+}
+
+/**
+ * Maps a Geoforge Field/FieldType to a standard JSON Schema type for pygeoapi
+ */
+function mapFieldToSchemaType(field: any): { type: string; format?: string; enum?: string[] } {
+  const ft = field.fieldType;
+  if (!ft) return { type: 'string' };
+
+  if (ft.kind === 'primitive') {
+    const bt = String(ft.baseType).toLowerCase();
+    switch (bt) {
+      case 'integer':
+      case 'int':
+      case 'int4':
+      case 'int8':
+      case 'integer32':
+      case 'integer64':
+      case 'bigint':
+      case 'long':
+      case 'short':
+      case 'smallint':
+      case 'tinyint':
+        // Pygeoapi/OGC Queryables often prefer 'number' for general numeric compatibility
+        return { type: 'number' };
+      case 'number':
+      case 'float':
+      case 'float4':
+      case 'float8':
+      case 'double':
+      case 'decimal':
+      case 'numeric':
+      case 'real':
+        return { type: 'number' };
+      case 'boolean':
+      case 'bool':
+        return { type: 'boolean' };
+      case 'date': return { type: 'string', format: 'date' };
+      case 'date-time':
+      case 'timestamp':
+      case 'timestamptz':
+        return { type: 'string', format: 'date-time' };
+      default: return { type: 'string' };
+    }
+  }
+  
+  if (ft.kind === 'codelist' && ft.mode === 'inline') {
+    return { 
+      type: 'string', 
+      enum: ft.values.map((v: any) => v.code || v.id) 
+    };
+  }
+
+  return { type: 'string' };
+}

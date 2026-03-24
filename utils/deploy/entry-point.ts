@@ -11,6 +11,7 @@ import {
 import { generateDeltaScript } from './delta';
 import { generateEnvFile, generateDockerCompose, generateDockerfile, generateFlyToml, generateRailwayJson } from './infra';
 import { generateReadme, generateGithubActionsWorkflow, generateReadmeForTarget, generateWorkflowForTarget } from './readme';
+import { generatePygeoapiTheme, generateCollectionsHtml, generateItemsHtml, generateItemHtml, generateCollectionHtml, generateIndexHtml } from './pygeoapi-theme';
 import {
   generateStacCatalog, generateStacCollection, generateStacLayerCatalog,
   generateStacItemSnippet, generateNginxStacConf,
@@ -35,6 +36,12 @@ export const generateDeployFiles = async (
     'model.json': JSON.stringify(model, null, 2),
     'Dockerfile': generateDockerfile(model, source),
     'pygeoapi-config.yml': await generatePygeoapiConfig(model, source, lang),
+    'templates/landing_page.html': generateIndexHtml(model),
+    'templates/_base.html': generatePygeoapiTheme(model),
+    'templates/collections/index.html': generateCollectionsHtml(model),
+    'templates/collections/items/index.html': generateItemsHtml(model),
+    'templates/collections/items/item.html': generateItemHtml(model),
+    'templates/collections/collection.html': generateCollectionHtml(model),
     '.env.template': generateEnvFile(source),
     '.gitignore': '.env\ndata/\n*.gpkg\n__pycache__/\n',
     'README.md': generateReadmeForTarget(model, source, target, lang),
