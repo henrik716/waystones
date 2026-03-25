@@ -26,15 +26,15 @@ function isValidSchemaRow(row: unknown): row is SchemaRow {
   if (!row || typeof row !== 'object') return false;
   const r = row as Record<string, unknown>;
   return typeof r.table_name === 'string' && r.table_name.length > 0
-      && typeof r.column_name === 'string' && r.column_name.length > 0
-      && typeof r.data_type === 'string';
+    && typeof r.column_name === 'string' && r.column_name.length > 0
+    && typeof r.data_type === 'string';
 }
 
 /**
  * Call the /api/pg-schema endpoint and convert the result to a DataModel.
  *
  * This is a browser-side client for the PostGIS proxy. Requires:
- * - A running GeoForge server with POST /api/pg-schema endpoint
+ * - A running Waystones server with POST /api/pg-schema endpoint
  * - Optional: SUPABASE_JWT_SECRET env var set on the server for auth
  *
  * @param connectionString - PostgreSQL connection string (e.g., "postgresql://user:pass@host:5432/db")

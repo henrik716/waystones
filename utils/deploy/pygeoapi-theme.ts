@@ -2,16 +2,16 @@ import { DataModel } from '../../types';
 import { hexToRgb } from '../colorUtils';
 
 /**
- * Toggle this to true to invert the colors of the GeoForge logo and favicon 
+ * Toggle this to true to invert the colors of the Waystones logo and favicon 
  * (White background with Indigo icon). Set to false for the original 
  * Indigo background with White icon.
  */
 const INVERT_BRAND_COLORS = true;
 
 export function deriveBrandColor(_model: DataModel): string {
-  // Always use GeoForge's primary indigo brand color for the API interface
+  // Always use Waystones's primary indigo brand color for the API interface
   // rather than inheriting random feature layer styling.
-  return '#4338ca'; // GeoForge Indigo
+  return '#4338ca'; // Waystones Indigo
 }
 
 function darken(hex: string, amount = 30): string {

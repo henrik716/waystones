@@ -154,8 +154,8 @@ export const generatePygeoapiConfig = async (
       const rawCrs = model.crs;
       const storageCrsUri = rawCrs
         ? (rawCrs.startsWith('http')
-            ? rawCrs
-            : `http://www.opengis.net/def/crs/EPSG/0/${rawCrs.split(':')[1]}`)
+          ? rawCrs
+          : `http://www.opengis.net/def/crs/EPSG/0/${rawCrs.split(':')[1]}`)
         : null;
       yaml += `    providers:\n`;
       yaml += `      - type: feature\n`;
@@ -173,15 +173,15 @@ export const generatePygeoapiConfig = async (
     // Explicitly define schema to ensure all fields are available as queryables.
     // We resolve inheritance to include properties from parent layers.
     const allProperties = resolveLayerProperties(layer, model.layers);
-    
+
     yaml += `    schema:\n`;
     yaml += `      # Resolved properties for ${layer.name} (Local: ${layer.properties.length}, Total: ${allProperties.length})\n`;
     yaml += `      # Generator Version: 1.0.2\n`;
     yaml += `      title: "${layer.name}"\n`;
     yaml += `      type: object\n`;
     yaml += `      properties:\n`;
-    yaml += `        "geoforge_ping":\n`;
-    yaml += `          title: "GeoForge Connection Check"\n`;
+    yaml += `        "waystones_ping":\n`;
+    yaml += `          title: "Waystones Connection Check"\n`;
     yaml += `          type: string\n`;
     allProperties.forEach(prop => {
       const typeInfo = mapFieldToSchemaType(prop);
@@ -207,10 +207,10 @@ export const generatePygeoapiConfig = async (
  */
 function getCQL2Extensions(): string {
   let s = `        extensions:\n`;
-  s +=    `          filters:\n`;
-  s +=    `            - cql2-text\n`;
-  s +=    `            - cql2-json\n`;
-  s +=    `            - cql-text\n\n`;
+  s += `          filters:\n`;
+  s += `            - cql2-text\n`;
+  s += `            - cql2-json\n`;
+  s += `            - cql-text\n\n`;
   return s;
 }
 
@@ -221,14 +221,14 @@ function resolveLayerProperties(layer: any, allLayers: any[]): any[] {
   const propertyMap = new Map<string, any>();
   const visitedIds = new Set<string>();
   let current = layer;
-  
+
   const layersToProcess: any[] = [];
   while (current) {
     layersToProcess.unshift(current); // Base layers (top-most parent) first
-    
+
     const parentRef = current.extends;
     if (!parentRef || visitedIds.has(parentRef)) break;
-    
+
     visitedIds.add(parentRef);
     // Try lookup by ID first, then by name as fallback
     current = allLayers.find(l => l.id === parentRef || l.name === parentRef);
@@ -288,11 +288,11 @@ function mapFieldToSchemaType(field: any): { type: string; format?: string; enum
       default: return { type: 'string' };
     }
   }
-  
+
   if (ft.kind === 'codelist' && ft.mode === 'inline') {
-    return { 
-      type: 'string', 
-      enum: ft.values.map((v: any) => v.code || v.id) 
+    return {
+      type: 'string',
+      enum: ft.values.map((v: any) => v.code || v.id)
     };
   }
 
