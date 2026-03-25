@@ -139,9 +139,24 @@ async function handlePostgisSchema(req, res) {
     const { Pool } = await import('pg');
     const targetSchema = schema || 'public';
 
+    // Disable SSL certificate verification for hosted DBs (Railway, Render, Fly.io etc.)
+    // which use self-signed/auto-generated certs. Still encrypts the connection.
+    let sslOptions = false;
+    try {
+      const parsedForSsl = new URL(finalConnectionString.includes('://') ? finalConnectionString : `postgresql://${finalConnectionString}`);
+      const sslmode = parsedForSsl.searchParams.get('sslmode') || 'prefer';
+      if (sslmode !== 'disable') {
+        sslOptions = { rejectUnauthorized: false };
+      }
+    } catch {
+      sslOptions = { rejectUnauthorized: false };
+    }
+
     const pool = new Pool({
       connectionString: finalConnectionString,
       connectionTimeoutMillis: 5000,   // 5 s to connect
+      statement_timeout: 10000,        // 10 s per query
+      ssl: sslOptions,
     });
 
     try {
@@ -190,7 +205,7 @@ async function handlePostgisSchema(req, res) {
   } catch (err) {
     console.error('PostGIS schema error (conn: %s):', scrubConnectionString(connectionString), err.message);
     res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Failed to read database schema' }));
+    res.end(JSON.stringify({ error: 'Failed to read database schema', detail: err.message }));
   }
 }
 
