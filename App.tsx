@@ -497,6 +497,7 @@ const App: React.FC = () => {
                       t={t}
                       lang={lang}
                       validation={deployValidation}
+                      onUpdateModel={handleUpdateModel}
                       onSourceChange={(source) => {
                         handleUpdateModel({ ...selectedModel, sourceConnection: source });
                       }}

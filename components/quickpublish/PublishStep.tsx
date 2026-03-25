@@ -13,12 +13,14 @@ import GitHubRepoBrowser from '../GitHubRepoBrowser';
 
 interface PublishStepProps {
   model: DataModel;
-  summary: InferredDataSummary;
+  summary?: InferredDataSummary;
   selectedLayers: Set<string>;
   dataBlob?: { blob: Blob; filename: string } | null;
   lang: string;
   t: Translations;
   onBack?: () => void;
+  /** When provided (e.g. from DeployPanel), skip building a geopackage source and use this instead */
+  sourceOverride?: SourceConnection;
 }
 
 interface OAuthState {
@@ -27,7 +29,7 @@ interface OAuthState {
   token?: any;
 }
 
-const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayers, dataBlob, lang, t, onBack }) => {
+const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayers, dataBlob, lang, t, onBack, sourceOverride }) => {
   const q = t.quickPublish || {};
   const d = t.deploy || {};
   const o = d.oauth || {};
@@ -117,7 +119,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
       layers: baseModel.layers.filter(l => selectedIds.has(l.id)),
     };
     if (!filtered.crs) {
-      const summarySrid = summary.layers.find(sl =>
+      const summarySrid = summary?.layers.find((sl: { tableName: string; srid: number }) =>
         filtered.layers.some(l => l.name === sl.tableName)
       )?.srid;
       if (summarySrid) {
@@ -128,21 +130,25 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
   };
 
   const buildSourceForPublish = (publishModel: DataModel, layerMappings: Record<string, LayerSourceMapping>): SourceConnection => {
+    if (sourceOverride) {
+      return { ...sourceOverride, layerMappings: sourceOverride.layerMappings ?? layerMappings };
+    }
     const sc = publishModel.sourceConnection;
     if (sc && (sc.type === 'postgis' || sc.type === 'supabase') && sc.config) {
       return { type: sc.type, config: sc.config, layerMappings };
     }
     return {
       type: 'geopackage' as const,
-      config: { filename: summary.filename || 'data.gpkg' },
+      config: { filename: summary?.filename || 'data.gpkg' },
       layerMappings,
     };
   };
 
   const buildLayerMappings = (publishModel: DataModel) => {
+    if (sourceOverride?.layerMappings) return sourceOverride.layerMappings;
     return Object.fromEntries(
       publishModel.layers.map(l => {
-        const summaryLayer = summary.layers.find(sl => sl.tableName === l.name);
+        const summaryLayer = summary?.layers.find((sl: { tableName: string; primaryKeyColumn: string }) => sl.tableName === l.name);
         const primaryKeyColumn = summaryLayer?.primaryKeyColumn || 'fid';
         return [l.id, {
           sourceTable: l.name,
