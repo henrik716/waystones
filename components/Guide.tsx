@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import type { Translations } from '../i18n/index';
 import { 
   X, Database, Layers, GitBranch, ArrowRight, 
-  Share2, FileCode, Cloud, Link2, BookOpen, ShieldCheck, Github, Rocket
+  Link2, Github, Rocket, Sparkles, Zap, Paintbrush, Check, Globe
 } from 'lucide-react';
 
 interface GuideProps {
@@ -23,44 +23,44 @@ const Guide: React.FC<GuideProps> = ({ onClose, t }) => {
 
   const sections = [
     {
-      title: t.guide.sections.modeling,
-      desc: t.guide.sections.modelingDesc,
+      title: t.guide.sections.quickPublish,
+      desc: t.guide.sections.quickPublishDesc,
+      icon: <Rocket className="text-indigo-600" size={28} />,
+      color: "bg-indigo-50",
+      accent: "border-indigo-100",
+      secondaryIcon: <Zap className="text-indigo-300" size={16} />
+    },
+    {
+      title: t.guide.sections.ai,
+      desc: t.guide.sections.aiDesc,
+      icon: <Sparkles className="text-violet-500" size={28} />,
+      color: "bg-violet-50",
+      accent: "border-violet-100",
+      secondaryIcon: <Check className="text-violet-300" size={16} />
+    },
+    {
+      title: t.guide.sections.connect,
+      desc: t.guide.sections.connectDesc,
+      icon: <Database className="text-emerald-500" size={28} />,
+      color: "bg-emerald-50",
+      accent: "border-emerald-100",
+      secondaryIcon: <Link2 className="text-emerald-300" size={16} />
+    },
+    {
+      title: t.guide.sections.design,
+      desc: t.guide.sections.designDesc,
       icon: <Layers className="text-indigo-500" size={28} />,
       color: "bg-indigo-50",
       accent: "border-indigo-100",
-      secondaryIcon: <ShieldCheck className="text-indigo-300" size={16} />
+      secondaryIcon: <Paintbrush className="text-indigo-300" size={16} />
     },
     {
-      title: t.guide.sections.mapping,
-      desc: t.guide.sections.mappingDesc,
-      icon: <Link2 className="text-amber-500" size={28} />,
-      color: "bg-amber-50",
-      accent: "border-amber-100",
-      secondaryIcon: <Database className="text-amber-300" size={16} />
-    },
-    {
-      title: t.guide.sections.versioning,
-      desc: t.guide.sections.versioningDesc,
+      title: t.guide.sections.collaboration,
+      desc: t.guide.sections.collaborationDesc,
       icon: <Github className="text-slate-700" size={28} />,
       color: "bg-slate-50",
       accent: "border-slate-200",
       secondaryIcon: <GitBranch className="text-slate-300" size={16} />
-    },
-    {
-      title: t.guide.sections.export,
-      desc: t.guide.sections.exportDesc,
-      icon: <Share2 className="text-blue-500" size={28} />,
-      color: "bg-blue-50",
-      accent: "border-blue-100",
-      secondaryIcon: <FileCode className="text-blue-300" size={16} />
-    },
-    {
-      title: t.guide.sections.api,
-      desc: t.guide.sections.apiDesc,
-      icon: <Rocket className="text-violet-500" size={28} />,
-      color: "bg-violet-50",
-      accent: "border-violet-100",
-      secondaryIcon: <Cloud className="text-violet-300" size={16} />
     }
   ];
 

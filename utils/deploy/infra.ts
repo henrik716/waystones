@@ -67,8 +67,8 @@ export const generateEnvFile = (source: SourceConnection): string => {
 
   // FIX: QGIS Server needs QGIS_SERVER_SERVICE_URL so GetCapabilities advertises
   // the correct public HTTPS URL rather than the internal http:// address.
-  // QGIS Server 3.x serves WMS/WFS/WCS at /ows/ by default.
-  env += `\n# --- QGIS Server public URL (WMS/WFS at /ows/) ---\n`;
+  // QGIS Server 3.x serves WMS and WCS at /ows/ by default.
+  env += `\n# --- QGIS Server public URL (WMS at /ows/) ---\n`;
   env += `# Set to the public-facing HTTPS URL for the QGIS Server service.\n`;
   env += `# Without this, GetCapabilities will advertise http:// behind an HTTPS proxy.\n`;
   env += `# Railway: https://<qgis-service>.up.railway.app/ows/\n`;
@@ -108,7 +108,7 @@ export const generateDockerCompose = (
 #   1. Copy .env.template to .env and fill in credentials
 #   2. docker compose up -d
 #   3. OGC API Features: http://localhost:5000
-#   4. WMS/WFS (QGIS):   http://localhost:8080/ows/?SERVICE=WMS&REQUEST=GetCapabilities
+#   4. WMS (QGIS):   http://localhost:8080/ows/?SERVICE=WMS&REQUEST=GetCapabilities
 #   5. Downloads:        http://localhost:\${DOWNLOAD_PORT:-8081}
 
 services:
@@ -139,7 +139,7 @@ services:
   // WMS via QGIS Server (only if there are geometry layers)
   if (hasGeomLayers) {
     compose += `
-  # --- WMS/WFS (QGIS Server) ---
+  # --- WMS (QGIS Server) ---
   # QGIS Server 3.x serves all OGC services at /ows/ by default.
   # WMS GetCapabilities: http://localhost:8080/ows/?SERVICE=WMS&REQUEST=GetCapabilities
   #

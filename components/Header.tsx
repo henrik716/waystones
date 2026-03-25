@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { HelpCircle, Sparkles, X, Activity, Check, AlertTriangle } from 'lucide-react';
+import { HelpCircle, Sparkles, X, Activity, Check, AlertTriangle, Github } from 'lucide-react';
 import { Language } from '../types';
 import { AiProvider, getProvider, setProvider, getApiKey, saveApiKey, clearApiKey, getTrialUsesLeft } from '../utils/aiService';
 import { useAiStatus } from '../hooks/useAiStatus';
@@ -380,6 +380,16 @@ const Header: React.FC<{
             </div>
           )}
         </div>
+
+        <a
+          href="https://github.com/henrik716/waystones"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="GitHub - View Source Code"
+          className="p-2 md:p-3 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shrink-0"
+        >
+          <Github size={18} className="md:w-[22px] md:h-[22px]" />
+        </a>
 
         <button aria-label="Hjelp" onClick={onShowGuide} className="p-2 md:p-3 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shrink-0">
           <HelpCircle size={18} className="md:w-[22px] md:h-[22px]" />
