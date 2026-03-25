@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { Translations } from '../i18n/index';
-import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe } from 'lucide-react';
+import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2 } from 'lucide-react';
 import { DataModel } from '../types';
 
 interface LandingScreenProps {
@@ -11,7 +11,7 @@ interface LandingScreenProps {
   onImportFile: () => void;
   onImportUrl: () => void;
   onImportGithub: () => void;
-  onImportDatabase: () => void;
+  onImportDatabase?: (sourceType: 'postgis' | 'supabase') => void;
   onSelectModel: (id: string) => void;
   isParsing: boolean;
 }
@@ -43,45 +43,44 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
       <div className="w-full max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 mt-4 md:mt-6">
 
         {/* Hero */}
-        <div className="text-center space-y-5">
+        <div className="text-center space-y-6">
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 leading-snug max-w-xl mx-auto">
             {l.heroTagline}
           </h1>
 
-          {/* 3-step flow strip */}
-          <div className="flex items-center justify-center overflow-x-auto">
-            <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm w-28 md:w-36 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
-                <Database size={18} />
+          {/* Output showcase */}
+          <div className="bg-white border border-slate-100 shadow-sm rounded-2xl px-6 py-5 flex flex-col items-center gap-4">
+            <span className="text-[10px] font-black text-slate-300 tracking-widest uppercase">{l.heroOutputLabel}</span>
+            <div className="flex flex-wrap justify-center items-center gap-3">
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-emerald-50">
+                <Globe size={16} className="text-emerald-600" />
+                <span className="text-sm font-bold text-emerald-700">OGC API</span>
               </div>
-              <span className="text-xs font-black text-slate-800 text-center leading-tight">{l.heroStep1Label}</span>
-              <span className="text-[10px] text-slate-400 text-center leading-tight hidden md:block">{l.heroStep1Sub}</span>
-            </div>
-            <ArrowRight size={16} className="text-slate-300 mx-2 shrink-0" />
-            <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm w-28 md:w-36 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500">
-                <Layers size={18} />
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-emerald-50">
+                <Layers size={16} className="text-emerald-600" />
+                <span className="text-sm font-bold text-emerald-700">WMS</span>
               </div>
-              <span className="text-xs font-black text-slate-800 text-center leading-tight">{l.heroStep2Label}</span>
-              <span className="text-[10px] text-slate-400 text-center leading-tight hidden md:block">{l.heroStep2Sub}</span>
-            </div>
-            <ArrowRight size={16} className="text-slate-300 mx-2 shrink-0" />
-            <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm w-28 md:w-36 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center text-sky-500">
-                <Globe size={18} />
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-indigo-50">
+                <Server size={16} className="text-indigo-600" />
+                <span className="text-sm font-bold text-indigo-700">Docker</span>
               </div>
-              <span className="text-xs font-black text-slate-800 text-center leading-tight">{l.heroStep3Label}</span>
-              <span className="text-[10px] text-slate-400 text-center leading-tight hidden md:block">{l.heroStep3Sub}</span>
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-indigo-50">
+                <GitBranch size={16} className="text-indigo-600" />
+                <span className="text-sm font-bold text-indigo-700">CI/CD</span>
+              </div>
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-blue-50">
+                <Code2 size={16} className="text-blue-600" />
+                <span className="text-sm font-bold text-blue-700">OpenAPI</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Two paths */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Three paths: Asymmetric 2-column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
 
-          {/* Path 1: Publish data */}
-          {/* Endret fra space-y-6 til flex flex-col gap-6 for å tillate strekking */}
-          <div className="group relative bg-white rounded-[32px] border-2 border-slate-200 hover:border-emerald-400 p-8 md:p-10 flex flex-col gap-6 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-100/50">
+          {/* Path 1: Publish data (Left column - wider) */}
+          <div className="md:col-span-3 group relative bg-white rounded-[32px] border-2 border-slate-200 hover:border-emerald-400 p-8 md:p-10 flex flex-col gap-6 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-100/50">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
                 <Upload size={28} />
@@ -93,7 +92,6 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
             </div>
 
             {/* Dropzone */}
-            {/* Lagt til flex-1 for å fylle høyden, og justify-center for å midtstille innholdet */}
             <div
               onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
               onDragLeave={() => setIsDragOver(false)}
@@ -130,10 +128,49 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
             />
           </div>
 
-          {/* Path 2: Work with model */}
-          <div className="group relative bg-white rounded-[32px] border-2 border-slate-200 hover:border-indigo-400 p-8 md:p-10 space-y-6 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-100/50">
+          {/* Right column: Connect & Deploy + Work with model stacked */}
+          <div className="md:col-span-2 flex flex-col gap-6">
+            {/* Path 2: Connect & Deploy */}
+            <div className="group relative bg-white rounded-[32px] border-2 border-slate-200 hover:border-indigo-400 p-8 md:p-10 flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-indigo-100/50">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                  <Zap size={28} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight">{l.connectTitle}</h2>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">{l.connectDesc}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 flex-1 flex flex-col justify-center mt-4">
+                <button
+                  onClick={() => onImportDatabase && onImportDatabase('postgis')}
+                  className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
+                    <Server size={20} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{l.connectPostgis}</span>
+                  <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
+                </button>
+
+                <button
+                  onClick={() => onImportDatabase && onImportDatabase('supabase')}
+                  className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
+                    <Cloud size={20} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{l.connectSupabase}</span>
+                  <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
+                </button>
+              </div>
+            </div>
+
+            {/* Path 3: Work with model (Right column bottom) */}
+            <div className="group relative bg-white rounded-[32px] border-2 border-slate-200 hover:border-blue-400 p-8 md:p-10 space-y-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/50">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
                 <PenTool size={28} />
               </div>
               <div>
@@ -145,75 +182,50 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
             <div className="space-y-3">
               <button
                 onClick={onNewModel}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 text-left transition-all group/btn"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-500 group-hover/btn:bg-indigo-200 transition-colors">
-                  <Plus size={20} />
+                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center text-blue-500 group-hover/btn:bg-blue-200 transition-colors">
+                  <Plus size={16} />
                 </div>
                 <span className="text-sm font-bold text-slate-700">{l.modelNew}</span>
-                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
+                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-blue-400 transition-colors" />
               </button>
 
               <button
                 onClick={onImportGithub}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 text-left transition-all group/btn"
               >
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
-                  <Github size={20} />
+                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-blue-100 group-hover/btn:text-blue-500 transition-colors">
+                  <Github size={16} />
                 </div>
                 <span className="text-sm font-bold text-slate-700">{l.modelImportGithub}</span>
-                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
+                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-blue-400 transition-colors" />
               </button>
 
               <button
                 onClick={onImportFile}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 text-left transition-all group/btn"
               >
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
-                  <Layers size={20} />
+                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-blue-100 group-hover/btn:text-blue-500 transition-colors">
+                  <Layers size={16} />
                 </div>
                 <span className="text-sm font-bold text-slate-700">{l.modelImportFile}</span>
-                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
-              </button>
-
-              <button
-                onClick={onImportDatabase}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
-              >
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
-                  <Database size={20} />
-                </div>
-                <span className="text-sm font-bold text-slate-700">{l.modelImportDatabase}</span>
-                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
+                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-blue-400 transition-colors" />
               </button>
 
               <button
                 onClick={onImportUrl}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 text-left transition-all group/btn"
               >
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
-                  <Globe size={20} />
+                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-blue-100 group-hover/btn:text-blue-500 transition-colors">
+                  <Globe size={16} />
                 </div>
                 <span className="text-sm font-bold text-slate-700">{l.modelImportUrl}</span>
-                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
+                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-blue-400 transition-colors" />
               </button>
             </div>
+            </div>
           </div>
-        </div>
-
-        {/* What can I do? */}
-        <div className="max-w-2xl mx-auto w-full space-y-3">
-          <p className="text-xs font-bold text-slate-400 text-center">{l.whatCanIDoTitle}</p>
-          <ul className="space-y-2">
-            {[l.whatCanIDo1, l.whatCanIDo2, l.whatCanIDo3, l.whatCanIDo4, l.whatCanIDo5].map((item, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
-                <span className="mt-0.5 w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                  <ArrowRight size={10} />
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Existing models */}
@@ -235,6 +247,21 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
             </div>
           </div>
         )}
+
+        {/* What can I do? */}
+        <div className="max-w-2xl mx-auto w-full space-y-3">
+          <p className="text-xs font-bold text-slate-400 text-center">{l.whatCanIDoTitle}</p>
+          <ul className="space-y-2">
+            {[l.whatCanIDo1, l.whatCanIDo2, l.whatCanIDo3, l.whatCanIDo4, l.whatCanIDo5].filter(Boolean).map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
+                <span className="mt-0.5 w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ArrowRight size={10} />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

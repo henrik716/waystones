@@ -9,12 +9,13 @@ interface DatabaseImportDialogProps {
   t: Translations;
   onClose: () => void;
   onImport: (model: DataModel) => void;
+  initialSourceType?: 'supabase' | 'postgis';
 }
 
 type SourceType = 'supabase' | 'postgis';
 
-const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose, onImport }) => {
-  const [sourceType, setSourceType] = useState<SourceType>('postgis');
+const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose, onImport, initialSourceType = 'postgis' }) => {
+  const [sourceType, setSourceType] = useState<SourceType>(initialSourceType);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +67,26 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
   const handleImport = () => {
     if (!fetchedModel) return;
     const filteredLayers = fetchedModel.layers.filter(l => selectedLayerIds.has(l.id));
-    onImport({ ...fetchedModel, layers: filteredLayers });
+
+    // Attach source connection to the model
+    const modelWithSource = {
+      ...fetchedModel,
+      layers: filteredLayers,
+      sourceConnection: sourceType === 'supabase'
+        ? {
+            type: 'supabase' as const,
+            url: supabaseUrl,
+            anonKey: supabaseAnonKey,
+            schema: supabaseSchema
+          }
+        : {
+            type: 'postgis' as const,
+            connectionString: postgisConnectionString,
+            schema: postgisSchema
+          }
+    };
+
+    onImport(modelWithSource);
   };
 
   const handleBack = () => {
@@ -315,7 +335,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
               <button
                 onClick={handleConnect}
                 disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading && <Loader2 size={16} className="animate-spin" />}
                 {loading ? (labels.connecting || 'Connecting...') : labels.connect || 'Connect'}
