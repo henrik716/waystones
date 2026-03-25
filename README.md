@@ -32,7 +32,7 @@ Build complex geospatial schemas with ease:
 Deploy your services to your favorite cloud with pre-configured kits:
 - **Cloud Native**: Support for **Railway**, **Fly.io**, and **GitHub Container Registry (GHCR)**.
 - **Modern Standards**: Automatically generates `pygeoapi` (REST) and **QGIS Server** (WMS) configurations.
-- **Live Data Sync**: Integrated **Delta Sync Engine** for keeping live PostGIS, Supabase, and Databricks sources in sync.
+- **Live Data Sync**: Integrated **Delta Sync Engine** for keeping live PostGIS and Supabase sources in sync.
 - **Advanced Metadata**: Built-in support for **STAC** (SpatioTemporal Asset Catalog) catalogs.
 
 ### 🔍 GitHub-First Workflow
@@ -52,9 +52,9 @@ Connect Claude or Gemini to auto-generate metadata, field descriptions, and even
 | Layer | Technology |
 |---|---|
 | **Frontend** | React 19, TypeScript, Vite 6 |
-| **Geospatial** | GDAL3.js, jszip, STAC |
+| **Geospatial** | GDAL3.js, jszip, js-yaml, STAC |
 | **Icons** | Lucide React |
-| **Sources** | PostGIS (pg), Supabase, Databricks, GeoPackage |
+| **Sources** | PostGIS (pg), Supabase, GeoPackage |
 | **Engines** | pygeoapi, QGIS Server |
 | **Deployment** | Docker, Fly.io, Railway, GitHub Actions |
 
