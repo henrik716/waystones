@@ -44,6 +44,15 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
   };
 
   const [kwInput, setKwInput] = useState('');
+  const [touched, setTouched] = useState(false);
+
+  const errors = {
+    name: !model.name.trim(),
+    contactName: !meta.contactName.trim(),
+    contactEmail: !meta.contactEmail.trim(),
+    contactOrganization: !meta.contactOrganization.trim(),
+  };
+  const hasErrors = Object.values(errors).some(Boolean);
   const addKeyword = () => {
     const kw = kwInput.trim();
     if (kw && !meta.keywords.includes(kw)) {
@@ -103,12 +112,13 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
 
       {/* Dataset name */}
       <div className="space-y-1.5">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.modelName}</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.modelName}<span className="text-red-400 ml-0.5">*</span></label>
         <input
           value={model.name}
           onChange={e => onUpdateModel({ ...model, name: e.target.value })}
-          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all"
+          className={`w-full bg-white border-2 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 transition-all ${touched && errors.name ? 'border-red-400 focus:border-red-400 focus:ring-red-500/10' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-500/10'}`}
         />
+        {touched && errors.name && <p className="text-xs text-red-500 font-medium">Required</p>}
       </div>
 
       {/* Description */}
@@ -136,16 +146,19 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
       {/* Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.contactName}</label>
-          <input value={meta.contactName} onChange={e => updateMeta({ contactName: e.target.value })} placeholder={md.contactNamePlaceholder} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all" />
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.contactName}<span className="text-red-400 ml-0.5">*</span></label>
+          <input value={meta.contactName} onChange={e => updateMeta({ contactName: e.target.value })} placeholder={md.contactNamePlaceholder} className={`w-full bg-white border-2 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-4 transition-all ${touched && errors.contactName ? 'border-red-400 focus:border-red-400 focus:ring-red-500/10' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-500/10'}`} />
+          {touched && errors.contactName && <p className="text-xs text-red-500 font-medium">Required</p>}
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.contactEmail}</label>
-          <input value={meta.contactEmail} onChange={e => updateMeta({ contactEmail: e.target.value })} placeholder={md.contactEmailPlaceholder} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all" />
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.contactEmail}<span className="text-red-400 ml-0.5">*</span></label>
+          <input value={meta.contactEmail} onChange={e => updateMeta({ contactEmail: e.target.value })} placeholder={md.contactEmailPlaceholder} className={`w-full bg-white border-2 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-4 transition-all ${touched && errors.contactEmail ? 'border-red-400 focus:border-red-400 focus:ring-red-500/10' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-500/10'}`} />
+          {touched && errors.contactEmail && <p className="text-xs text-red-500 font-medium">Required</p>}
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.contactOrganization}</label>
-          <input value={meta.contactOrganization} onChange={e => updateMeta({ contactOrganization: e.target.value })} placeholder={md.contactOrganizationPlaceholder} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all" />
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{md.contactOrganization}<span className="text-red-400 ml-0.5">*</span></label>
+          <input value={meta.contactOrganization} onChange={e => updateMeta({ contactOrganization: e.target.value })} placeholder={md.contactOrganizationPlaceholder} className={`w-full bg-white border-2 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-4 transition-all ${touched && errors.contactOrganization ? 'border-red-400 focus:border-red-400 focus:ring-red-500/10' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-500/10'}`} />
+          {touched && errors.contactOrganization && <p className="text-xs text-red-500 font-medium">Required</p>}
         </div>
       </div>
 
@@ -235,7 +248,7 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
         <button onClick={onBack} className="px-6 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 active:scale-95 transition-all">
           {q.back}
         </button>
-        <button onClick={onNext} className="px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-slate-800 active:scale-95 transition-all shadow-lg flex items-center gap-2">
+        <button onClick={() => { setTouched(true); if (!hasErrors) onNext(); }} className="px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-slate-800 active:scale-95 transition-all shadow-lg flex items-center gap-2">
           {q.next} <ArrowRight size={16} />
         </button>
       </div>
