@@ -33,7 +33,7 @@ const Field: React.FC<{
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold text-slate-800 outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-400 transition-all"
+          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all"
         />
         {isPassword && (
           <button
@@ -146,16 +146,16 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 }
               }} />
               {localDataFile ? (
-                <div className="flex items-center gap-3 bg-emerald-50 text-emerald-700 px-5 py-3 rounded-2xl border border-emerald-200">
+                <div className="flex items-center gap-3 bg-indigo-50 text-indigo-700 px-5 py-3 rounded-2xl border border-indigo-200">
                   <Check size={16} strokeWidth={3} />
                   <span className="text-xs font-black truncate flex-1">{localDataFile.filename}</span>
-                  <span className="text-[10px] font-bold text-emerald-500">{localDataFile.blob.size < 1024 * 1024 ? `${(localDataFile.blob.size / 1024).toFixed(1)} KB` : `${(localDataFile.blob.size / (1024 * 1024)).toFixed(1)} MB`}</span>
-                  <button onClick={() => { onLocalDataFileChange(null); onIncludeDataChange(false); }} className="text-emerald-400 hover:text-rose-500 transition-colors"><X size={16}/></button>
+                  <span className="text-[10px] font-bold text-indigo-500">{localDataFile.blob.size < 1024 * 1024 ? `${(localDataFile.blob.size / 1024).toFixed(1)} KB` : `${(localDataFile.blob.size / (1024 * 1024)).toFixed(1)} MB`}</span>
+                  <button onClick={() => { onLocalDataFileChange(null); onIncludeDataChange(false); }} className="text-indigo-400 hover:text-rose-500 transition-colors"><X size={16}/></button>
                 </div>
               ) : (
                 <button
                   onClick={() => gpkgFileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-violet-300 hover:text-violet-500 transition-all text-xs font-bold"
+                  className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all text-xs font-bold"
                 >
                   <Upload size={16} /> {d.includeDataUpload}
                 </button>
@@ -166,7 +166,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
       </div>
       <div className="flex gap-4">
         <button onClick={onBack} className="px-8 py-4 rounded-2xl border-2 bg-white border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all hover:border-slate-300">{d.back}</button>
-        <button onClick={onNext} disabled={!isConnectionValid} className="px-8 py-4 rounded-2xl bg-violet-600 text-white font-black text-[10px] uppercase tracking-widest disabled:opacity-50 shadow-lg shadow-violet-200 active:scale-95 transition-all hover:bg-violet-700">{d.next}</button>
+        <button onClick={onNext} disabled={!isConnectionValid} className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest disabled:opacity-50 shadow-lg shadow-indigo-200 active:scale-95 transition-all hover:bg-indigo-700">{d.next}</button>
       </div>
     </section>
   );

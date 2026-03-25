@@ -22,10 +22,10 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
   const isMapped = !!mapping?.sourceTable;
 
   return (
-    <div className={`bg-white rounded-[24px] border transition-all overflow-hidden ${isExpanded ? 'border-violet-200 ring-4 ring-violet-500/5' : 'border-slate-200 shadow-sm'}`}>
+    <div className={`bg-white rounded-[24px] border transition-all overflow-hidden ${isExpanded ? 'border-indigo-200 ring-4 ring-indigo-500/5' : 'border-slate-200 shadow-sm'}`}>
       <button onClick={onToggle} className="w-full flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
         <div className="flex items-center gap-4">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isMapped ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isMapped ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
             {isMapped ? <Check size={20} /> : <Table size={20} />}
           </div>
           <div className="text-left">
@@ -35,7 +35,7 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
         </div>
         <div className="flex items-center gap-3">
            {mapping?.timestampColumn && (
-              <span className="hidden sm:flex text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-lg font-black uppercase tracking-tighter items-center gap-1">
+              <span className="hidden sm:flex text-[9px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-lg font-black uppercase tracking-tighter items-center gap-1">
                 <Clock size={10} /> delta
               </span>
            )}
@@ -69,7 +69,7 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
               <label className="text-[10px] font-black uppercase text-slate-400 px-1 flex items-center gap-2">
                   {d.timestampColumn || 'Timestamp Column'}
                   <div className="group relative">
-                    <Info size={14} className="text-slate-300 cursor-help hover:text-violet-500 transition-colors" />
+                    <Info size={14} className="text-slate-300 cursor-help hover:text-indigo-500 transition-colors" />
                     <div className="absolute bottom-full left-0 md:left-1/2 md:-translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-white text-[10px] rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-2xl font-medium leading-relaxed border border-slate-700">
                         {d.timestampExplainer}
                     </div>
@@ -79,7 +79,7 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
                 <select
                   value={mapping?.timestampColumn || ''}
                   onChange={e => onUpdateMapping({ timestampColumn: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold outline-none appearance-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-400 transition-all cursor-pointer shadow-sm"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold outline-none appearance-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all cursor-pointer shadow-sm"
                 >
                   <option value="">{d.noTimestamp}</option>
                   {layer.properties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
@@ -102,7 +102,7 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
                   <input
                     value={(mapping?.fieldMappings || {})[prop.id] || prop.name}
                     onChange={e => onFieldChange(prop.id, e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-400 transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all"
                   />
                 </div>
               ))}
