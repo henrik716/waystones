@@ -1,5 +1,5 @@
 <div align="center">
-# Waystones
+<h1>Waystones</h1>
 
 **The fastest way to design, model, and deploy world-class geospatial services.**
 
@@ -13,7 +13,7 @@
 
 Waystones is a modern, web-native platform that bridges the gap between raw spatial data and production-ready geospatial infrastructure. With a focus on developer experience and standards-compliance, it allows you to build OGC API – Features and WMS services in minutes, not days.
 
-## ⚡ The "Wow" Factor
+## ✨ Key Features
 
 ### 🚀 Quick Publish
 **From data to live URL in under 60 seconds.**
@@ -72,6 +72,23 @@ npm run dev
 
 Visit `http://localhost:3000` and start modeling.
 
+### ⚙️ Environment Variables
+
+For full functionality, copy `.env.example` to `.env` (if it exists) or manually configure:
+
+```env
+# GitHub OAuth (required for GitHub integration)
+GITHUB_CLIENT_ID=your_github_oauth_app_id
+GITHUB_CLIENT_SECRET=your_github_oauth_app_secret
+VITE_GITHUB_REDIRECT_URI=http://localhost:3000/auth/callback
+
+# Optional: AI Assistant (Claude or Gemini)
+VITE_DEFAULT_AI_KEY=your_api_key_here
+VITE_DEFAULT_AI_PROVIDER=claude  # or 'gemini'
+```
+
+The app includes a small Express server (`server.js`) that proxies GitHub OAuth and handles PostGIS schema imports. In development, `npm run dev` starts both Vite and the server automatically.
+
 ---
 
 ## 🏗 Deployment Architecture
@@ -88,8 +105,36 @@ A Waystones project generates a complete deployment ecosystem:
 - **GeoPackage, GeoJSON, GML, Shapefile**
 - **STAC** — SpatioTemporal Asset Catalog
 
+## 📁 Project Structure
+
+```
+waystones/
+├── components/        # React UI components (dialogs, editor, deploy panels, etc.)
+├── hooks/             # Custom React hooks (useLayerActions, useHistory, etc.)
+├── utils/             # Services and utilities
+│   ├── deploy/        # Deployment generators (pygeoapi, QGIS, Docker, GitHub Actions)
+│   ├── gdalService    # GeoPackage and raster processing
+│   ├── aiService      # AI assistant integration (Claude & Gemini)
+│   ├── githubService  # GitHub API integration
+│   └── ...
+├── api/               # Backend endpoints
+│   └── github-oauth.js  # GitHub OAuth proxy
+├── server.js          # Express backend server
+├── App.tsx            # Root React component
+└── types.ts           # TypeScript type definitions
+```
+
 ## 🇳🇴 Language Support
 Full UI translations for **English** and **Norwegian**.
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's bug reports, feature requests, or pull requests, please:
+1. [Open an issue](../../issues) to discuss significant changes first.
+2. Follow the existing code style and patterns.
+3. Test your changes locally with `npm run dev` and `npm run lint`.
+
+---
 
 ## ⚖️ License
 Waystones is dual-licensed:
