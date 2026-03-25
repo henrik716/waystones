@@ -10,8 +10,8 @@ import { ModelChange } from '../utils/diffUtils';
 import ConstraintsEditor from './property/ConstraintsEditor';
 import CodelistEditor from './property/CodelistEditor';
 import {
-  AiProvider, AiConstraintSuggestion,
-  generatePropertyDescription, suggestFieldType, inferConstraints,
+  AiProvider,
+  generatePropertyDescription,
 } from '../utils/aiService';
 import { sanitizeTechnicalName } from '../utils/nameSanitizer';
 import { useAiContext } from '../contexts/AiContext';
@@ -117,7 +117,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   const [isOpen, setIsOpen] = useState(prop.name === "" || depth > 0);
   const config = getFieldConfig(prop.fieldType);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [constraintSuggestion, setConstraintSuggestion] = useState<AiConstraintSuggestion | null>(null);
   const typeOptions = getTypeOptions(t);
 
   const aiContext = useAiContext();
@@ -141,52 +140,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
     });
   };
 
-  const handleSuggestType = () => {
-    if (!aiContext.ensureApiKey('type')) return;
-
-    aiContext.setLoading('type', `Analyzing "${prop.name}" to suggest type…`);
-    suggestFieldType({
-      fieldName: prop.name || 'field',
-      description: prop.description || '',
-      lang,
-    }).then(result => {
-      const cleaned = result.trim().toLowerCase();
-      const option = typeOptions.find(o => o.value === cleaned);
-      if (option) {
-        handleUpdate({ fieldType: option.toFieldType(), defaultValue: '', constraints: {} });
-      }
-      aiContext.setSuccess();
-    }).catch(error => {
-      aiContext.setError(error, 'type');
-    });
-  };
-
-  const handleInferConstraints = () => {
-    if (!aiContext.ensureApiKey('constraints')) return;
-
-    aiContext.setLoading('constraints', `Inferring constraints for "${prop.name}"…`);
-    inferConstraints({
-      fieldName: prop.name || 'field',
-      fieldType: fieldTypeToValue(ft),
-      description: prop.description || '',
-      lang,
-    }).then(result => {
-      setConstraintSuggestion(result);
-      aiContext.setSuccess();
-    }).catch(error => {
-      aiContext.setError(error, 'constraints');
-    });
-  };
-
-  const handleApplyConstraints = () => {
-    if (!constraintSuggestion) return;
-    const { required, ...rest } = constraintSuggestion;
-    handleUpdate({
-      constraints: { ...(prop.constraints || {}), ...rest },
-      ...(required !== undefined ? { multiplicity: required ? '1..1' as Multiplicity : '0..1' as Multiplicity } : {}),
-    });
-    setConstraintSuggestion(null);
-  };
 
   const c = prop.constraints || {};
   const hasActiveConstraints = prop.multiplicity !== '0..1' || Object.keys(c).some(k => {
@@ -363,14 +316,6 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
-                <AiTrigger
-                  onClick={handleSuggestType}
-                  isLoading={aiContext.isLoading}
-                  isActive={aiContext.currentOperation === 'type'}
-                  hasError={aiContext.error !== null}
-                  tooltip={t.ai?.suggestType || 'Suggest type'}
-                  t={t}
-                />
               </div>
             </PropDiffField>
 
@@ -418,53 +363,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
 
 
           <div className="space-y-2">
-            <div className="flex items-center justify-end">
-              <AiTrigger
-                onClick={handleInferConstraints}
-                isLoading={aiContext.isLoading}
-                isActive={aiContext.currentOperation === 'constraints'}
-                hasError={aiContext.error !== null}
-                tooltip={t.ai?.inferConstraints || 'Suggest constraints'}
-                t={t}
-              />
-            </div>
             <ConstraintsEditor prop={prop} onUpdate={onUpdate} t={t} isSharedType={isSharedType} />
-            {constraintSuggestion && Object.keys(constraintSuggestion).length > 0 && (
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-3 animate-in slide-in-from-top-1 duration-200">
-                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">{t.ai?.suggestedConstraints || 'Suggested constraints'}</p>
-                <div className="flex flex-wrap gap-2">
-                  {constraintSuggestion.required !== undefined && (
-                    <span className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-700">NOT NULL: {constraintSuggestion.required ? '✓' : '✗'}</span>
-                  )}
-                  {constraintSuggestion.min !== undefined && (
-                    <span className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-700">Min: {constraintSuggestion.min}</span>
-                  )}
-                  {constraintSuggestion.max !== undefined && (
-                    <span className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-700">Max: {constraintSuggestion.max}</span>
-                  )}
-                  {constraintSuggestion.minLength !== undefined && (
-                    <span className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-700">MinLen: {constraintSuggestion.minLength}</span>
-                  )}
-                  {constraintSuggestion.maxLength !== undefined && (
-                    <span className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-700">MaxLen: {constraintSuggestion.maxLength}</span>
-                  )}
-                  {constraintSuggestion.pattern && (
-                    <span className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-mono text-indigo-700">{constraintSuggestion.pattern}</span>
-                  )}
-                  {(constraintSuggestion.enumeration || []).map((v, i) => (
-                    <span key={i} className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-700">{v}</span>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={handleApplyConstraints} className="text-[10px] font-black bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                    {t.ai?.applyConstraints || 'Apply suggestions'}
-                  </button>
-                  <button onClick={() => setConstraintSuggestion(null)} className="text-[10px] font-black text-indigo-400 hover:text-indigo-600 px-2 py-2">
-                    {t.ai?.dismiss || 'Dismiss'}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {ft.kind === 'feature-ref' && (

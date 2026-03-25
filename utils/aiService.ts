@@ -1,14 +1,5 @@
 export type AiProvider = 'claude' | 'gemini';
 
-export interface AiConstraintSuggestion {
-  min?: number;
-  max?: number;
-  minLength?: number;
-  maxLength?: number;
-  pattern?: string;
-  required?: boolean;
-  enumeration?: string[];
-}
 
 const PROVIDER_KEY = 'waystones-ai-provider';
 const API_KEY_PREFIX = 'waystones-ai-key-';
@@ -228,33 +219,6 @@ export async function generatePropertyDescription(params: {
   return callAI(system, user);
 }
 
-export async function suggestFieldType(params: {
-  fieldName: string;
-  description: string;
-  lang: string;
-}): Promise<string> {
-  const validTypes = 'string, number, integer, boolean, date, date-time, geometry, codelist, json, object, array';
-  const system = `You are a geospatial data modeler. Given a field name and optional description, choose the single most appropriate data type from this exact list: ${validTypes}. Output ONLY the type keyword (e.g. "integer"). No explanation, no punctuation.`;
-  const user = `Field name: "${params.fieldName}"\nDescription: "${params.description || '(none)'}"`;
-  return callAI(system, user);
-}
-
-export async function inferConstraints(params: {
-  fieldName: string;
-  fieldType: string;
-  description: string;
-  lang: string;
-}): Promise<AiConstraintSuggestion> {
-  const system = `You are a geospatial data modeler. Given a field's name, type, and description, suggest applicable constraints as a JSON object. Only include keys that are clearly relevant. Valid keys: min (number), max (number), minLength (number), maxLength (number), pattern (regex string), required (boolean), enumeration (array of strings). Output ONLY valid JSON. No markdown, no explanation.`;
-  const user = `Field name: "${params.fieldName}"\nType: ${params.fieldType}\nDescription: "${params.description || '(none)'}"`;
-  const raw = await callAI(system, user);
-  try {
-    const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
-    return JSON.parse(cleaned) as AiConstraintSuggestion;
-  } catch {
-    throw new Error('AI returned invalid JSON for constraints');
-  }
-}
 
 export async function suggestTheme(params: {
   modelName: string;
