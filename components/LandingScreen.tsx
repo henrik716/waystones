@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { Translations } from '../i18n/index';
-import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload } from 'lucide-react';
+import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload, HardDrive } from 'lucide-react';
 import { DataModel } from '../types';
 
 interface LandingScreenProps {
@@ -111,7 +111,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
                 </React.Fragment>
               ) : (
                 <React.Fragment>
-                  <Database size={32} className="text-slate-300" />
+                  <HardDrive size={32} className="text-slate-300" />
                   <span className="text-sm font-bold text-slate-500">{l.publishDropHint}</span>
                   <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{l.publishBrowse}</span>
                 </React.Fragment>
@@ -147,7 +147,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
                   className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
                 >
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
-                    <Server size={20} />
+                    <Database size={20} />
                   </div>
                   <span className="text-sm font-bold text-slate-700">{l.connectPostgis}</span>
                   <ArrowRight size={16} className="ml-auto text-slate-300 group-hover/btn:text-indigo-400 transition-colors" />
