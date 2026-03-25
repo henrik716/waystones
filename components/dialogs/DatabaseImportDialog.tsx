@@ -176,7 +176,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                     onChange={e => setSupabaseUrl(e.target.value)}
                     placeholder={labels.supabaseUrlPlaceholder || 'https://yourproject.supabase.co'}
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-slate-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-slate-50"
                   />
                 </div>
 
@@ -190,7 +190,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                     onChange={e => setSupabaseAnonKey(e.target.value)}
                     placeholder={labels.supabaseAnonKeyPlaceholder || 'eyJhbGci...'}
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-slate-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-slate-50"
                   />
                 </div>
 
@@ -204,7 +204,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                     onChange={e => setSupabaseSchema(e.target.value)}
                     placeholder="public"
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-slate-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-slate-50"
                   />
                 </div>
 
@@ -224,7 +224,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                     onChange={e => setPostgisConnectionString(e.target.value)}
                     placeholder={labels.postgisConnectionPlaceholder || 'postgresql://user:pass@host:5432/db'}
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-slate-50 font-mono"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-slate-50 font-mono"
                   />
                 </div>
 
@@ -238,7 +238,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                     onChange={e => setPostgisSchema(e.target.value)}
                     placeholder="public"
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-slate-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-slate-50"
                   />
                 </div>
 
@@ -264,7 +264,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
             <div className="flex gap-2">
               <button
                 onClick={handleSelectAll}
-                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
               >
                 {labels.selectAll || 'Select all'}
               </button>
@@ -293,7 +293,7 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
                       onClick={() => toggleLayer(layer.id)}
                       className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
                         selectedLayerIds.has(layer.id)
-                          ? 'bg-emerald-500 border-emerald-500'
+                          ? 'bg-indigo-500 border-indigo-500'
                           : 'border-slate-300 bg-white'
                       }`}
                     >
@@ -355,11 +355,11 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
               <button
                 onClick={handleImport}
                 disabled={selectedLayerIds.size === 0}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {labels.import || 'Import'}
                 {selectedLayerIds.size > 0 && (
-                  <span className="bg-emerald-600 rounded-full px-1.5 py-0.5 text-xs">
+                  <span className="bg-indigo-600 rounded-full px-1.5 py-0.5 text-xs">
                     {selectedLayerIds.size}
                   </span>
                 )}
