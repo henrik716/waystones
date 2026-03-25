@@ -129,14 +129,16 @@ Full UI translations for **English** and **Norwegian**.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's bug reports, feature requests, or pull requests, please:
-1. [Open an issue](../../issues) to discuss significant changes first.
+Contributions are welcome! To ensure clear ownership, all contributors must agree to our **Contributor License Agreement (CLA)**.
+
+1. **Sign the CLA**: Please read our [CLA](CLA.md) before submitting a pull request.
+2. [Open an issue](../../issues) to discuss significant changes first.
 2. Follow the existing code style and patterns.
 3. Test your changes locally with `npm run dev` and `npm run lint`.
 
 ---
 
 ## ⚖️ License
-Waystones is dual-licensed:
-- **Open Source (AGPL v3)**: For community and open projects.
-- **Commercial License**: For proprietary and enterprise use. [Inquire here](../../issues).
+Waystones is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
+
+Contributions are subject to our [Contributor License Agreement (CLA)](CLA.md).
