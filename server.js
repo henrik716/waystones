@@ -91,6 +91,10 @@ async function handlePostgisSchema(req, res) {
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
   if (req.method !== 'POST') { res.writeHead(405).end(); return; }
 
+  // Hoist variable declarations so they're accessible in the catch block
+  let connectionString = '';
+  let schema = 'public';
+
   try {
     // Check JWT if SUPABASE_JWT_SECRET is set
     if (process.env.SUPABASE_JWT_SECRET) {
@@ -105,7 +109,7 @@ async function handlePostgisSchema(req, res) {
     // Parse request body
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
-    const { connectionString, schema } = JSON.parse(Buffer.concat(chunks).toString());
+    ({ connectionString, schema } = JSON.parse(Buffer.concat(chunks).toString()));
 
     if (!connectionString) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
