@@ -215,7 +215,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
           {selectedLayers.size} {q.selectedLayers}
         </span>
         {meta.contactOrganization && (
-          <span className="px-3 py-1.5 bg-emerald-50 rounded-xl text-xs font-bold text-emerald-600 border border-emerald-200">
+          <span className="px-3 py-1.5 bg-indigo-50 rounded-xl text-xs font-bold text-indigo-600 border border-indigo-200">
             {meta.contactOrganization}
           </span>
         )}
@@ -386,7 +386,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
       )}
       {repoCheckStatus === 'done' && repoAccess && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold ${
-          willCreatePR ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+          willCreatePR ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
         }`}>
           {willCreatePR ? <GitPullRequest size={14} /> : <Check size={14} strokeWidth={3} />}
           {willCreatePR ? d.repoAccessPR?.replace('{owner}', repoAccess.ownerLogin) : d.repoAccessDirect?.replace('{branch}', ghBranch)}
@@ -400,21 +400,21 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
 
       {/* Publish result */}
       {publishStatus === 'success' && publishResult?.success && (
-        <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-4 animate-in zoom-in-95 duration-500">
-          <div className="flex items-center gap-2 text-emerald-700">
+        <div className="p-6 bg-indigo-50 border border-indigo-200 rounded-2xl space-y-4 animate-in zoom-in-95 duration-500">
+          <div className="flex items-center gap-2 text-indigo-700">
             <Check size={20} strokeWidth={3} />
             <span className="text-sm font-black">{d.publishSuccess}</span>
           </div>
-          <p className="text-xs text-emerald-600 font-medium">
+          <p className="text-xs text-indigo-600 font-medium">
             {publishResult.prUrl ? d.prCreatedDesc : d.directPushDesc}
           </p>
           {publishResult.prUrl && (
-            <a href={publishResult.prUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-500 transition-all active:scale-95">
+            <a href={publishResult.prUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-95">
               <ExternalLink size={14} /> {d.viewPR}
             </a>
           )}
           {!publishResult.prUrl && publishResult.commitSha && (
-            <a href={`https://github.com/${ghRepo}/commit/${publishResult.commitSha}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-500 transition-all active:scale-95">
+            <a href={`https://github.com/${ghRepo}/commit/${publishResult.commitSha}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-95">
               <ExternalLink size={14} /> {d.viewCommit}
             </a>
           )}
@@ -473,7 +473,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
           <button
             onClick={handlePublish}
             disabled={!ghRepo || !getEffectiveToken() || publishStatus === 'loading'}
-            className="px-8 py-3.5 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-emerald-500 active:scale-95 transition-all shadow-lg shadow-emerald-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-indigo-500 active:scale-95 transition-all shadow-lg shadow-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {publishStatus === 'loading' ? (
               <React.Fragment><RefreshCw size={16} className="animate-spin" /> {d.publishing}</React.Fragment>

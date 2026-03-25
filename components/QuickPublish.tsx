@@ -137,12 +137,12 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
           const isDone = i < step;
           return (
             <React.Fragment key={i}>
-              {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${isDone ? 'bg-emerald-400' : 'bg-slate-200'}`} />}
+              {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${isDone ? 'bg-indigo-400' : 'bg-slate-200'}`} />}
               <button
                 onClick={() => i <= step && setStep(i)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
                   isActive ? 'bg-slate-900 text-white shadow-lg' :
-                  isDone ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' :
+                  isDone ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100' :
                   'bg-slate-100 text-slate-400'
                 }`}
               >
@@ -191,7 +191,7 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
                   <div
                     key={layerId}
                     className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                      isSelected ? 'ring-2 ring-emerald-400 border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'
+                      isSelected ? 'ring-2 ring-indigo-400 border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-slate-50'
                     } hover:border-slate-300 hover:bg-white`}
                     onClick={() => {
                       const next = new Set(selectedLayers);
@@ -205,7 +205,7 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
-                        isSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                        isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'
                       }`}>
                         {GEOM_ICONS[summaryLayer.geometryType] || '◇'}
                       </div>
@@ -225,7 +225,7 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
                         setSelectedLayers(next);
                       }}
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                        isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                        isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300'
                       }`}
                     >
                       {isSelected && <Check size={12} strokeWidth={3} className="text-white" />}
