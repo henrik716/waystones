@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import type { Translations } from '../../i18n/index';
 import type { DataModel } from '../../types';
+import type { SupabaseConfig } from '../../types';
+import { parsePostgresConnectionString } from '../../utils/deploy/_helpers';
 import { X, Loader2, Check } from 'lucide-react';
 import { processSupabaseSchemaToModel } from '../../utils/supabaseSchemaService';
 import { processPostgisSchemaToModel } from '../../utils/postgisSchemaService';
@@ -68,22 +70,23 @@ const DatabaseImportDialog: React.FC<DatabaseImportDialogProps> = ({ t, onClose,
     if (!fetchedModel) return;
     const filteredLayers = fetchedModel.layers.filter(l => selectedLayerIds.has(l.id));
 
-    // Attach source connection to the model
+    // Attach source connection to the model in the proper SourceConnection format
+    const sourceConnection = sourceType === 'supabase'
+      ? {
+          type: 'supabase' as const,
+          config: { projectUrl: supabaseUrl, anonKey: supabaseAnonKey, schema: supabaseSchema } as SupabaseConfig,
+          layerMappings: {},
+        }
+      : {
+          type: 'postgis' as const,
+          config: parsePostgresConnectionString(postgisConnectionString, postgisSchema),
+          layerMappings: {},
+        };
+
     const modelWithSource = {
       ...fetchedModel,
       layers: filteredLayers,
-      sourceConnection: sourceType === 'supabase'
-        ? {
-            type: 'supabase' as const,
-            url: supabaseUrl,
-            anonKey: supabaseAnonKey,
-            schema: supabaseSchema
-          }
-        : {
-            type: 'postgis' as const,
-            connectionString: postgisConnectionString,
-            schema: postgisSchema
-          }
+      sourceConnection,
     };
 
     onImport(modelWithSource);

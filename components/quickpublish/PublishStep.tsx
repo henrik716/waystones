@@ -4,7 +4,7 @@ import {
   Check, Github, Layers, RefreshCw, ExternalLink, Info,
   GitPullRequest, Download, Cloud, Server, Package, AlertTriangle, ShieldAlert
 } from 'lucide-react';
-import { DataModel, ModelMetadata, DeployTarget } from '../../types';
+import { DataModel, ModelMetadata, DeployTarget, SourceConnection, LayerSourceMapping } from '../../types';
 import { InferredDataSummary } from '../../utils/importUtils';
 import { generateDeployFiles, exportDeployKit } from '../../utils/deployUtils';
 import { pushDeployKit, checkRepoAccess, DeployPushResult } from '../../utils/githubService';
@@ -127,6 +127,18 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     return filtered;
   };
 
+  const buildSourceForPublish = (publishModel: DataModel, layerMappings: Record<string, LayerSourceMapping>): SourceConnection => {
+    const sc = publishModel.sourceConnection;
+    if (sc && (sc.type === 'postgis' || sc.type === 'supabase') && sc.config) {
+      return { type: sc.type, config: sc.config, layerMappings };
+    }
+    return {
+      type: 'geopackage' as const,
+      config: { filename: summary.filename || 'data.gpkg' },
+      layerMappings,
+    };
+  };
+
   const buildLayerMappings = (publishModel: DataModel) => {
     return Object.fromEntries(
       publishModel.layers.map(l => {
@@ -147,12 +159,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     try {
       const publishModel = buildPublishModel(model, selectedLayers);
       const layerMappings = buildLayerMappings(publishModel);
-
-      const source = {
-        type: 'geopackage' as const,
-        config: { filename: summary.filename },
-        layerMappings,
-      };
+      const source = buildSourceForPublish(publishModel, layerMappings);
       const files = await generateDeployFiles(publishModel, source, lang, deployTarget);
       const commitMsg = `[${publishModel.version}] Publish ${publishModel.name}`;
 
@@ -174,12 +181,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
   const handleDownloadZip = async () => {
     const publishModel = buildPublishModel(model, selectedLayers);
     const layerMappings = buildLayerMappings(publishModel);
-
-    const source = {
-      type: 'geopackage' as const,
-      config: { filename: summary.filename },
-      layerMappings,
-    };
+    const source = buildSourceForPublish(publishModel, layerMappings);
     const binaryFilesForZip = includeData && dataBlob ? { [`data/${dataBlob.filename}`]: dataBlob.blob } : undefined;
     await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip);
   };

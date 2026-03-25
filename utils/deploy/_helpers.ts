@@ -4,6 +4,36 @@ import {
 } from '../../types';
 
 // ============================================================
+// Helper: parse a PostgreSQL connection string into PostgresConfig
+// Supports URL format: postgresql://user:pass@host:5432/dbname
+// and key=value format: host=H port=P dbname=D user=U password=P
+// ============================================================
+export const parsePostgresConnectionString = (connStr: string, schema = 'public'): PostgresConfig => {
+  // URL format: postgres[ql]://[user[:pass]@]host[:port]/dbname[?...]
+  const urlMatch = connStr.match(/^postgres(?:ql)?:\/\/([^:@]*)(?::([^@]*))?@([^:/]+)(?::(\d+))?\/([^?]*)/);
+  if (urlMatch) {
+    return {
+      user: decodeURIComponent(urlMatch[1] || ''),
+      password: decodeURIComponent(urlMatch[2] || ''),
+      host: urlMatch[3],
+      port: urlMatch[4] || '5432',
+      dbname: urlMatch[5],
+      schema,
+    };
+  }
+  // Key=value format
+  const get = (key: string) => connStr.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`))?.[1] || '';
+  return {
+    host: get('host') || 'localhost',
+    port: get('port') || '5432',
+    dbname: get('dbname'),
+    user: get('user'),
+    password: get('password'),
+    schema: get('schema') || schema,
+  };
+};
+
+// ============================================================
 // Helper: get Geopackage filename
 // ============================================================
 export const getGpkgFilename = (model: DataModel, source?: SourceConnection): string => {
