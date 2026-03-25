@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { Translations } from '../i18n/index';
-import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload, HardDrive } from 'lucide-react';
+import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload, Package } from 'lucide-react';
 import { DataModel } from '../types';
 
 interface LandingScreenProps {
@@ -111,7 +111,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
                 </React.Fragment>
               ) : (
                 <React.Fragment>
-                  <HardDrive size={32} className="text-slate-300" />
+                  <Package size={32} className="text-slate-300" />
                   <span className="text-sm font-bold text-slate-500">{l.publishDropHint}</span>
                   <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{l.publishBrowse}</span>
                 </React.Fragment>
