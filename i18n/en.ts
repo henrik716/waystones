@@ -115,6 +115,8 @@ export const en = {
   confirmDeleteBtn: "Yes, delete model",
   undo: "Undo", redo: "Redo",
   layers: "Layers", addLayer: "New layer", deleteLayer: "Delete layer",
+  modelSettings: "Model Settings",
+  layerSettings: "Settings",
   layerName: "Layer name", layerNameDefault: "Layer", layerNamePlaceholder: "e.g. Protected areas",
   geomColumnName: "Geometry column",
   propName: "Field name", propNamePlaceholder: "e.g. protection_type",
