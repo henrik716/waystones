@@ -164,9 +164,9 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
           </React.Fragment>
         )}
       </div>
-      <div className="flex gap-4">
-        <button onClick={onBack} className="px-8 py-4 rounded-2xl border-2 bg-white border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all hover:border-slate-300">{d.back}</button>
-        <button onClick={onNext} disabled={!isConnectionValid} className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest disabled:opacity-50 shadow-lg shadow-indigo-200 active:scale-95 transition-all hover:bg-indigo-700">{d.next}</button>
+      <div className="flex items-center justify-between pt-4">
+        <button onClick={onBack} className="px-6 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-500 font-black text-xs uppercase tracking-widest active:scale-95 transition-all hover:bg-slate-50">{d.back}</button>
+        <button onClick={onNext} disabled={!isConnectionValid} className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest disabled:opacity-50 shadow-lg active:scale-95 transition-all hover:bg-indigo-700">{d.next}</button>
       </div>
     </section>
   );

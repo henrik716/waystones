@@ -201,6 +201,24 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
     { icon: Github,     label: d.steps?.[3]         || 'Publish' },
   ];
 
+  // Shared navigation buttons component
+  const NavButtons = ({ onBack, onNext, showBackBg = false }: { onBack: () => void; onNext: () => void; showBackBg?: boolean }) => (
+    <div className="flex items-center justify-between pt-4">
+      <button
+        onClick={onBack}
+        className={`px-6 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest active:scale-95 transition-all ${showBackBg ? 'bg-white hover:bg-slate-50' : 'hover:bg-slate-50'}`}
+      >
+        {q.back || d.back}
+      </button>
+      <button
+        onClick={onNext}
+        className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg flex items-center gap-2"
+      >
+        {q.next || d.next} <ChevronRight size={16} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-8 pb-20">
 
@@ -286,9 +304,8 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
             ))}
           </div>
 
-          <div className="sticky bottom-6 z-20 flex gap-4 p-2 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[28px] shadow-xl">
-            <button onClick={() => setStep(1)} className="px-10 py-4 rounded-2xl border-2 bg-white border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all hover:bg-slate-50">{d.back}</button>
-            <button onClick={() => setStep(3)} className="flex-1 px-10 py-4 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest active:scale-95 shadow-lg transition-all hover:bg-indigo-700">{d.next}</button>
+          <div className="sticky bottom-6 z-20 p-2 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[28px] shadow-xl">
+            <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} showBackBg={true} />
           </div>
         </section>
       )}
@@ -380,14 +397,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
             })}
           </div>
 
-          <div className="flex items-center justify-between pt-4">
-            <button onClick={() => setStep(2)} className="px-6 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 active:scale-95 transition-all">
-              {q.back || d.back}
-            </button>
-            <button onClick={() => setStep(4)} className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-indigo-700 active:scale-95 transition-all shadow-lg flex items-center gap-2">
-              {q.next || d.next} <ChevronRight size={16} />
-            </button>
-          </div>
+          <NavButtons onBack={() => setStep(2)} onNext={() => setStep(4)} />
         </div>
       )}
 
