@@ -5,7 +5,7 @@ import {
   RefreshCw,
   X, ArrowRightLeft,
   Layers, CheckCircle2, ChevronDown,
-  Globe, BookOpen
+  Globe, BookOpen, ChevronLeft, ChevronUp
 } from 'lucide-react';
 import { DataModel } from '../types';
 import { processAnyFile } from '../utils/importUtils';
@@ -40,6 +40,7 @@ const DataMapper: React.FC<DataMapperProps> = ({ model, t, onTransformedData }) 
   const [isLoading, setIsLoading] = useState(false);
   const [openValueMapId, setOpenValueMapId] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
+  const [showGdalInfo, setShowGdalInfo] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeLayer = model.layers.find(l => l.id === activeModelLayerId) || model.layers[0];
@@ -304,19 +305,28 @@ const DataMapper: React.FC<DataMapperProps> = ({ model, t, onTransformedData }) 
   const mappedLayerCount = Object.keys(mappings).filter(id => mappings[id].sourceLayer).length;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 md:space-y-12 pb-40 px-2 md:px-4 animate-in fade-in duration-700">
+    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-40 px-2 md:px-4 animate-in fade-in duration-700">
+
       
       {/* 0. GDAL INFO SECTION */}
-      <section className="bg-white p-6 md:p-10 rounded-[32px] border-l-8 border-l-blue-600 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 items-start">
-         <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
-            <BookOpen size={32} />
-         </div>
-         <div className="space-y-3">
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{t.mapper.aboutGdal.title}</h2>
-            <p className="text-sm md:text-base text-slate-500 font-medium leading-relaxed">
-              {t.mapper.aboutGdal.desc}
-            </p>
-         </div>
+      <section className="bg-white rounded-[32px] border-l-8 border-l-blue-600 border border-slate-200 shadow-sm overflow-hidden">
+         <button
+           onClick={() => setShowGdalInfo(v => !v)}
+           className="w-full flex items-center gap-6 p-5 md:p-6 text-left hover:bg-slate-50 transition-colors"
+         >
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
+               <BookOpen size={22} />
+            </div>
+            <h2 className="flex-1 text-base md:text-lg font-black text-slate-800 tracking-tight">{t.mapper.aboutGdal.title}</h2>
+            {showGdalInfo ? <ChevronUp size={18} className="text-slate-400 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+         </button>
+         {showGdalInfo && (
+           <div className="px-5 md:px-6 pb-5 md:pb-6 pl-[calc(1.25rem+3rem+1.5rem)] md:pl-[calc(1.5rem+3rem+1.5rem)]">
+             <p className="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">
+               {t.mapper.aboutGdal.desc}
+             </p>
+           </div>
+         )}
       </section>
 
       {/* 1. PROGRESS STEPPER */}
@@ -346,14 +356,14 @@ const DataMapper: React.FC<DataMapperProps> = ({ model, t, onTransformedData }) 
       </div>
 
       {/* STEP 1: SOURCE SELECTION */}
-      <section className="bg-white p-6 md:p-10 rounded-[32px] border border-slate-200 shadow-sm space-y-6 md:space-y-10">
+      <section className="bg-white p-5 md:p-8 rounded-[32px] border border-slate-200 shadow-sm space-y-5 md:space-y-8">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center gap-6">
-                 <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shrink-0">
-                   <Upload size={28} />
+                 <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shrink-0">
+                   <Upload size={24} />
                  </div>
                  <div>
-                    <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">{t.mapper.step1}</h3>
+                    <h3 className="text-base md:text-lg font-black text-slate-800 tracking-tight leading-none mb-1">{t.mapper.step1}</h3>
                     <p className="text-xs text-slate-500 font-medium">{t.mapper.uploadHint}</p>
                  </div>
               </div>
@@ -402,13 +412,13 @@ const DataMapper: React.FC<DataMapperProps> = ({ model, t, onTransformedData }) 
 
       {/* STEP 2: LAYER MATCHING */}
       <section className={`transition-all duration-500 ${!sourceFilename ? 'opacity-30 grayscale pointer-events-none' : 'opacity-100'}`}>
-         <div className="bg-white p-6 md:p-10 rounded-[32px] border border-slate-200 shadow-sm space-y-8">
+         <div className="bg-white p-5 md:p-8 rounded-[32px] border border-slate-200 shadow-sm space-y-8">
             <div className="flex items-center gap-6">
-               <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
-                 <Table size={28} />
+               <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
+                 <Table size={24} />
                </div>
                <div>
-                  <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">{t.mapper.step2}</h3>
+                  <h3 className="text-base md:text-lg font-black text-slate-800 tracking-tight leading-none mb-1">{t.mapper.step2}</h3>
                   <p className="text-xs text-slate-500 font-medium">{t.mapper.multiLayerHint}</p>
                </div>
             </div>

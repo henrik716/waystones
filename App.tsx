@@ -410,15 +410,17 @@ const App: React.FC = () => {
         {/* Standard 3-panel layout */}
         {activeTab !== 'landing' && activeTab !== 'quick-publish' && (
           <div className="flex-1 flex overflow-hidden relative min-w-0">
-            <button
-              aria-label="Toggle Sidebar"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 left-0 z-[150] w-6 h-12 bg-white border border-slate-200 items-center justify-center rounded-r-xl shadow-md text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all duration-500
-            ${sidebarCollapsed ? 'translate-x-0' : 'translate-x-64 xl:translate-x-72'}
-          `}
-            >
-              {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-            </button>
+            {activeTab === 'editor' && (
+              <button
+                aria-label="Toggle Sidebar"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 left-0 z-[150] w-6 h-12 bg-white border border-slate-200 items-center justify-center rounded-r-xl shadow-md text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all duration-500
+              ${sidebarCollapsed ? 'translate-x-0' : 'translate-x-64 xl:translate-x-72'}
+            `}
+              >
+                {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              </button>
+            )}
 
             <main className={`
           ${(activeTab === 'editor' || activeTab === 'mapper' || activeTab === 'deploy') ? 'flex' : 'hidden lg:flex'} 
@@ -431,7 +433,7 @@ const App: React.FC = () => {
                       <div className="p-2 rounded-xl bg-white border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-all"><ChevronLeft size={16} /></div>
                       {t.cancel}
                     </button>
-                    <DataMapper model={selectedModel} t={t} onTransformedData={(blob, filename) => {
+                    <DataMapper model={selectedModel} t={t} onTransformedData={(blob: Blob, filename: string) => {
                       setTransformedData({ blob, filename });
                       // Generer summary fra modellen slik at QuickPublish har det den trenger
                       const summary = {
@@ -510,18 +512,21 @@ const App: React.FC = () => {
               )}
             </main>
 
-            <button
-              aria-label="Toggle Preview"
-              onClick={() => setPreviewCollapsed(!previewCollapsed)}
-              style={isDesktop ? {
-                transform: `translateY(-50%) translateX(${previewCollapsed ? 0 : -previewWidth}px)`,
-                transition: isResizingPreview ? 'none' : 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-              } : {}}
-              className={`hidden lg:flex absolute top-1/2 right-0 z-[150] w-6 h-12 bg-white border border-slate-200 items-center justify-center rounded-l-xl shadow-md text-slate-400 hover:text-indigo-600 hover:bg-slate-50`}
-            >
-              {previewCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-            </button>
+            {activeTab === 'editor' && (
+              <button
+                aria-label="Toggle Preview"
+                onClick={() => setPreviewCollapsed(!previewCollapsed)}
+                style={isDesktop ? {
+                  transform: `translateY(-50%) translateX(${previewCollapsed ? 0 : -previewWidth}px)`,
+                  transition: isResizingPreview ? 'none' : 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                } : {}}
+                className={`hidden lg:flex absolute top-1/2 right-0 z-[150] w-6 h-12 bg-white border border-slate-200 items-center justify-center rounded-l-xl shadow-md text-slate-400 hover:text-indigo-600 hover:bg-slate-50`}
+              >
+                {previewCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+              </button>
+            )}
 
+            {activeTab === 'editor' && (
             <aside
               style={isDesktop ? {
                 width: `${previewWidth}px`,
@@ -556,6 +561,7 @@ const App: React.FC = () => {
               )}
               <button onClick={() => setActiveTab('editor')} className="lg:hidden absolute top-4 left-4 p-2.5 bg-white border border-slate-200 rounded-xl shadow-xl text-slate-500 z-[140] hover:bg-slate-50 transition-colors"><ChevronLeft size={18} /></button>
             </aside>
+            )}
           </div>
         )}
 

@@ -273,7 +273,19 @@ export const no = {
     scalableArch: "Skalerbar arkitektur",
     simpleFileMig: "Enkel filmigrering",
     postgisAdvantage: "Migrering til PostGIS gir best ytelse for store datamengder og produksjonsmiljøer.",
-    gpkgAdvantage: "GeoPackage er ideelt for arkivering og mindre prosjekter."
+    gpkgAdvantage: "GeoPackage er ideelt for arkivering og mindre prosjekter.",
+    transformBtn: "Transformer",
+    transformRunning: "Transformerer med GDAL...",
+    transformIdle: "Kjør ogr2ogr i nettleseren via WebAssembly",
+    transformDone: "GeoPackage klar",
+    downloadGpkg: "Last ned GeoPackage",
+    sendToPublish: "Send til QuickPublish",
+    resetTransform: "Nullstill",
+    terminalScriptHint: "For bruk i terminal eller CI/CD-pipeline",
+    sourceUniqueValue: "Unik kildeverdi",
+    mapToTarget: "Koble til målverdi",
+    noValuesDetected: "Ingen unike verdier oppdaget for dette feltet. Verdier kan vises etter at mer data er lastet inn.",
+    fieldsMapped: "felter koblet"
   },
   deploy: {
     title: "Deploy",

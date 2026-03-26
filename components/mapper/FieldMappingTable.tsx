@@ -42,6 +42,9 @@ const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
   onUpdateFieldMapping,
   onOpenValueMap,
 }) => {
+  const mappedCount = Object.values(activeMapping.fieldMappings).filter(Boolean).length;
+  const totalCount = activeLayer?.properties.length || 0;
+
   return (
     <section className={`transition-all duration-500 ${!activeMapping.sourceLayer ? 'opacity-30 grayscale pointer-events-none' : 'opacity-100'}`}>
        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -55,12 +58,19 @@ const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{activeLayer?.name}</p>
                 </div>
              </div>
-             <button onClick={onAutoMap} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-200">
-                <Wand2 size={16}/> {t.mapper.autoMap}
-             </button>
+             <div className="flex items-center gap-3 w-full sm:w-auto">
+                {totalCount > 0 && (
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl border ${mappedCount === totalCount ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
+                    {mappedCount}/{totalCount} {t.mapper.fieldsMapped}
+                  </span>
+                )}
+                <button onClick={onAutoMap} className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-200">
+                   <Wand2 size={16}/> {t.mapper.autoMap}
+                </button>
+             </div>
           </div>
 
-          <div className="overflow-x-auto min-h-[400px]">
+          <div className="overflow-x-auto">
              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead className="sticky top-0 z-20 bg-slate-50/90 backdrop-blur-md border-b border-slate-100">
                   <tr>
@@ -80,11 +90,15 @@ const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
                       const mappedField = activeMapping.fieldMappings[prop.id];
                       const isValueMappable = (prop.fieldType.kind === 'codelist' || (prop.constraints?.enumeration && prop.constraints.enumeration.length > 0)) && !!mappedField;
                       const valueMapCount = Object.keys(activeMapping.valueMappings[prop.id] || {}).length;
+                      const isRequired = prop.multiplicity.startsWith('1');
 
                       return (
                         <tr key={prop.id} className={`hover:bg-slate-50/80 transition-colors group ${mappedField ? 'bg-emerald-50/10' : ''}`}>
                           <td className="px-6 py-3">
-                             <div className="font-black text-slate-800 text-sm mono">{prop.name}</div>
+                             <div className="flex items-center gap-1.5">
+                               <span className="font-black text-slate-800 text-sm mono">{prop.name}</span>
+                               {isRequired && !mappedField && <span className="text-rose-500 text-xs font-black leading-none" title="Required">*</span>}
+                             </div>
                              <div className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">{prop.title}</div>
                           </td>
                           <td className="px-4 py-3">
@@ -115,9 +129,7 @@ const FieldMappingTable: React.FC<FieldMappingTableProps> = ({
                                   <Wand2 size={18} />
                                   {valueMapCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-white">{valueMapCount}</span>}
                                 </button>
-                             ) : (
-                                <div className="p-2.5 text-slate-100"><Wand2 size={18} /></div>
-                             )}
+                             ) : null}
                           </td>
                         </tr>
                       );

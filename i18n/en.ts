@@ -273,7 +273,19 @@ export const en = {
     scalableArch: "Scalable architecture",
     simpleFileMig: "Simple file migration",
     postgisAdvantage: "Migrating to PostGIS offers the best performance for large datasets and production environments.",
-    gpkgAdvantage: "GeoPackage is ideal for archiving and smaller projects."
+    gpkgAdvantage: "GeoPackage is ideal for archiving and smaller projects.",
+    transformBtn: "Transform",
+    transformRunning: "Transforming with GDAL...",
+    transformIdle: "Run ogr2ogr in the browser via WebAssembly",
+    transformDone: "GeoPackage ready",
+    downloadGpkg: "Download GeoPackage",
+    sendToPublish: "Send to QuickPublish",
+    resetTransform: "Reset",
+    terminalScriptHint: "For use in a terminal or CI/CD pipeline",
+    sourceUniqueValue: "Source unique value",
+    mapToTarget: "Map to target",
+    noValuesDetected: "No unique values detected for this field. Values may appear after loading more data.",
+    fieldsMapped: "fields mapped"
   },
   deploy: {
     title: "Deploy",
