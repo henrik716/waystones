@@ -29,6 +29,18 @@ interface ModelEditorProps {
   onSetBaseline: (model: DataModel) => void;
   t: Translations;
   lang: string;
+  // Unified nav props
+  models: DataModel[];
+  navCollapsed?: boolean;
+  onSelectModelById: (id: string) => void;
+  onNewModel: () => void;
+  onImportGis: () => void;
+  onImportUrl: () => void;
+  onImportDatabase: () => void;
+  onGithubImport: () => void;
+  onDeleteModel: (id: string) => void;
+  onOpenMapper: () => void;
+  onOpenDeploy: () => void;
 }
 
 type NavSection = 'model' | 'types' | 'layer';
@@ -41,6 +53,17 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   onSetBaseline,
   t,
   lang,
+  models,
+  navCollapsed,
+  onSelectModelById,
+  onNewModel,
+  onImportGis,
+  onImportUrl,
+  onImportDatabase,
+  onGithubImport,
+  onDeleteModel,
+  onOpenMapper,
+  onOpenDeploy,
 }) => {
   // --- UI state
   const [activeNavSection, setActiveNavSection] = useState<NavSection>('layer');
@@ -205,6 +228,17 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
           t={t}
           isOpen={isNavOpen}
           onClose={() => setIsNavOpen(false)}
+          isCollapsed={navCollapsed}
+          models={models}
+          onSelectModelById={onSelectModelById}
+          onNewModel={onNewModel}
+          onImportGis={onImportGis}
+          onImportUrl={onImportUrl}
+          onImportDatabase={onImportDatabase}
+          onGithubImport={onGithubImport}
+          onDeleteModel={onDeleteModel}
+          onOpenMapper={onOpenMapper}
+          onOpenDeploy={onOpenDeploy}
         />
 
         {/* Right panel */}

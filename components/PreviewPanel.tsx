@@ -25,7 +25,7 @@ interface PreviewPanelProps {
 const PreviewPanel: React.FC<PreviewPanelProps> = ({ 
   model, baselineModel, githubConfig, onImport, onUpdate, onSetBaseline, onUpdateGithubConfig, t, lang 
 }) => {
-  const [tab, setTab] = useState<'visual' | 'schema' | 'export' | 'tutorial' | 'github'>('visual');
+  const [tab, setTab] = useState<'schema' | 'export' | 'tutorial' | 'github'>('schema');
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
@@ -33,7 +33,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
   const tabContainerRef = useRef<HTMLDivElement>(null);
 
   const allTabs = [
-    { id: 'visual' as const, icon: Eye, label: t.visualTab },
     { id: 'schema' as const, icon: Code2, label: t.schemaTab },
     { id: 'github' as const, icon: Github, label: t.githubTab },
     { id: 'export' as const, icon: Share2, label: t.exportTab },
@@ -87,7 +86,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
   // Handle tab selection with auto-scroll
   const handleTabClick = (tabId: string) => {
-    setTab(tabId as any);
+    setTab(tabId as 'schema' | 'export' | 'tutorial' | 'github');
     
     // Auto-scroll to selected tab if needed
     if (tabContainerRef.current) {
@@ -110,6 +109,19 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
   return (
     <div className="flex flex-col w-full h-full bg-white overflow-hidden min-w-0">
+
+      {/* ── LIVE PREVIEW ZONE (always visible) ── */}
+      <div className="flex-none h-[38%] min-h-[200px] border-b border-slate-100 overflow-y-auto p-4 md:p-6 bg-slate-50/30 custom-scrollbar">
+        <div className="flex items-center gap-2 mb-3">
+          <Eye size={12} className="text-slate-300 shrink-0" />
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300">
+            {t.visualTab}
+          </span>
+        </div>
+        <VisualTab model={model} t={t} />
+      </div>
+
+      {/* ── SECONDARY TABS ── */}
       <div className="flex-none relative">
         {/* Left gradient indicator */}
         {canScrollLeft && (
@@ -170,20 +182,19 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/30 custom-scrollbar min-w-0 min-h-0">
-        {tab === 'visual' && <VisualTab model={model} t={t} />}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/30 custom-scrollbar min-w-0 min-h-0">
         {tab === 'export' && <ExportTab model={model} t={t} lang={lang} />}
         {tab === 'tutorial' && <TutorialTab model={model} t={t} lang={lang} />}
         {tab === 'schema' && <SchemaTab model={model} t={t} />}
         {tab === 'github' && (
-          <GithubTab 
-            model={model} 
-            baselineModel={baselineModel} 
+          <GithubTab
+            model={model}
+            baselineModel={baselineModel}
             githubConfig={githubConfig}
-            onSetBaseline={onSetBaseline} 
+            onSetBaseline={onSetBaseline}
             onUpdate={onUpdate}
             onUpdateGithubConfig={onUpdateGithubConfig}
-            t={t} 
+            t={t}
           />
         )}
       </div>

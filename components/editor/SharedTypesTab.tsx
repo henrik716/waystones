@@ -49,23 +49,25 @@ const SharedTypesTab: React.FC<SharedTypesTabProps> = ({
     <section className="space-y-6 md:space-y-8 animate-in fade-in duration-300 pb-24">
 
       {/* Sub-tab toggle */}
-      <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit shadow-sm">
+      <div className="flex gap-6 border-b border-slate-200 pb-px">
         <button
           onClick={() => setSubTab('types')}
-          className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${subTab === 'types' ? 'bg-fuchsia-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+          className={`flex items-center gap-1.5 pb-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${subTab === 'types' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
         >
+          <Box size={13} />
           {t.sharedTypes || 'Types'}
           {sharedTypes.length > 0 && (
-            <span className={`ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full ${subTab === 'types' ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}>{sharedTypes.length}</span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${subTab === 'types' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>{sharedTypes.length}</span>
           )}
         </button>
         <button
           onClick={() => setSubTab('enums')}
-          className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${subTab === 'enums' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+          className={`flex items-center gap-1.5 pb-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${subTab === 'enums' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
         >
+          <Hash size={13} />
           {lang === 'no' ? 'Delte kodelister' : 'Shared Codelists'}
           {sharedEnums.length > 0 && (
-            <span className={`ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full ${subTab === 'enums' ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}>{sharedEnums.length}</span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${subTab === 'enums' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>{sharedEnums.length}</span>
           )}
         </button>
       </div>

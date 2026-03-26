@@ -1,11 +1,16 @@
-import React from 'react';
-import { Plus, Layers, Box, Settings, AlertCircle, AlertTriangle, X, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Plus, Layers, Box, Settings, AlertCircle, AlertTriangle, X,
+  ChevronDown, Link2, Rocket, Github, Globe, Database, Trash2,
+} from 'lucide-react';
+import { GEOM_ICONS } from '../../constants';
 import type { Translations } from '../../i18n/index';
 import type { DataModel, Layer } from '../../types';
 import type { ModelValidationIssue } from '../../utils/validationUtils';
 import type { ModelChange } from '../../utils/diffUtils';
 
 interface EditorLeftNavProps {
+  // Active model editor state
   model: DataModel;
   reviewMode: boolean;
   changes: ModelChange[];
@@ -19,8 +24,22 @@ interface EditorLeftNavProps {
   onSelectLayer: (id: string) => void;
   onAddLayer: () => void;
   t: Translations;
+  // Mobile overlay
   isOpen?: boolean;
   onClose?: () => void;
+  // Desktop collapse
+  isCollapsed?: boolean;
+  // Model list & actions
+  models: DataModel[];
+  onSelectModelById: (id: string) => void;
+  onNewModel: () => void;
+  onImportGis: () => void;
+  onImportUrl: () => void;
+  onImportDatabase: () => void;
+  onGithubImport: () => void;
+  onDeleteModel: (id: string) => void;
+  onOpenMapper: () => void;
+  onOpenDeploy: () => void;
 }
 
 const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
@@ -39,7 +58,21 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
   t,
   isOpen,
   onClose,
+  isCollapsed,
+  models,
+  onSelectModelById,
+  onNewModel,
+  onImportGis,
+  onImportUrl,
+  onImportDatabase,
+  onGithubImport,
+  onDeleteModel,
+  onOpenMapper,
+  onOpenDeploy,
 }) => {
+  const [isModelSwitcherOpen, setIsModelSwitcherOpen] = useState(false);
+  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+
   const totalErrors = validationIssues.filter((i) => i.severity === 'error').length;
   const totalWarnings = validationIssues.filter((i) => i.severity === 'warning').length;
 
@@ -47,6 +80,14 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
     'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all text-left';
   const navItemActive = 'bg-indigo-50 text-indigo-600';
   const navItemInactive = 'text-slate-500 hover:text-slate-700 hover:bg-slate-50';
+
+  const importActions = [
+    { label: t.newModel || 'New blank', Icon: Plus, onClick: () => { onNewModel(); setIsImportMenuOpen(false); }, cls: 'text-indigo-600' },
+    { label: t.importGis || 'Import GIS file', Icon: Layers, onClick: () => { onImportGis(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.importUrl || 'Import from URL', Icon: Globe, onClick: () => { onImportUrl(); setIsImportMenuOpen(false); }, cls: 'text-emerald-600' },
+    { label: t.importDatabase?.title || 'Import Database', Icon: Database, onClick: () => { onImportDatabase(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.github?.importTitle || 'Import from GitHub', Icon: Github, onClick: () => { onGithubImport(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+  ];
 
   return (
     <>
@@ -69,6 +110,8 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
               : 'hidden lg:flex lg:flex-col'
             : 'flex'
           }
+          ${isCollapsed ? 'lg:-ml-64 xl:-ml-72 opacity-0 lg:pointer-events-none' : ''}
+          transition-all duration-500
         `}
       >
         {/* Mobile close button */}
@@ -81,14 +124,114 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
           </div>
         )}
 
-        {/* Model name */}
-        <div className="px-4 pt-5 pb-3">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Model</p>
-          <p className="text-sm font-black text-slate-800 truncate">{model.name || 'Untitled'}</p>
+        {/* ── MODEL SWITCHER & TOOLS ── */}
+        <div className="px-3 pt-4 pb-3 border-b border-slate-100 space-y-2">
+
+          {/* Model switcher row */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { setIsModelSwitcherOpen(!isModelSwitcherOpen); setIsImportMenuOpen(false); }}
+              className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all text-left min-w-0"
+              title="Switch model"
+            >
+              <div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+              <span className="text-xs font-black text-slate-800 truncate flex-1 min-w-0">
+                {model.name || 'Untitled'}
+              </span>
+              <ChevronDown
+                size={13}
+                className={`text-slate-400 shrink-0 transition-transform duration-200 ${isModelSwitcherOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {/* + Import dropdown trigger */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => { setIsImportMenuOpen(!isImportMenuOpen); setIsModelSwitcherOpen(false); }}
+                className="p-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 active:scale-90 transition-all shadow-sm"
+                title={t.newModel || 'New / Import'}
+              >
+                <Plus size={14} />
+              </button>
+
+              {/* Import dropdown */}
+              {isImportMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsImportMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1.5 z-20 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden w-52 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {importActions.map(({ label, Icon, onClick, cls }) => (
+                      <button
+                        key={label}
+                        onClick={onClick}
+                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold hover:bg-slate-50 transition-colors text-left ${cls}`}
+                      >
+                        <Icon size={14} className="shrink-0" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Model switcher list (inline expand) */}
+          {isModelSwitcherOpen && models.length > 0 && (
+            <div className="bg-slate-50 rounded-xl border border-slate-100 overflow-hidden animate-in slide-in-from-top-1 duration-200">
+              <div className="max-h-44 overflow-y-auto custom-scrollbar">
+                {models.map((m) => (
+                  <div key={m.id} className="group relative flex items-center">
+                    <button
+                      onClick={() => { onSelectModelById(m.id); setIsModelSwitcherOpen(false); }}
+                      className={`flex-1 flex items-center gap-2 px-3 py-2.5 pr-8 text-left transition-all ${
+                        m.id === model.id
+                          ? 'bg-indigo-50 text-indigo-700'
+                          : 'text-slate-600 hover:bg-white'
+                      }`}
+                    >
+                      <span className="flex-1 text-[11px] font-bold truncate min-w-0">
+                        {m.name || 'Untitled'}
+                      </span>
+                      <span className="text-[9px] text-slate-400 shrink-0">
+                        {m.layers.length} {t.layers?.toLowerCase() || 'layers'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteModel(m.id); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all z-10"
+                      title={t.delete || 'Delete'}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Mapper + Deploy tool buttons */}
+          <div className="flex gap-1.5">
+            <button
+              onClick={onOpenMapper}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100 transition-all text-[10px] font-bold"
+              title={t.mappingTab || 'Mapper'}
+            >
+              <Link2 size={13} />
+              <span className="hidden xl:inline">{t.mappingTab || 'Mapper'}</span>
+            </button>
+            <button
+              onClick={onOpenDeploy}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-100 transition-all text-[10px] font-bold"
+              title={t.deploy?.title || 'Deploy'}
+            >
+              <Rocket size={13} />
+              <span className="hidden xl:inline">{t.deploy?.title || 'Deploy'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Top nav items */}
-        <div className="px-3 space-y-0.5">
+        {/* ── TOP NAV ITEMS ── */}
+        <div className="px-3 pt-3 space-y-0.5">
           <button
             onClick={onSelectModel}
             className={`${navItemBase} ${activeNavSection === 'model' ? navItemActive : navItemInactive}`}
@@ -105,7 +248,7 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
           </button>
         </div>
 
-        {/* Layers section */}
+        {/* ── LAYERS SECTION ── */}
         <div className="flex items-center justify-between px-4 pt-5 pb-2">
           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1.5">
             <Layers size={12} />
@@ -146,11 +289,12 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
                   }
                 `}
               >
-                {/* Color swatch */}
-                <div
-                  className="w-3 h-3 rounded-full shrink-0 border border-black/10"
-                  style={{ backgroundColor: layer.style?.simpleColor || '#ccc' }}
-                />
+                {/* Geometry type icon */}
+                {(() => {
+                  const GeomIcon = GEOM_ICONS[layer.geometryType || 'None'] || Layers;
+                  const color = isActive ? 'white' : (isGhost ? undefined : (layer.style?.simpleColor || '#94a3b8'));
+                  return <GeomIcon size={13} className="shrink-0" style={{ color }} />;
+                })()}
 
                 {/* Layer name */}
                 <span

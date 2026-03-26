@@ -115,7 +115,7 @@ export const no = {
   confirmDeleteBtn: "Ja, slett modell",
   undo: "Angre", redo: "Gjør om",
   layers: "Lag", addLayer: "Nytt lag", deleteLayer: "Slett lag",
-  modelSettings: "Modellinnstillinger",
+  modelSettings: "Metadata & Innstillinger",
   layerSettings: "Innstillinger",
   layerName: "Lagnavn", layerNameDefault: "Lag", layerNamePlaceholder: "f.eks. Verneområder",
   geomColumnName: "Geometrikolonne",

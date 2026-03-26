@@ -4,7 +4,6 @@ import { DataModel, ViewTab, Language, ImportValidationResult, ImportWarning } f
 import { i18n, createEmptyModel } from './constants';
 import { AiProvider } from './contexts/AiContext';
 import ModelEditor from './components/ModelEditor';
-import Sidebar from './components/Sidebar';
 import PreviewPanel from './components/PreviewPanel';
 import DataMapper from './components/DataMapper';
 import Guide from './components/Guide';
@@ -411,47 +410,11 @@ const App: React.FC = () => {
         {/* Standard 3-panel layout */}
         {activeTab !== 'landing' && activeTab !== 'quick-publish' && (
           <div className="flex-1 flex overflow-hidden relative min-w-0">
-            <div
-              className={`
-            ${activeTab === 'models' ? 'translate-x-0 opacity-100' : '-translate-x-full lg:translate-x-0'} 
-            fixed lg:relative top-14 md:top-16 lg:top-0 bottom-16 lg:bottom-0 left-0 lg:left-auto w-full sm:w-80 lg:w-[320px] xl:w-[360px] 
-            flex-none border-r border-slate-200 bg-white z-[120] lg:z-20 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
-            ${sidebarCollapsed ? 'lg:-ml-[320px] xl:-ml-[360px] opacity-0 pointer-events-none' : ''}
-          `}
-            >
-              <Sidebar
-                models={models}
-                selectedId={selectedId}
-                onSelect={(id) => {
-                  const m = models.find(model => model.id === id);
-                  if (m?.githubMeta) {
-                    setGithubConfig((prev: any) => ({ ...prev, ...m.githubMeta }));
-                  }
-                  setSelectedId(id);
-                  setDirty(false);
-                  setTransformedData(null);
-                  setQuickPublishSummary(null);
-                  setQuickPublishValidation(null);
-                  setDeployValidation(null);
-                  setActiveTab('editor');
-                }}
-                onNew={handleNewModel}
-                onImportGis={() => fileInputRef.current?.click()}
-                onImportUrl={() => setShowUrlImport(true)}
-                onImportDatabase={() => setShowDatabaseImportForEditor(true)}
-                onGithubImport={() => setShowGithubImport(true)}
-                onDelete={(id) => setModelToDelete(id)}
-                onOpenMapper={() => setActiveTab('mapper')}
-                onOpenDeploy={() => setActiveTab('deploy')}
-                t={t}
-              />
-            </div>
-
             <button
               aria-label="Toggle Sidebar"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 left-0 z-[150] w-6 h-12 bg-white border border-slate-200 items-center justify-center rounded-r-xl shadow-md text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all duration-500
-            ${sidebarCollapsed ? 'translate-x-0' : 'translate-x-[320px] xl:translate-x-[360px]'}
+            ${sidebarCollapsed ? 'translate-x-0' : 'translate-x-64 xl:translate-x-72'}
           `}
             >
               {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -512,6 +475,29 @@ const App: React.FC = () => {
                     onSetBaseline={handleSetBaseline}
                     t={t}
                     lang={lang}
+                    models={models}
+                    navCollapsed={sidebarCollapsed}
+                    onSelectModelById={(id: string) => {
+                      const m = models.find(model => model.id === id);
+                      if (m?.githubMeta) {
+                        setGithubConfig((prev: any) => ({ ...prev, ...m.githubMeta }));
+                      }
+                      setSelectedId(id);
+                      setDirty(false);
+                      setTransformedData(null);
+                      setQuickPublishSummary(null);
+                      setQuickPublishValidation(null);
+                      setDeployValidation(null);
+                      setActiveTab('editor');
+                    }}
+                    onNewModel={handleNewModel}
+                    onImportGis={() => fileInputRef.current?.click()}
+                    onImportUrl={() => setShowUrlImport(true)}
+                    onImportDatabase={() => setShowDatabaseImportForEditor(true)}
+                    onGithubImport={() => setShowGithubImport(true)}
+                    onDeleteModel={(id: string) => setModelToDelete(id)}
+                    onOpenMapper={() => setActiveTab('mapper')}
+                    onOpenDeploy={() => setActiveTab('deploy')}
                   />
                 )
               ) : (
