@@ -83,10 +83,10 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
 
   const importActions = [
     { label: t.newModel || 'New blank', Icon: Plus, onClick: () => { onNewModel(); setIsImportMenuOpen(false); }, cls: 'text-indigo-600' },
-    { label: t.importGis || 'Import GIS file', Icon: Layers, onClick: () => { onImportGis(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
-    { label: t.importUrl || 'Import from URL', Icon: Globe, onClick: () => { onImportUrl(); setIsImportMenuOpen(false); }, cls: 'text-emerald-600' },
-    { label: t.importDatabase?.title || 'Import Database', Icon: Database, onClick: () => { onImportDatabase(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
     { label: t.github?.importTitle || 'Import from GitHub', Icon: Github, onClick: () => { onGithubImport(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.importGis || 'Import GIS file', Icon: Layers, onClick: () => { onImportGis(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.importDatabase?.title || 'Import Database', Icon: Database, onClick: () => { onImportDatabase(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.importUrl || 'Import from URL', Icon: Globe, onClick: () => { onImportUrl(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
   ];
 
   return (

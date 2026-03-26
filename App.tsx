@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Layers, Upload, Globe, Github, Database } from 'lucide-react';
 import { DataModel, ViewTab, Language, ImportValidationResult, ImportWarning } from './types';
 import { i18n, createEmptyModel } from './constants';
 import { AiProvider } from './contexts/AiContext';
@@ -127,9 +127,17 @@ const App: React.FC = () => {
     setModels(prev => {
       const updated = prev.filter(m => m.id !== id);
       setTimeout(() => pushToHistory(updated, true), 0);
+      if (selectedId === id) {
+        if (updated.length > 0) {
+          setSelectedId(updated[0].id);
+          setActiveTab('editor');
+        } else {
+          setSelectedId(null);
+          setActiveTab('models');
+        }
+      }
       return updated;
     });
-    if (selectedId === id) { setSelectedId(null); setActiveTab('models'); }
     setDirty(false);
     setModelToDelete(null);
   };
@@ -504,10 +512,65 @@ const App: React.FC = () => {
                 )
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-8 text-center bg-slate-50 animate-in fade-in zoom-in-95 duration-700">
-                  <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] bg-white border border-slate-200 flex items-center justify-center text-slate-200 mb-6 md:mb-10 shadow-inner"><Layers size={32} className="md:w-12 md:h-12" /></div>
-                  <h2 className="text-lg md:text-3xl font-black text-slate-800 mb-2 md:mb-4 tracking-tight">{t.noModels}</h2>
-                  <p className="text-slate-400 text-[10px] md:sm font-medium mb-8 md:mb-12 max-w-xs">{t.noModelsHint}</p>
-                  <button onClick={() => setActiveTab('landing')} className="flex items-center justify-center gap-2 md:gap-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-[9px] md:text-xs px-6 md:px-10 py-3.5 md:py-5 rounded-2xl md:rounded-[28px] shadow-2xl shadow-indigo-200 transition-all active:scale-95"><Plus size={18} className="md:w-6 md:h-6" /> {t.newModel}</button>
+                  <div className="w-full max-w-2xl space-y-6">
+                    <div>
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] bg-white border border-slate-200 flex items-center justify-center text-slate-200 mb-6 md:mb-10 shadow-inner mx-auto"><Layers size={32} className="md:w-12 md:h-12" /></div>
+                      <h2 className="text-lg md:text-3xl font-black text-slate-800 mb-2 md:mb-4 tracking-tight">{t.noModels}</h2>
+                      <p className="text-slate-400 text-[10px] md:sm font-medium mb-8 md:mb-12">{t.noModelsHint}</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleNewModel}
+                        className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-500 group-hover/btn:bg-indigo-200 transition-colors">
+                          <Plus size={16} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">{t.landing?.modelNew || 'New model'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setShowGithubImport(true)}
+                        className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
+                          <Github size={16} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">{t.landing?.modelImportGithub || 'Import from GitHub'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
+                          <Upload size={16} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">{t.landing?.modelImportFile || 'Import from file'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setShowDatabaseImportForEditor(true); setDatabaseSourceType('postgis'); }}
+                        className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
+                          <Database size={16} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">{t.landing?.modelImportDatabase || 'Import from database'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setShowUrlImport(true)}
+                        className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-left transition-all group/btn"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-indigo-100 group-hover/btn:text-indigo-500 transition-colors">
+                          <Globe size={16} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">{t.landing?.modelImportUrl || 'Import from URL'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </main>
