@@ -141,7 +141,7 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
               <button
                 onClick={() => i <= step && setStep(i)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                  isActive ? 'bg-slate-900 text-white shadow-lg' :
+                  isActive ? 'bg-indigo-600 text-white shadow-lg' :
                   isDone ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100' :
                   'bg-slate-100 text-slate-400'
                 }`}
@@ -238,7 +238,7 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
 
           <div className="flex items-center justify-between pt-4">
             <span className="text-xs text-slate-400 font-bold">{selectedLayers.size} {q.selectedLayers}</span>
-            <button onClick={() => setStep(1)} className="px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-slate-800 active:scale-95 transition-all shadow-lg flex items-center gap-2">
+            <button onClick={() => setStep(1)} className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-indigo-700 active:scale-95 transition-all shadow-lg flex items-center gap-2">
               {q.next} <ArrowRight size={16} />
             </button>
           </div>
@@ -354,7 +354,7 @@ const QuickPublish: React.FC<QuickPublishProps> = ({
             <button onClick={() => {
               console.log('Next button clicked, going to step 2');
               setStep(2);
-            }} className="px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-slate-800 active:scale-95 transition-all shadow-lg flex items-center gap-2">
+            }} className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-indigo-700 active:scale-95 transition-all shadow-lg flex items-center gap-2">
               {q.next} <ArrowRight size={16} />
             </button>
           </div>

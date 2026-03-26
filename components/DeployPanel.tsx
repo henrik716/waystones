@@ -218,7 +218,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
               <button
                 onClick={() => isDone && setStep(i)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                  isActive ? 'bg-slate-900 text-white shadow-lg' :
+                  isActive ? 'bg-indigo-600 text-white shadow-lg' :
                   isDone   ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 cursor-pointer' :
                              'bg-slate-100 text-slate-400 cursor-default'
                 }`}
@@ -288,7 +288,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
 
           <div className="sticky bottom-6 z-20 flex gap-4 p-2 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[28px] shadow-xl">
             <button onClick={() => setStep(1)} className="px-10 py-4 rounded-2xl border-2 bg-white border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all hover:bg-slate-50">{d.back}</button>
-            <button onClick={() => setStep(3)} className="flex-1 px-10 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest active:scale-95 shadow-lg transition-all hover:bg-slate-800">{d.next}</button>
+            <button onClick={() => setStep(3)} className="flex-1 px-10 py-4 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest active:scale-95 shadow-lg transition-all hover:bg-indigo-700">{d.next}</button>
           </div>
         </section>
       )}
@@ -384,7 +384,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
             <button onClick={() => setStep(2)} className="px-6 py-3 rounded-2xl border-2 border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 active:scale-95 transition-all">
               {q.back || d.back}
             </button>
-            <button onClick={() => setStep(4)} className="px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-slate-800 active:scale-95 transition-all shadow-lg flex items-center gap-2">
+            <button onClick={() => setStep(4)} className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-[0.15em] hover:bg-indigo-700 active:scale-95 transition-all shadow-lg flex items-center gap-2">
               {q.next || d.next} <ChevronRight size={16} />
             </button>
           </div>
