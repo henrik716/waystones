@@ -510,6 +510,7 @@ export const gdalInfoToModel = (
       properties,
       geometryColumnName,
       geometryType,
+      primaryKeyColumn,
     });
 
     layerSummaries.push({
@@ -610,18 +611,15 @@ export const processFilesWithGdal = async (
     // Find the corresponding model layer to check properties (like DeployPanel does)
     const modelLayer = result.model.layers.find(l => l.name === layerSummary.tableName);
 
-    // Check if layer has a proper ID field in properties (same logic as DeployPanel)
-    const hasIdField = modelLayer?.properties.some(p =>
-      p.name.toLowerCase() === 'id' || p.name.toLowerCase() === 'fid'
-    );
+    const hasIdField = !!modelLayer?.primaryKeyColumn;
 
     if (!hasIdField) {
       warnings.push({
         type: 'no_primary_key',
         layerName: layerSummary.tableName,
         columnName: 'none',
-        message: `Layer '${layerSummary.tableName}' has no ID field (id or fid).`,
-        suggestion: "Add an INTEGER PRIMARY KEY column (e.g., 'id' or 'fid')",
+        message: `Layer '${layerSummary.tableName}' has no primary key defined.`,
+        suggestion: "Set a primary key column in the layer editor before deploying",
         severity: 'error'
       });
     }

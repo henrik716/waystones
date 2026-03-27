@@ -277,23 +277,42 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
             </div>
           </DiffField>
 
-          {activeLayer.geometryType !== 'None' && (
+          <div className={`grid gap-3 ${activeLayer.geometryType !== 'None' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {activeLayer.geometryType !== 'None' && (
+              <DiffField
+                label={t.geomColumnName}
+                currentValue={activeLayer.geometryColumnName}
+                baselineValue={baselineLayer?.geometryColumnName}
+                reviewMode={reviewMode}
+              >
+                <input
+                  type="text"
+                  value={activeLayer.geometryColumnName}
+                  placeholder={t.geomColumnNamePlaceholder}
+                  onChange={(e) =>
+                    onUpdateLayer({ geometryColumnName: sanitizeTechnicalName(e.target.value) })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-indigo-700 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all"
+                />
+              </DiffField>
+            )}
             <DiffField
-              label={t.geomColumnName}
-              currentValue={activeLayer.geometryColumnName}
-              baselineValue={baselineLayer?.geometryColumnName}
+              label={t.pkColumnName}
+              currentValue={activeLayer.primaryKeyColumn || ''}
+              baselineValue={baselineLayer?.primaryKeyColumn || ''}
               reviewMode={reviewMode}
             >
               <input
                 type="text"
-                value={activeLayer.geometryColumnName}
-                onChange={(e) =>
-                  onUpdateLayer({ geometryColumnName: sanitizeTechnicalName(e.target.value) })
+                value={activeLayer.primaryKeyColumn || ''}
+                placeholder={t.pkColumnNamePlaceholder}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onUpdateLayer({ primaryKeyColumn: sanitizeTechnicalName(e.target.value) || undefined })
                 }
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-indigo-700 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all"
               />
             </DiffField>
-          )}
+          </div>
         </div>
 
         {/* Tab strip */}

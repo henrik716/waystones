@@ -11,6 +11,30 @@ interface ImportWarningsProps {
   lang: string;
 }
 
+const substitute = (template: string, vars: Record<string, string>) =>
+  template.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+
+const getWarningMessage = (warning: ImportWarning, d: Record<string, any>): string => {
+  const vars = { layerName: warning.layerName || '', columnName: warning.columnName || '' };
+  switch (warning.type) {
+    case 'no_primary_key':   return d.noPrimaryKeyMessage   ? substitute(d.noPrimaryKeyMessage,   vars) : '';
+    case 'non_integer_pk':   return d.nonIntegerPkMessage   ? substitute(d.nonIntegerPkMessage,   vars) : '';
+    case 'null_pk':          return d.nullPkMessage         ? substitute(d.nullPkMessage,          vars) : '';
+    case 'non_unique_pk':    return d.nonUniquePkMessage    ? substitute(d.nonUniquePkMessage,    vars) : '';
+    default: return '';
+  }
+};
+
+const getWarningSuggestion = (warning: ImportWarning, d: Record<string, any>): string => {
+  switch (warning.type) {
+    case 'no_primary_key':   return d.noPrimaryKeySuggestion   || '';
+    case 'non_integer_pk':   return d.nonIntegerPkSuggestion   || '';
+    case 'null_pk':          return d.nullPkSuggestion          || '';
+    case 'non_unique_pk':    return d.nonUniquePkSuggestion    || '';
+    default: return '';
+  }
+};
+
 const ImportWarnings: React.FC<ImportWarningsProps> = ({
   validation,
   onProceed,
@@ -135,8 +159,10 @@ const ImportWarnings: React.FC<ImportWarningsProps> = ({
                       {getIcon(warning.severity)}
                     </div>
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${styles.title} leading-relaxed`}>{warning.message}</p>
-                      
+                      <p className={`text-sm font-medium ${styles.title} leading-relaxed`}>
+                        {getWarningMessage(warning, d) || warning.message}
+                      </p>
+
                       {/* Layer info */}
                       {warning.layerName && (
                         <div className="mt-3 flex items-center gap-2 text-xs">
@@ -152,15 +178,17 @@ const ImportWarnings: React.FC<ImportWarningsProps> = ({
                           )}
                         </div>
                       )}
-                      
+
                       {/* Suggestion */}
-                      {warning.suggestion && (
+                      {(getWarningSuggestion(warning, d) || warning.suggestion) && (
                         <div className={`mt-3 rounded-lg border ${styles.suggestion} p-3`}>
                           <div className="flex items-start gap-2">
                             <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-medium">Suggested Fix:</p>
-                              <p className="text-xs mt-1 leading-relaxed opacity-90">{warning.suggestion}</p>
+                              <p className="text-xs font-medium">{d.suggestedFixes || 'Suggested Fix'}:</p>
+                              <p className="text-xs mt-1 leading-relaxed opacity-90">
+                                {getWarningSuggestion(warning, d) || warning.suggestion}
+                              </p>
                             </div>
                           </div>
                         </div>

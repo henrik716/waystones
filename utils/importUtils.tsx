@@ -280,7 +280,7 @@ export const validateGeoPackageIdFields = async (
     }
   }
 
-  if (!foundPkColumn || primaryKeyColumn === 'fid') {
+  if (!foundPkColumn) {
     warnings.push({
       type: 'no_primary_key',
       layerName: tableName,
@@ -426,7 +426,8 @@ export const processGpkgFile = async (file: File): Promise<{
         ...createEmptyLayer(tableName),
         properties,
         geometryColumnName,
-        geometryType
+        geometryType,
+        primaryKeyColumn,
       });
       layerSummaries.push({
         tableName,

@@ -21,6 +21,14 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
   const d = t.deploy;
   const isMapped = !!mapping?.sourceTable;
 
+  const pkValue = mapping?.primaryKeyColumn || 'fid';
+  const declaredPk = layer.properties.find(p => p.constraints?.isPrimaryKey);
+  const pkMismatch = layer.primaryKeyColumn
+    ? pkValue !== layer.primaryKeyColumn
+    : declaredPk
+      ? pkValue !== declaredPk.name
+      : false;
+
   return (
     <div className={`bg-white rounded-[24px] border transition-all overflow-hidden ${isExpanded ? 'border-indigo-200 ring-4 ring-indigo-500/5' : 'border-slate-200 shadow-sm'}`}>
       <button onClick={onToggle} className="w-full flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
@@ -54,13 +62,23 @@ const LayerMappingCard: React.FC<LayerMappingCardProps> = ({
               onChange={v => onUpdateMapping({ sourceTable: v })}
               hint={sourceType === 'geopackage' ? 'Layer name inside GeoPackage' : (d.sourceTableHint || 'Table name in database')}
             />
-            <Field
-              label={d.primaryKeyColumn || 'Primary Key'}
-              value={mapping?.primaryKeyColumn || 'fid'}
-              onChange={v => onUpdateMapping({ primaryKeyColumn: v })}
-              placeholder="fid"
-              hint={d.primaryKeyHint || 'Unique identifier column (e.g. fid, id)'}
-            />
+            <div className="space-y-2">
+              <Field
+                label={d.primaryKeyColumn || 'Primary Key'}
+                value={mapping?.primaryKeyColumn || 'fid'}
+                onChange={v => onUpdateMapping({ primaryKeyColumn: v })}
+                placeholder="fid"
+                hint={d.primaryKeyHint || 'Unique identifier column (e.g. fid, id)'}
+              />
+              {pkMismatch && (
+                <p className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                  {declaredPk
+                    ? (d.pkMismatchDeclared || "Model declares '{declared}' as primary key — update this field to match").replace('{declared}', declaredPk.name)
+                    : (d.pkNotInModel || "Column '{column}' not found in model — verify it exists in your database table").replace('{column}', pkValue)
+                  }
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Timestamp Selection - Hidden for GeoPackage */}

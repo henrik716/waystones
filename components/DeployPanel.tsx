@@ -68,7 +68,8 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
       const tbl = toTableName(l.name);
       const fieldMappings: Record<string, string> = {};
       l.properties.forEach(p => { fieldMappings[p.id] = p.name; });
-      initial[l.id] = { sourceTable: tbl, fieldMappings, timestampColumn: '', primaryKeyColumn: 'fid' };
+      const pkProp = l.properties.find(p => p.constraints?.isPrimaryKey);
+      initial[l.id] = { sourceTable: tbl, fieldMappings, timestampColumn: '', primaryKeyColumn: l.primaryKeyColumn || pkProp?.name || 'fid' };
     });
     return initial;
   });

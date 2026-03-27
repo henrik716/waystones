@@ -220,7 +220,8 @@ export const validateLayer = (layer: Layer, allLayers: Layer[], sharedTypes: Sha
     }
 
     // Primary key as warning (best practice, not blocking)
-    const hasPk = layer.properties.some(p => p.constraints?.isPrimaryKey);
+    // A layer has a PK if either a property is marked isPrimaryKey, or primaryKeyColumn is set on the layer
+    const hasPk = layer.properties.some(p => p.constraints?.isPrimaryKey) || !!layer.primaryKeyColumn;
     if (!hasPk) {
       issues.push({
         severity: 'warning',

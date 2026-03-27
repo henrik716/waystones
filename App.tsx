@@ -330,17 +330,16 @@ const App: React.FC = () => {
 
       model.layers.filter(layer => !layer.isAbstract).forEach(layer => {
         const effectiveProps = getEffectiveProperties(layer, model.layers);
-        const hasIdField = effectiveProps.some(p =>
-          p.name.toLowerCase() === 'id' || p.name.toLowerCase() === 'fid'
-        );
+        const hasIdField = !!layer.primaryKeyColumn ||
+          effectiveProps.some(p => p.constraints?.isPrimaryKey);
 
         if (!hasIdField) {
           warnings.push({
             type: 'no_primary_key',
             layerName: layer.name,
             columnName: 'none',
-            message: `Layer '${layer.name}' has no ID field (id or fid).`,
-            suggestion: "Add an INTEGER PRIMARY KEY column (e.g., 'id' or 'fid')",
+            message: `Layer '${layer.name}' has no primary key defined.`,
+            suggestion: "Set a primary key column in the layer editor before deploying",
             severity: 'error'
           });
         }
@@ -350,7 +349,7 @@ const App: React.FC = () => {
         warnings,
         errors: [],
         isValid: warnings.filter(w => w.severity === 'error').length === 0,
-        canProceed: true
+        canProceed: warnings.filter(w => w.severity === 'error').length === 0,
       };
 
       setDeployValidation(validation);

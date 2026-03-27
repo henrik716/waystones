@@ -118,6 +118,7 @@ export interface Layer {
   properties: Field[];
   geometryType: GeometryType;
   geometryColumnName: string;
+  primaryKeyColumn?: string;
   style: LayerStyle;
   layerConstraints?: LayerConstraint[];
   extends?: string;

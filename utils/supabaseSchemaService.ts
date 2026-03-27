@@ -43,5 +43,8 @@ export const processSupabaseSchemaToModel = async (
   // Set a sensible default CRS
   model.crs = 'EPSG:25833';
 
+  // Supabase auto-generates an 'id' primary key on all tables
+  model.layers = model.layers.map(l => ({ ...l, primaryKeyColumn: 'id' }));
+
   return model;
 };
