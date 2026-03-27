@@ -117,6 +117,8 @@ export const no = {
   layers: "Lag", addLayer: "Nytt lag", deleteLayer: "Slett lag",
   modelSettings: "Metadata & Innstillinger",
   layerSettings: "Innstillinger",
+  showDetails: "Detaljer",
+  hideDetails: "Skjul detaljer",
   layerName: "Lagnavn", layerNameDefault: "Lag", layerNamePlaceholder: "f.eks. Verneområder",
   geomColumnName: "Geometrikolonne",
   propName: "Teknisk navn", propNamePlaceholder: "f.eks. verneform",

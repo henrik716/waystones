@@ -1,4 +1,5 @@
 import React from 'react';
+import { Database, ChevronUp, ChevronDown } from 'lucide-react';
 import { COMMON_CRS } from '../../constants';
 import { sanitizeTechnicalName } from '../../utils/nameSanitizer';
 import DiffField from './DiffField';
@@ -15,6 +16,8 @@ interface ModelHeaderSectionProps {
   lang: string;
   aiContext: any;
   onGenerateDescription: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
 const ModelHeaderSection: React.FC<ModelHeaderSectionProps> = ({
@@ -26,10 +29,40 @@ const ModelHeaderSection: React.FC<ModelHeaderSectionProps> = ({
   lang,
   aiContext,
   onGenerateDescription,
+  isOpen,
+  onToggle,
 }) => {
   return (
-    <section className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm p-5 md:p-8 mb-6 md:mb-10 relative">
-      <div className="flex flex-col gap-6 md:gap-8">
+    <section className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-200 shadow-sm mb-6 md:mb-10 overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-4 md:p-5 hover:bg-slate-50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <Database size={16} className="text-indigo-600" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm md:text-base font-bold text-slate-900">
+              {model.name || t.modelNamePlaceholder}
+            </h3>
+            {model.crs && (
+              <span className="text-[9px] md:text-[10px] font-mono text-slate-500">{model.crs}</span>
+            )}
+          </div>
+        </div>
+        {isOpen ? (
+          <ChevronUp size={16} className="text-slate-400 flex-shrink-0" />
+        ) : (
+          <ChevronDown size={16} className="text-slate-400 flex-shrink-0" />
+        )}
+      </button>
+
+      {/* Content */}
+      {isOpen && (
+        <div className="px-5 md:px-8 pb-6 md:pb-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex flex-col gap-6 md:gap-8">
         <div className="flex-1 space-y-4 sm:space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <DiffField
@@ -161,6 +194,8 @@ const ModelHeaderSection: React.FC<ModelHeaderSectionProps> = ({
           </DiffField>
         </div>
       </div>
+        </div>
+      )}
     </section>
   );
 };

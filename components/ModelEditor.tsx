@@ -72,7 +72,8 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   // --- UI state
   const [activeNavSection, setActiveNavSection] = useState<NavSection>('layer');
   const [isNavOpen, setIsNavOpen] = useState(false);
-  const [isMetadataOpen, setIsMetadataOpen] = useState(true);
+  const [isModelHeaderOpen, setIsModelHeaderOpen] = useState(true);
+  const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isRenderingOrderOpen, setIsRenderingOrderOpen] = useState(true);
 
   // --- Extracted hooks
@@ -346,6 +347,8 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
                   lang={lang}
                   aiContext={aiContext}
                   onGenerateDescription={handleGenerateDatasetDescription}
+                  isOpen={isModelHeaderOpen}
+                  onToggle={() => setIsModelHeaderOpen(!isModelHeaderOpen)}
                 />
                 <MetadataSection
                   model={model}

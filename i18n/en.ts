@@ -117,6 +117,8 @@ export const en = {
   layers: "Layers", addLayer: "New layer", deleteLayer: "Delete layer",
   modelSettings: "Metadata & Settings",
   layerSettings: "Settings",
+  showDetails: "Details",
+  hideDetails: "Hide details",
   layerName: "Layer name", layerNameDefault: "Layer", layerNamePlaceholder: "e.g. Protected areas",
   geomColumnName: "Geometry column",
   propName: "Field name", propNamePlaceholder: "e.g. protection_type",
