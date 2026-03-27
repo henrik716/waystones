@@ -407,7 +407,7 @@ const DataMapper: React.FC<DataMapperProps> = ({ model, t, onTransformedData }) 
                  <button onClick={() => { setSourceFilename(''); setSourceUrl(''); setSourceFiles([]); setSourceGeomColumns({}); setMappings({}); }} className="ml-2 hover:text-rose-600 transition-colors"><X size={16}/></button>
               </div>
            )}
-           <input type="file" ref={fileInputRef} className="hidden" accept=".geojson,.json,.gpkg,.sqlite,.gml,.xml,.kml,.kmz,.shp,.shx,.dbf,.prj,.cpg,.fgb,.tab,.mif,.csv,.gpx,.dxf" multiple onChange={handleFileUpload} />
+           <input type="file" ref={fileInputRef} className="hidden" accept=".geojson,.json,.gpkg,.sqlite,.gml,.xml,.kml,.kmz,.shp,.shx,.dbf,.prj,.cpg,.fgb,.parquet,.tab,.mif,.csv,.gpx,.dxf" multiple onChange={handleFileUpload} />
       </section>
 
       {/* STEP 2: LAYER MATCHING */}

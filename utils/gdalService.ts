@@ -90,7 +90,7 @@ export const isGdalReady = (): boolean => gdalInstance !== null;
 // ============================================================
 const VECTOR_EXTENSIONS = new Set([
   'gpkg', 'shp', 'geojson', 'json', 'gml', 'kml', 'kmz',
-  'fgb', 'tab', 'mif', 'gdb', 'sqlite', 'csv', 'tsv',
+  'fgb', 'parquet', 'tab', 'mif', 'gdb', 'sqlite', 'csv', 'tsv',
   'gpx', 'ods', 'xlsx', 'dxf', 'dgn', 'pbf', 'osm',
 ]);
 

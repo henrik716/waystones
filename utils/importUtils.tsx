@@ -509,7 +509,7 @@ export const processAnyFile = async (
     return processGpkgFile(mainFile);
   }
 
-  throw new Error(`Unsupported file format: .${ext}. Supported formats: GeoPackage (.gpkg), Shapefile (.shp), GeoJSON, GML, KML, FlatGeobuf, and more (requires GDAL).`);
+  throw new Error(`Unsupported file format: .${ext}. Supported formats: GeoPackage (.gpkg), Shapefile (.shp), GeoJSON, GML, KML, FlatGeobuf (.fgb), GeoParquet (.parquet), and more (requires GDAL).`);
 };
 
 // ============================================================

@@ -369,7 +369,7 @@ const App: React.FC = () => {
   return (
     <AiProvider>
       <div className="flex flex-col h-screen bg-slate-50 overflow-hidden text-slate-900 font-sans selection:bg-indigo-500/20">
-        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".geojson,.json,.gpkg,.sqlite,.sql,.gml,.kml,.kmz,.shp,.fgb,.csv,.gpx,.tab,.mif,.dxf,.yaml,.yml" className="hidden" />
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".geojson,.json,.gpkg,.sqlite,.sql,.gml,.kml,.kmz,.shp,.fgb,.parquet,.csv,.gpx,.tab,.mif,.dxf,.yaml,.yml" className="hidden" />
         {showGuide && <Guide onClose={() => { setShowGuide(false); localStorage.setItem('guide_seen', 'true'); }} t={t} />}
         {showGithubImport && <GithubImportDialog t={t} onClose={() => setShowGithubImport(false)} onImport={handleImportModel} />}
         {showUrlImport && <UrlImportDialog t={t} onClose={() => setShowUrlImport(false)} onImport={handleUrlImportSuccess} />}
