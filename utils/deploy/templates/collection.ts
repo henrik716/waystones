@@ -105,9 +105,13 @@ export function generateCollectionHtml(_model: DataModel): string {
       </div>
       {% endif %}
       {% if data.crs %}
-      <div class="sidebar-row">
+      <div class="sidebar-row" style="align-items:flex-start;">
         <span class="sidebar-key">CRS</span>
-        <span class="sidebar-val">{{ data.crs[0] | replace('http://www.opengis.net/def/crs/EPSG/0/', 'EPSG:') | replace('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'CRS84') }}</span>
+        <span class="sidebar-val" style="display:flex;flex-direction:column;gap:0.2rem;align-items:flex-end;">
+          {% for crs_uri in data.crs %}
+            <span style="font-size:0.78rem;font-family:monospace;">{{ crs_uri | replace('http://www.opengis.net/def/crs/EPSG/0/', 'EPSG:') | replace('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'CRS84') }}</span>
+          {% endfor %}
+        </span>
       </div>
       {% endif %}
       <div class="sidebar-row" style="margin-top:0.5rem;padding-top:0.9rem;border-top:1px solid #e2e8f0;flex-wrap:wrap;gap:0.5rem;">
