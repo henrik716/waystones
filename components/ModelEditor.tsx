@@ -3,7 +3,11 @@ import type { Translations } from '../i18n/index';
 import { Eye, ChevronDown, Menu } from 'lucide-react';
 import { DataModel } from '../types';
 import { validateModel, groupIssuesByLayer } from '../utils/validationUtils';
-import { generateModelAbstract, generateLayerDescription } from '../utils/aiService';
+import { 
+  generateModelAbstract, 
+  generateLayerDescription,
+  suggestLayerKeywords
+} from '../utils/aiService';
 import { useAiContext } from '../contexts/AiContext';
 import { useDragAndDropReorder } from '../hooks/useDragAndDropReorder';
 import { useRenderingOrder } from '../hooks/useRenderingOrder';
@@ -166,6 +170,31 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
       })
       .catch((error) => {
         aiContext.setError(error, 'description');
+      });
+  };
+
+
+  const handleSuggestLayerKeywords = () => {
+    if (!layerActions.activeLayer) return;
+    if (!aiContext.ensureApiKey('layerKeywords')) return;
+    aiContext.setLoading('layerKeywords', 'Suggesting layer keywords…');
+    const layerProperties = layerActions.activeLayer.properties.map((p) => ({
+      name: p.name,
+      type: p.fieldType.kind === 'primitive' ? p.fieldType.baseType : p.fieldType.kind,
+    }));
+    suggestLayerKeywords({
+      layerName: layerActions.activeLayer.name,
+      properties: layerProperties,
+      lang,
+    })
+      .then((result) => {
+        const existing = layerActions.activeLayer?.keywords || [];
+        const combined = Array.from(new Set([...existing, ...result]));
+        layerActions.handleUpdateLayer({ keywords: combined });
+        aiContext.setSuccess();
+      })
+      .catch((error) => {
+        aiContext.setError(error, 'layerKeywords');
       });
   };
 
@@ -400,6 +429,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
                 sharedTypes={sharedTypesActions.sharedTypes}
                 sharedEnums={sharedTypesActions.sharedEnums}
                 onGenerateLayerDescription={handleGenerateLayerDescription}
+                onSuggestLayerKeywords={handleSuggestLayerKeywords}
               />
             )}
           </div>

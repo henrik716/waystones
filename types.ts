@@ -113,6 +113,8 @@ export interface Layer {
   id: string;
   name: string;
   description: string;
+  title?: string;
+  keywords?: string[];
   properties: Field[];
   geometryType: GeometryType;
   geometryColumnName: string;

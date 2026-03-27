@@ -284,3 +284,32 @@ export async function generateModelAbstract(params: {
   const user = `Dataset name: "${params.modelName}"\nLayers:\n${layerSummary}`;
   return callAI(system, user);
 }
+export async function suggestLayerTitle(params: {
+  layerName: string;
+  properties: Array<{ name: string; type: string }>;
+  lang: string;
+}): Promise<string> {
+  const langInstruction = params.lang === 'no' ? 'Svar kun på norsk.' : 'Reply in English only.';
+  const propsSummary = params.properties.slice(0, 6).map(p => p.name).join(', ');
+  const system = `You are a geospatial metadata specialist. Given a technical layer name and its properties, suggest a concise, professional, and human-friendly display title for the layer. ${langInstruction} Output ONLY the title text, no quotes, no preamble.`;
+  const user = `Technical name: "${params.layerName}"\nProperties: ${propsSummary || '(no properties)'}`;
+  return callAI(system, user);
+}
+
+export async function suggestLayerKeywords(params: {
+  layerName: string;
+  properties: Array<{ name: string; type: string }>;
+  lang: string;
+}): Promise<string[]> {
+  const langInstruction = params.lang === 'no' ? 'Svar kun på norsk.' : 'Reply in English only.';
+  const propsSummary = params.properties.slice(0, 10).map(p => p.name).join(', ');
+  const system = `You are a geospatial metadata specialist. Given a layer name and its properties, suggest 4-6 relevant search keywords/tags. ${langInstruction} Output ONLY a JSON array of strings (e.g. ["roads","transport"]). No explanation, no markdown.`;
+  const user = `Layer: "${params.layerName}"\nProperties: ${propsSummary || '(no properties)'}`;
+  const raw = await callAI(system, user);
+  try {
+    const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleaned) as string[];
+  } catch {
+    return raw.split(',').map(s => s.replace(/["'\[\]]/g, '').trim()).filter(Boolean);
+  }
+}

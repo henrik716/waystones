@@ -872,6 +872,7 @@ export const no = {
     provider: 'Leverandør',
     suggestTheme: 'Foreslå tema',
     suggestKeywords: 'Foreslå nøkkelord',
+    suggestTitle: 'Foreslå tittel',
     // New AI configuration modal translations
     configureApiKey: 'Konfigurer API-nøkkel',
     aiConfiguration: 'AI-konfigurasjon',

@@ -90,13 +90,13 @@ export const generatePygeoapiConfig = async (
 
     // pygeoapi requires a keywords list on every collection resource — not just
     // in top-level metadata. Missing keywords causes a KeyError on /collections.
-    const layerKeywords = (layer as any).keywords?.length
-      ? (layer as any).keywords
+    const layerKeywords = layer.keywords?.length
+      ? layer.keywords
       : [model.namespace || 'data', layer.name.toLowerCase().replace(/[^a-z0-9]/g, '-')];
 
     yaml += `  ${collectionId}:\n`;
     yaml += `    type: collection\n`;
-    yaml += `    title: ${layer.name}\n`;
+    yaml += `    title: ${layer.title || layer.name}\n`;
     yaml += `    description: ${layer.description || 'Spatial collection'}\n`;
     yaml += `    keywords:\n`;
     layerKeywords.forEach((kw: string) => { yaml += `      - ${kw}\n`; });

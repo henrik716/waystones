@@ -872,6 +872,7 @@ export const en = {
     provider: 'Provider',
     suggestTheme: 'Suggest theme',
     suggestKeywords: 'Suggest keywords',
+    suggestTitle: 'Suggest title',
     // New AI configuration modal translations
     configureApiKey: 'Configure API Key',
     aiConfiguration: 'AI Configuration',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Layers, Edit3, ShieldCheck, Settings2, Palette } from 'lucide-react';
+import { Plus, Trash2, Layers, Edit3, ShieldCheck, Settings2, Palette, X } from 'lucide-react';
 import type { Translations } from '../../i18n/index';
 import type { DataModel, Layer, Field, SharedType, SharedEnum } from '../../types';
 import { GEOM_ICONS } from '../../constants';
@@ -40,6 +40,7 @@ interface LayerEditorTabsProps {
   sharedTypes: SharedType[];
   sharedEnums: SharedEnum[];
   onGenerateLayerDescription: () => void;
+  onSuggestLayerKeywords: () => void;
 }
 
 const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
@@ -62,6 +63,7 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
   sharedTypes,
   sharedEnums,
   onGenerateLayerDescription,
+  onSuggestLayerKeywords,
 }) => {
   const [activeTab, setActiveTab] = useState<LayerTab>('fields');
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
@@ -117,6 +119,104 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
                 )}
               </div>
             </DiffField>
+
+            <div className="mt-3 px-1 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Public Title */}
+                <DiffField
+                  label={<span className="text-[9px] opacity-70 tracking-widest uppercase font-black">{t.propTitle}</span>}
+                  currentValue={activeLayer.title || ''}
+                  baselineValue={baselineLayer?.title}
+                  reviewMode={reviewMode}
+                >
+                  <input
+                    type="text"
+                    value={activeLayer.title || ''}
+                    onChange={(e) => onUpdateLayer({ title: e.target.value })}
+                    placeholder={activeLayer.name}
+                    className="w-full bg-slate-50/50 border border-slate-200 hover:border-indigo-200 rounded-xl px-3 py-2 text-xs md:text-sm font-bold focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all placeholder:text-slate-300"
+                  />
+                </DiffField>
+
+                {/* Keywords */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[9px] opacity-70 tracking-widest font-black uppercase">{lang === 'no' ? 'NØKKELORD' : 'DISCOVERY KEYWORDS'}</label>
+                    <AiTrigger
+                      onClick={onSuggestLayerKeywords}
+                      isLoading={aiContext.isLoading}
+                      isActive={aiContext.currentOperation === 'layerKeywords'}
+                      hasError={!!aiContext.error}
+                      label={t.ai?.suggestKeywords || 'Suggest keywords'}
+                      t={t}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 p-1.5 min-h-[38px] bg-slate-50/50 border border-slate-200 hover:border-indigo-200 rounded-xl">
+                    {(activeLayer.keywords || []).map((kw, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 bg-white text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm">
+                        {kw}
+                        {!reviewMode && (
+                          <button 
+                            onClick={() => onUpdateLayer({ keywords: (activeLayer.keywords || []).filter((_, idx) => idx !== i) })} 
+                            className="text-indigo-400 hover:text-indigo-700 transition-colors"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                    {!reviewMode && (
+                      <input
+                        type="text"
+                        placeholder={t.metadata?.keywordsPlaceholder || 'Type keyword…'}
+                        className="flex-1 min-w-[80px] bg-transparent text-xs font-medium focus:outline-none placeholder:text-slate-300 px-1"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
+                            e.preventDefault();
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (!(activeLayer.keywords || []).includes(val)) {
+                              onUpdateLayer({ keywords: [...(activeLayer.keywords || []), val] });
+                            }
+                            (e.target as HTMLInputElement).value = '';
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <DiffField
+                label={<span className="text-[9px] opacity-70 tracking-widest">{t.description}</span>}
+                currentValue={activeLayer.description}
+                baselineValue={baselineLayer?.description}
+                reviewMode={reviewMode}
+                action={
+                  <AiTrigger
+                    onClick={onGenerateLayerDescription}
+                    isLoading={aiContext.isLoading}
+                    isActive={aiContext.currentOperation === 'description'}
+                    hasError={!!aiContext.error}
+                    label={t.ai?.generateDescription || 'Generate description'}
+                    t={t}
+                  />
+                }
+              >
+                <textarea
+                  placeholder={t.descriptionPlaceholder}
+                  value={activeLayer.description}
+                  onChange={(e) => onUpdateLayer({ description: e.target.value })}
+                  className="w-full bg-slate-50/50 border border-slate-200 hover:border-indigo-200 rounded-xl text-slate-500 text-xs md:text-sm px-3 py-2.5 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all resize-none leading-relaxed placeholder:text-slate-300 min-h-[3rem] max-h-32 overflow-y-auto"
+                  rows={1}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = `${target.scrollHeight}px`;
+                  }}
+                />
+              </DiffField>
+            </div>
           </div>
           {model.layers.length > 1 && !isGhostLayer && (
             <button
@@ -369,31 +469,6 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
         {/* ── SETTINGS TAB ── */}
         {activeTab === 'settings' && (
           <div className="p-4 sm:p-6 md:p-8 space-y-6">
-            {/* Description */}
-            <DiffField
-              label={t.description}
-              currentValue={activeLayer.description}
-              baselineValue={baselineLayer?.description}
-              reviewMode={reviewMode}
-              action={
-                <AiTrigger
-                  onClick={onGenerateLayerDescription}
-                  isLoading={aiContext.isLoading}
-                  isActive={aiContext.currentOperation === 'description'}
-                  hasError={!!aiContext.error}
-                  label={t.ai?.generateDescription || 'Generate description'}
-                  t={t}
-                />
-              }
-            >
-              <textarea
-                placeholder={t.descriptionPlaceholder}
-                value={activeLayer.description}
-                onChange={(e) => onUpdateLayer({ description: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-[18px] md:rounded-[20px] px-4 py-4 md:px-5 text-xs md:text-sm min-h-[60px] md:min-h-[80px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none leading-relaxed"
-              />
-            </DiffField>
-
             {/* Layer inheritance */}
             {!isGhostLayer && (
               <LayerInheritanceSection

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AiAuthError, AiKeyMissingError, getApiKey, getProvider, hasApiKey } from '../utils/aiService';
 
-export type AiOperationType = 'description' | 'type' | 'constraints' | 'abstract' | 'theme' | 'keywords';
+export type AiOperationType = 'description' | 'type' | 'constraints' | 'abstract' | 'theme' | 'keywords' | 'layerTitle' | 'layerKeywords';
 
 export interface AiError {
   type: 'network' | 'auth' | 'rate_limit' | 'invalid_key' | 'unknown';
@@ -49,6 +49,14 @@ const operationMessages: Record<AiOperationType, { start: string; success: strin
   },
   keywords: {
     start: 'Extracting relevant keywords from your data…',
+    success: 'Keywords suggested successfully'
+  },
+  layerTitle: {
+    start: 'Suggesting a public title for this layer…',
+    success: 'Title suggested successfully'
+  },
+  layerKeywords: {
+    start: 'Extracting relevant keywords for this layer…',
     success: 'Keywords suggested successfully'
   }
 };
