@@ -7,16 +7,16 @@ export function generateIndexHtml(_model: DataModel): string {
 <style>
   .hero-sec { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem; gap:2rem; }
   .hero-text { flex:1; max-width:700px; }
-  .hero-title { font-size:2.25rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:1rem; color:#4338ca; }
+  .hero-title { font-size:2.25rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:1rem; color:var(--brand); }
   .hero-desc { font-size:1.05rem; color:#475569; line-height:1.6; margin-bottom:1.5rem; }
   
   .cta-card { background:#f1f5f9; border:1px solid #cbd5e1; border-radius:var(--radius); padding:1.5rem; margin-bottom:2rem; transition:all 0.2s; text-decoration:none; display:flex; align-items:center; gap:1.25rem; color:inherit; }
   .cta-card:hover { background:#e2e8f0; border-color:#94a3b8; box-shadow:0 4px 12px rgba(0,0,0,0.06); text-decoration:none; color:inherit; transform:translateY(-2px); }
   .cta-icon { width:52px; height:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#0f172a; }
   .cta-body { flex:1; }
-  .cta-title { font-weight:600; font-size:1.15rem; color:#4338ca; margin-bottom:0.15rem; }
+  .cta-title { font-weight:600; font-size:1.15rem; color:var(--brand); margin-bottom:0.15rem; }
   .cta-desc { font-size:0.95rem; color:#475569; }
-  .cta-arrow { color:#4338ca; opacity:0.6; }
+  .cta-arrow { color:var(--brand); opacity:0.6; }
   .cta-card:hover .cta-arrow { opacity:1; }
   
   .api-block { border:1px solid #cbd5e1; border-radius:var(--radius); padding:0; margin-bottom:2rem; overflow:hidden; }
@@ -38,7 +38,7 @@ export function generateIndexHtml(_model: DataModel): string {
   .meta-lbl { color:#64748b; font-weight:500; }
   .meta-val { color:#0f172a; font-weight:600; }
   .tags-wrap { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.2rem; }
-  .tag-pill { background:#e0e7ff; color:#4338ca; border-radius:999px; padding:0.15rem 0.6rem; font-size:0.75rem; font-weight:600; }
+  .tag-pill { background:var(--brand-light); color:var(--brand); border-radius:999px; padding:0.15rem 0.6rem; font-size:0.75rem; font-weight:600; }
   
   .contact-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.5rem; padding:1rem; }
   .contact-hdr { font-weight:700; font-size:0.85rem; color:#475569; margin-bottom:0.85rem; display:flex; align-items:center; gap:0.5rem; cursor:pointer; }

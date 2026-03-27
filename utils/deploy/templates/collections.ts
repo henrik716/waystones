@@ -32,10 +32,10 @@ export function generateCollectionsHtml(model: DataModel): string {
     font-size: 2rem;
   }
   .col-body { flex: 1; padding: 1.1rem 1.3rem; min-width: 0; }
-  .col-title { font-size: 1.05rem; font-weight: 700; color: #4338ca; text-decoration: none; }
+  .col-title { font-size: 1.05rem; font-weight: 700; color: var(--brand); text-decoration: none; }
   .col-title:hover { text-decoration: underline; }
-  .col-count { font-size: 0.78rem; background: #e0e7ff; color: #4338ca; border-radius: 999px; padding: 0.15rem 0.65rem; font-weight: 600; margin-left: 0.5rem; vertical-align: middle; }
-  .col-desc { font-size: 0.875rem; color: var(--brand); opacity: 0.7; margin: 0.3rem 0 0.6rem; }
+  .col-count { font-size: 0.78rem; background: var(--brand-light); color: var(--brand); border-radius: 999px; padding: 0.15rem 0.65rem; font-weight: 600; margin-left: 0.5rem; vertical-align: middle; }
+  .col-desc { font-size: 0.875rem; color: #475569; margin: 0.3rem 0 0.6rem; }
   .col-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .col-tag { font-size: 0.72rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.15rem 0.6rem; }
   .col-meta { padding: 1rem 1.3rem; min-width: 200px; border-left: 1px solid #f1f5f9; display: flex; flex-direction: column; justify-content: center; }
@@ -48,8 +48,8 @@ export function generateCollectionsHtml(model: DataModel): string {
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 style="font-weight:800;font-size:1.5rem;letter-spacing:-0.02em;color:#4338ca;">Collections</h2>
-  <a href="?f=json" class="btn btn-sm" style="background:#eef2ff;color:#4338ca;font-size:0.8rem;border:1px solid #c7d2fe;">JSON</a>
+  <h2 style="font-weight:800;font-size:1.5rem;letter-spacing:-0.02em;color:var(--brand);">Collections</h2>
+  <a href="?f=json" class="btn btn-json">JSON</a>
 </div>
 
 <div id="collections-map"></div>
@@ -99,6 +99,7 @@ export function generateCollectionsHtml(model: DataModel): string {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
       maxZoom: 18
     }).addTo(map);
+    var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
     var bounds = L.latLngBounds();
     var hasBounds = false;
     {% for col in data.collections %}
@@ -106,7 +107,7 @@ export function generateCollectionsHtml(model: DataModel): string {
         (function() {
           var bbox = {{ col.extent.spatial.bbox[0] | to_json }};
           var sw = [bbox[1], bbox[0]], ne = [bbox[3], bbox[2]];
-          L.rectangle([sw, ne], { color: '#4338ca', weight: 2, fillOpacity: 0.07 })
+          L.rectangle([sw, ne], { color: brandColor, weight: 2, fillOpacity: 0.07 })
             .addTo(map)
             .bindPopup('<b>{{ col.title }}</b><br><a href="{{ config.server.url }}/collections/{{ col.id }}">View &rarr;</a>');
           bounds.extend([sw, ne]);

@@ -25,8 +25,14 @@ export function generateItemHtml(_model: DataModel): string {
   .item-prop-table th { width:200px; background:#f8fafc; color:#64748b; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; padding:0.75rem 1.25rem; text-align:left; border-bottom:1px solid #f1f5f9; }
   .item-prop-table td { padding:0.75rem 1.25rem; font-size:0.875rem; color:#334155; border-bottom:1px solid #f1f5f9; word-break:break-word; }
   .item-prop-table tbody tr:hover { background:#f8fafc; }
-  .nav-btn { display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.85rem; background:#fff; color:#4338ca; border:1px solid #c7d2fe; border-radius:0.5rem; font-size:0.82rem; font-weight:600; text-decoration:none; transition:all 0.15s; }
-  .nav-btn:hover { background:#eef2ff; text-decoration:none; }
+  .nav-btn { display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.85rem; background:#fff; color:var(--brand); border:1px solid var(--brand-border); border-radius:0.5rem; font-size:0.82rem; font-weight:600; text-decoration:none; transition:all 0.15s; }
+  .nav-btn:hover { background:var(--brand-light); text-decoration:none; }
+  .sidebar-card { background:#fff; border:1px solid #e2e8f0; border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:1.25rem 1.5rem; }
+  .sidebar-card-title { font-size:0.8rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+  .sidebar-row { display:flex; justify-content:space-between; align-items:baseline; padding:0.5rem 0; border-bottom:1px solid #f8fafc; font-size:0.875rem; gap:1rem; }
+  .sidebar-row:last-child { border-bottom:none; }
+  .sidebar-key { color:#94a3b8; font-weight:500; flex-shrink:0; }
+  .sidebar-val { color:#0f172a; font-weight:600; text-align:right; word-break:break-all; }
 </style>
 
 <div class="row g-4">
@@ -132,7 +138,7 @@ export function generateItemHtml(_model: DataModel): string {
 
     var itemData = {{ data | to_json | safe }};
     if (itemData && itemData.geometry) {
-      var brandColor = '#4338ca';
+      var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
       var layer = L.geoJSON(itemData, {
         style: function() { return { color: brandColor, weight: 3, fillOpacity: 0.2 }; },
         pointToLayer: function(feature, latlng) {

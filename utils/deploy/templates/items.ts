@@ -13,14 +13,14 @@ export function generateItemsHtml(_model: DataModel): string {
 <style>
   #items-map { height: 420px; border-radius: var(--radius); box-shadow: var(--shadow-md); }
   .items-header { font-size:1.5rem; font-weight:800; letter-spacing:-0.02em; margin-bottom:0.25rem; color: var(--brand); }
-  .items-desc { color: var(--brand); opacity: 0.75; font-size:0.95rem; margin-bottom:1.25rem; }
+  .items-desc { color: #475569; font-size:0.95rem; margin-bottom:1.25rem; }
   .feature-table th { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; font-weight:700; padding:0.65rem 1rem; background:#f8fafc; border-bottom:2px solid #e2e8f0; }
   .feature-table td { padding:0.7rem 1rem; font-size:0.875rem; color:#334155; border-color:#f1f5f9; vertical-align:middle; }
   .feature-table tbody tr { transition:background 0.12s; }
   .feature-table tbody tr:hover { background:#f8fafc; }
-  .id-link { font-weight:700; font-family:monospace; font-size:0.95rem; color:#4338ca; display:inline-flex; align-items:center; gap:0.4rem; text-decoration:underline; text-decoration-color:#c7d2fe; text-underline-offset:4px; text-decoration-thickness:2px; transition:all 0.2s; }
-  .id-link:hover { color:#3730a3; text-decoration-color:#4338ca; }
-  .chip { display:inline-block; font-size:0.72rem; padding:0.15rem 0.6rem; border-radius:999px; background:#e0e7ff; color:#4338ca; font-weight:600; }
+  .id-link { font-weight:700; font-family:monospace; font-size:0.95rem; color:var(--brand); display:inline-flex; align-items:center; gap:0.4rem; text-decoration:underline; text-decoration-color:var(--brand-border); text-underline-offset:4px; text-decoration-thickness:2px; transition:all 0.2s; }
+  .id-link:hover { color:var(--brand-dark); text-decoration-color:var(--brand); }
+  .chip { display:inline-block; font-size:0.72rem; padding:0.15rem 0.6rem; border-radius:999px; background:var(--brand-light); color:var(--brand); font-weight:600; }
   .items-meta-bar { display:flex; gap:1.5rem; flex-wrap:wrap; align-items:center; margin-bottom:0.75rem; padding:0.85rem 1.1rem; background:#fff; border:1px solid #e2e8f0; border-radius: var(--radius); box-shadow:var(--shadow-sm); }
   .items-meta-bar .meta-item { display:flex; flex-direction:column; }
   .items-meta-bar .meta-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:#94a3b8; font-weight:700; }
@@ -35,27 +35,27 @@ export function generateItemsHtml(_model: DataModel): string {
   .filter-row-val { flex: 2; min-width: 0; }
   .filter-row label { display:block; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:#94a3b8; font-weight:700; margin-bottom:0.3rem; }
   .filter-row select, .filter-row input { width:100%; font-size:0.85rem; padding:0.455rem 0.65rem; border:1px solid #cbd5e1; border-radius:0.4rem; color:#334155; background:#f8fafc; transition:all 0.15s; outline:none; }
-  .filter-row select:focus, .filter-row input:focus { border-color:#4338ca; background:#fff; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+  .filter-row select:focus, .filter-row input:focus { border-color:var(--brand); background:#fff; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
   .btn-remove-row { background:none; border:none; color:#cbd5e1; padding:0.45rem; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
   .btn-remove-row:hover { color:#ef4444; background:#fef2f2; border-radius:0.35rem; }
   .btn-add-filter { display:inline-flex; align-items:center; gap:0.45rem; background:#fff; border:1px solid #e2e8f0; color:#64748b; font-size:0.8rem; font-weight:700; padding:0.55rem 1.1rem; border-radius:0.5rem; cursor:pointer; transition:all 0.15s; width: 100%; justify-content: center; margin-bottom: 1.5rem; box-shadow:var(--shadow-sm); }
-  .btn-add-filter:hover { border-color:#4338ca; color:#4338ca; background:#f8fafc; box-shadow:var(--shadow-md); }
+  .btn-add-filter:hover { border-color:var(--brand); color:var(--brand); background:#f8fafc; box-shadow:var(--shadow-md); }
   .filter-section-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; font-weight:800; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
   .filter-section-title::after { content:""; flex:1; height:1px; background:#f1f5f9; }
   .filter-actions { display:flex; gap:0.75rem; align-items:center; }
-  .btn-filter-apply { background:#4338ca; color:#fff; border:none; border-radius:0.5rem; font-size:0.82rem; font-weight:700; padding:0.55rem 1.4rem; cursor:pointer; transition:all 0.2s; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2); }
-  .btn-filter-apply:hover { background:#4338ca; transform:translateY(-1px); box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.3); }
+  .btn-filter-apply { background:var(--brand); color:#fff; border:none; border-radius:0.5rem; font-size:0.82rem; font-weight:700; padding:0.55rem 1.4rem; cursor:pointer; transition:all 0.2s; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2); }
+  .btn-filter-apply:hover { background:var(--brand-dark); transform:translateY(-1px); box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.3); }
   .btn-filter-apply:active { transform:translateY(0); }
   .btn-filter-clear { background:#fff; border:1px solid #e2e8f0; border-radius:0.5rem; font-size:0.82rem; font-weight:700; padding:0.55rem 1.4rem; color:#64748b; cursor:pointer; transition:all 0.2s; }
   .btn-filter-clear:hover { border-color:#94a3b8; color:#334155; background:#f8fafc; }
 
   /* Active filter chips */
   #active-filters { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem; }
-  .active-chip { display:inline-flex; align-items:center; gap:0.3rem; font-size:0.75rem; background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:999px; padding:0.2rem 0.5rem 0.2rem 0.7rem; font-weight:600; }
-  .active-chip button { background:none; border:none; cursor:pointer; color:#4338ca; padding:0; line-height:1; font-size:0.9rem; display:flex; align-items:center; opacity:0.6; transition:opacity 0.15s; }
+  .active-chip { display:inline-flex; align-items:center; gap:0.3rem; font-size:0.75rem; background:var(--brand-light); color:var(--brand); border:1px solid var(--brand-border); border-radius:999px; padding:0.2rem 0.5rem 0.2rem 0.7rem; font-weight:600; }
+  .active-chip button { background:none; border:none; cursor:pointer; color:var(--brand); padding:0; line-height:1; font-size:0.9rem; display:flex; align-items:center; opacity:0.6; transition:opacity 0.15s; }
   .active-chip button:hover { opacity:1; }
   .btn-filter-toggle { display:inline-flex; align-items:center; gap:0.45rem; font-size:0.82rem; font-weight:700; padding:0.38rem 0.85rem; border-radius:0.45rem; cursor:pointer; background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; transition:all 0.15s; white-space:nowrap; }
-  .btn-filter-toggle:hover, .btn-filter-toggle.active { background:#eef2ff; border-color:#c7d2fe; color:#4338ca; }
+  .btn-filter-toggle:hover, .btn-filter-toggle.active { background:var(--brand-light); border-color:var(--brand-border); color:var(--brand); }
 </style>
 
 <div class="items-header">{{ data.title | default('Collection') }}</div>
@@ -92,7 +92,7 @@ export function generateItemsHtml(_model: DataModel): string {
       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
       Filter
     </button>
-    <a href="?f=json" class="btn btn-sm" style="background:#eef2ff;color:#4338ca;font-size:0.8rem;border:1px solid #c7d2fe;">JSON</a>
+    <a href="?f=json" class="btn btn-json">JSON</a>
   </div>
 </div>
 
@@ -140,9 +140,9 @@ export function generateItemsHtml(_model: DataModel): string {
     <div class="d-flex gap-2">
       {% for link in data.links %}
         {% if link.rel == 'prev' %}
-          <a href="{{ link.href }}" class="btn btn-sm" style="background:#fff;color:#4338ca;border:1px solid #c7d2fe;font-size:0.75rem;padding:0.25rem 0.6rem;">&larr; Prev</a>
+          <a href="{{ link.href }}" class="nav-btn" style="font-size:0.75rem;padding:0.25rem 0.6rem;">&larr; Prev</a>
         {% elif link.rel == 'next' %}
-          <a href="{{ link.href }}" class="btn btn-sm" style="background:#fff;color:#4338ca;border:1px solid #c7d2fe;font-size:0.75rem;padding:0.25rem 0.6rem;">Next &rarr;</a>
+          <a href="{{ link.href }}" class="nav-btn" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Next &rarr;</a>
         {% endif %}
       {% endfor %}
     </div>
@@ -186,7 +186,7 @@ export function generateItemsHtml(_model: DataModel): string {
     }).addTo(map);
     var featuresData = {{ data | to_json | safe }};
     if (featuresData && featuresData.features && featuresData.features.length > 0) {
-      var brandColor = '#4338ca';
+      var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
       var layer = L.geoJSON(featuresData, {
         style: function() { return { color: brandColor, weight: 2, fillOpacity: 0.18 }; },
         pointToLayer: function(feature, latlng) {
@@ -197,19 +197,19 @@ export function generateItemsHtml(_model: DataModel): string {
         },
         onEachFeature: function(feature, layer) {
           var detailsUrl = '{{ data.items_path | default(config.server.url + "/collections/items") }}/' + feature.id;
-          var html = '<div style="min-width:240px; font-family:Inter,sans-serif;">';
-          
+          var html = '<div style="min-width:240px; font-family:\'DM Sans\',sans-serif;">';
+
           // Header
           html += '<div style="padding:10px 0; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">';
           html += '<span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; font-weight:700;">Feature</span>';
-          html += '<span style="font-family:monospace; font-size:0.85rem; font-weight:700; color:#4338ca;">#' + feature.id + '</span>';
+          html += '<span style="font-family:monospace; font-size:0.85rem; font-weight:700; color:' + brandColor + ';">#' + feature.id + '</span>';
           html += '</div>';
 
           // Properties Scroll Area
           html += '<div style="max-height:180px; overflow-y:auto; padding-right:4px;">';
           if (feature.properties) {
             for (var p in feature.properties) {
-              if (p === 'extent') continue; 
+              if (p === 'extent') continue;
               html += '<div style="margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #f8fafc;">';
               html += '<div style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase; font-weight:600; margin-bottom:1px;">' + p + '</div>';
               html += '<div style="font-size:0.82rem; color:#334155; font-weight:500; word-break:break-all;">' + feature.properties[p] + '</div>';
@@ -219,7 +219,7 @@ export function generateItemsHtml(_model: DataModel): string {
           html += '</div>';
 
           // Action Button
-          html += '<a href="' + detailsUrl + '" style="display:block; text-align:center; background:#4338ca; color:#fff; text-decoration:none; padding:8px; border-radius:6px; font-size:0.8rem; font-weight:700; margin-top:12px;">';
+          html += '<a href="' + detailsUrl + '" style="display:block; text-align:center; background:' + brandColor + '; color:#fff; text-decoration:none; padding:8px; border-radius:6px; font-size:0.8rem; font-weight:700; margin-top:12px;">';
           html += 'View full details &rarr;';
           html += '</a>';
           
