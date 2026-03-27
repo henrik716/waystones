@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Translations } from '../i18n/index';
-import { Eye, ChevronDown, Menu } from 'lucide-react';
+import { Eye, ChevronDown, Menu, Send } from 'lucide-react';
 import { DataModel } from '../types';
 import { validateModel, groupIssuesByLayer } from '../utils/validationUtils';
 import { 
@@ -45,6 +45,8 @@ interface ModelEditorProps {
   onDeleteModel: (id: string) => void;
   onOpenMapper: () => void;
   onOpenDeploy: () => void;
+  onUpdateGithubConfig: (config: any) => void;
+  onOpenGithubPublish: () => void;
 }
 
 type NavSection = 'model' | 'types' | 'layer';
@@ -68,6 +70,8 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   onDeleteModel,
   onOpenMapper,
   onOpenDeploy,
+  onUpdateGithubConfig,
+  onOpenGithubPublish,
 }) => {
   // --- UI state
   const [activeNavSection, setActiveNavSection] = useState<NavSection>('layer');
@@ -275,6 +279,13 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
         <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
           {/* Review controls header */}
           <div className="shrink-0 flex flex-wrap items-center justify-end gap-2 px-4 py-2 border-b border-slate-200 bg-white">
+            <button
+              onClick={onOpenGithubPublish}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-300"
+            >
+              <Send size={13} />
+              {t.github?.push || 'Publish'}
+            </button>
             {versionReview.reviewMode && githubConfig.repo && githubConfig.path && (
               <div className="flex items-center gap-1.5">
                 <label className="hidden sm:block text-[9px] font-black text-slate-400 uppercase tracking-widest">

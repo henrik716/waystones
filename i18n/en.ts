@@ -657,7 +657,10 @@ export const en = {
     repoNotFound: "Repository or file path not found.",
     validationFailed: "Validation failed. Is the branch correct?",
     unknownError: "An unexpected error occurred.",
-    importBtn: "Fetch model"
+    importBtn: "Fetch model",
+    stepConnect: "Connect",
+    stepConfigure: "Configure",
+    stepPublish: "Publish"
   },
   doc: {
     title: "Data Specification",

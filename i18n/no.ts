@@ -657,7 +657,10 @@ export const no = {
     repoNotFound: "Fant ikke repository eller filsti.",
     validationFailed: "Validering feilet. Er branchen riktig?",
     unknownError: "En uventet feil oppstod.",
-    importBtn: "Hent modell"
+    importBtn: "Hent modell",
+    stepConnect: "Koble til",
+    stepConfigure: "Konfigurer",
+    stepPublish: "Publiser"
   },
   doc: {
     title: "Dataspesifikasjon",

@@ -186,8 +186,42 @@ const GithubTab: React.FC<GithubTabProps> = ({
     }
   };
 
+  const effectiveToken = getEffectiveToken();
+  const activeStep = !effectiveToken ? 1 : (!githubRepo || !githubPath) ? 2 : 3;
+
+  const steps = [
+    { n: 1, label: t.github.stepConnect },
+    { n: 2, label: t.github.stepConfigure },
+    { n: 3, label: t.github.stepPublish },
+  ];
+
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-300 pb-24 min-w-0">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-300 pb-24 min-w-0 p-5 md:p-8">
+
+      {/* Step indicator */}
+      <div className="flex items-center gap-1.5">
+        {steps.map((step, i) => (
+          <React.Fragment key={step.n}>
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${
+              activeStep === step.n
+                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                : activeStep > step.n
+                  ? 'bg-indigo-100 text-indigo-600'
+                  : 'bg-slate-100 text-slate-400'
+            }`}>
+              {activeStep > step.n
+                ? <Check size={10} />
+                : <span className="w-3 text-center">{step.n}</span>
+              }
+              <span>{step.label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`flex-1 h-px ${activeStep > step.n ? 'bg-indigo-300' : 'bg-slate-200'}`} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
       {showConfirm && (
         <div className="fixed inset-0 z-[500] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 flex flex-col max-h-[90vh]">
@@ -302,33 +336,14 @@ const GithubTab: React.FC<GithubTabProps> = ({
          )}
 
          <div className="space-y-4 md:space-y-5 pt-2">
-            {/* OAuth Authentication - Much more prominent */}
             <div className="space-y-4">
               {!useOAuth ? (
-                <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-2xl">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                        <Github size={20} className="text-indigo-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-indigo-900">{o.recommended}</h4>
-                        <p className="text-sm text-indigo-600">{o.recommendedDesc}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setUseOAuth(true)}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm transition-all active:scale-95 shadow-sm"
-                    >
-                      {o.enableButton}
-                    </button>
-                  </div>
-                  <div className="text-xs text-indigo-500 space-y-1">
-                    <p>✓ {o.benefits.noTokens}</p>
-                    <p>✓ {o.benefits.autoManagement}</p>
-                    <p>✓ {o.benefits.visualBrowse}</p>
-                  </div>
-                </div>
+                <button
+                  onClick={() => setUseOAuth(true)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                >
+                  {o.enableButton || 'Use GitHub OAuth instead'}
+                </button>
               ) : (
                 <div className="space-y-4">
                   <GitHubAuth 
@@ -409,27 +424,7 @@ const GithubTab: React.FC<GithubTabProps> = ({
               <input type="text" value={githubPath} onChange={e => updateConfig({ path: e.target.value })} placeholder={t.github.pathPlaceholder} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-xs outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 font-mono" />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">{t.github.commitSummary}</label>
-              <input 
-                type="text" 
-                value={commitSummary} 
-                onChange={e => setCommitSummary(e.target.value)} 
-                placeholder={t.github.commitSummaryPlaceholder}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-xs outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 font-medium" 
-              />
-            </div>
-
-            {changelog && (
-              <div className="space-y-1.5">
-                <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">{t.review.generatedChangelog}</label>
-                <div className="w-full bg-slate-900 rounded-xl p-4 text-[10px] font-mono text-slate-300 whitespace-pre-wrap max-h-[150px] overflow-y-auto custom-scrollbar border border-slate-800">
-                  {changelog}
-                </div>
-              </div>
-            )}
-
-            <button 
+            <button
               onClick={handlePublishGithub} 
               disabled={pushStatus === 'loading'} 
               className="w-full bg-slate-900 hover:bg-black text-white px-6 md:px-8 py-4 md:py-5 rounded-[18px] md:rounded-[24px] font-black text-[10px] md:text-xs uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2 md:gap-3 disabled:opacity-50"

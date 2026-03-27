@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Layers, Upload, Globe, Github, Database } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Layers, Upload, Globe, Github, Database, Send, X } from 'lucide-react';
 import { DataModel, ViewTab, Language, ImportValidationResult, ImportWarning } from './types';
 import { i18n, createEmptyModel } from './constants';
 import { AiProvider } from './contexts/AiContext';
@@ -14,6 +14,7 @@ import Header from './components/Header';
 import MobileNav from './components/MobileNav';
 import { ConfirmDeleteDialog, GithubImportDialog, UrlImportDialog } from './components/dialogs';
 import DatabaseImportDialog from './components/dialogs/DatabaseImportDialog';
+import GithubTab from './components/preview/GithubTab';
 import { useHistory } from './hooks/useHistory';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePanelResize } from './hooks/usePanelResize';
@@ -44,6 +45,7 @@ const App: React.FC = () => {
   const [showDatabaseImportForEditor, setShowDatabaseImportForEditor] = useState(false);
   const [databaseSourceType, setDatabaseSourceType] = useState<'postgis' | 'supabase'>('postgis');
   const [modelToDelete, setModelToDelete] = useState<string | null>(null);
+  const [showGithubPublish, setShowGithubPublish] = useState(false);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
@@ -508,6 +510,8 @@ const App: React.FC = () => {
                     onDeleteModel={(id: string) => setModelToDelete(id)}
                     onOpenMapper={() => setActiveTab('mapper')}
                     onOpenDeploy={() => setActiveTab('deploy')}
+                    onUpdateGithubConfig={setGithubConfig}
+                    onOpenGithubPublish={() => setShowGithubPublish(true)}
                   />
                 )
               ) : (
@@ -612,12 +616,6 @@ const App: React.FC = () => {
               {selectedModel && (
                 <PreviewPanel
                   model={selectedModel}
-                  baselineModel={baselineModels[selectedModel.id] || null}
-                  githubConfig={githubConfig}
-                  onImport={handleImportModel}
-                  onUpdate={handleUpdateModel}
-                  onSetBaseline={handleSetBaseline}
-                  onUpdateGithubConfig={setGithubConfig}
                   t={t}
                   lang={lang}
                 />
@@ -637,6 +635,45 @@ const App: React.FC = () => {
           />
         )}
       </div>
+
+      {/* GitHub Publish Drawer — rendered at root level to escape stacking contexts */}
+      {showGithubPublish && selectedModel && (
+        <>
+          <div
+            className="fixed inset-0 z-[400] bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => setShowGithubPublish(false)}
+          />
+          <div className="fixed inset-y-0 right-0 z-[410] w-full max-w-lg bg-white shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+            <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                  <Send size={16} />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-700">
+                  {t.github.push}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowGithubPublish(false)}
+                className="p-2 rounded-xl hover:bg-slate-200 text-slate-400 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <GithubTab
+                model={selectedModel}
+                baselineModel={baselineModels[selectedModel.id] || null}
+                githubConfig={githubConfig}
+                onSetBaseline={handleSetBaseline}
+                onUpdate={handleUpdateModel}
+                onUpdateGithubConfig={setGithubConfig}
+                t={t}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </AiProvider>
   );
 };
