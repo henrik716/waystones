@@ -81,7 +81,11 @@ export function generateCollectionsHtml(model: DataModel): string {
   {% if col.crs %}
   <div class="col-meta">
     <div class="col-meta-label">CRS</div>
-    <div class="col-meta-value">{{ col.crs[0] | replace('http://www.opengis.net/def/crs/EPSG/0/', 'EPSG:') | replace('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'CRS84') }}</div>
+    <div class="col-meta-value" style="display:flex;flex-direction:column;gap:0.2rem;">
+      {% for crs_uri in col.crs %}
+        <span style="font-size:0.78rem;font-family:monospace;">{{ crs_uri | replace('http://www.opengis.net/def/crs/EPSG/0/', 'EPSG:') | replace('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'CRS84') }}</span>
+      {% endfor %}
+    </div>
   </div>
   {% endif %}
   <div class="col-cta">
