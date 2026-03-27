@@ -249,7 +249,7 @@ const DataCard: React.FC<DataCardProps> = ({ model, t }) => {
                         ))}
                      </div>
                    )}
-                   <div className="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border border-indigo-200 bg-indigo-100 text-indigo-700 whitespace-nowrap">{layer.geometryType}</div>
+                   <div className="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border border-indigo-200 bg-indigo-100 text-indigo-700 whitespace-nowrap">{t.geometryTypes[layer.geometryType] || layer.geometryType}</div>
                 </div>
               </div>
 

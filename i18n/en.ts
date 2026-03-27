@@ -166,7 +166,7 @@ export const en = {
     deleteRule: "Delete rule",
     noRules: "No validation rules defined yet."
   },
-  visualTab: "View", schemaTab: "Schema", githubTab: "GitHub", exportTab: "Export", tutorialTab: "API",
+  visualTab: "View", schemaTab: "Schema", githubTab: "GitHub", exportTab: "Export",
   helpTab: "Help",
   mappingTab: "Data Mapper",
   viewDiagram: "ER diagram", viewCard: "Data card",
@@ -689,61 +689,6 @@ export const en = {
     csv: "Data Template (.csv)",
     svg: "ER Diagram (.svg)",
     svgDesc: "Download the ER diagram as an editable vector file.",
-  },
-  tutorials: {
-    officialDocs: "Official documentation",
-    pygeoapi: {
-      title: "Modern Web API (pygeoapi)",
-      usage: "Best for: Developers who want to serve data as JSON via simple REST calls.",
-      step1: "What is pygeoapi?",
-      step1Desc: "A modern Python-based server implementing the new OGC API standards. It is lightweight, well-suited for cloud environments, and supports data exchange in modern formats.\n\npygeoapi ensures your systems can communicate across platforms without heavy proprietary solutions. It supports everything from GeoPackage to large PostgreSQL databases.",
-      step2: "Setup & Data Sources",
-      step2Desc: "You can serve data from either a GeoPackage (.gpkg) or a Cloud SQL (PostGIS) database.\n\n• GeoPackage is excellent for prototyping and smaller datasets that rarely change.\n• Cloud SQL is recommended for large data volumes, real-time updates, and production environments with multiple concurrent users.\n\nThe data source is defined under 'providers' in the configuration file.",
-      step3: "Configuration",
-      step3Desc: "Download the config file (.yml) from the Export tab. Ensure the 'database:' path points to your actual source (file path to GPKG or connection string to PostGIS).\n\nOnce the file is in place, start the server with the command below. You will then have a fully functional API running locally or in the cloud.",
-      commandLabel: "Docker command:"
-    },
-    qgisServer: {
-      title: "Map Service (QGIS Server)",
-      usage: "Best for: Advanced cartography where you need to maintain the exact look and feel of QGIS Desktop.",
-      step1: "What is QGIS Server?",
-      step1Desc: "A high-performance map server that uses your QGIS project (.qgs) directly as configuration. All colors, styles, and rules you set up in Waystones will look exactly the same when published.\n\nIt supports classic services like WMS (images), as well as the latest OGC API standards. For stable cloud operation, a VPS is highly recommended (see Cloud Instance section).",
-      step2: "Pre-publishing checklist",
-      step2Desc: "Open your project in QGIS Desktop and go through these points to ensure stable operation:\n\n• Enable WMS in Project Properties → QGIS Server.\n• Ensure all layers use relative file paths (Project Properties → General).\n• Enable 'OGC API – Features' for modern JSON access.\n• Define title and abstract under 'Service Capabilities' for correct metadata.",
-      commandLabel: "Docker command:"
-    },
-    cloudSql: {
-      title: "Cloud Database (PostGIS)",
-      usage: "Best for: Real-time collaboration, large datasets, and integration with other systems.",
-      step1: "Create instance",
-      step1Desc: "Provision a PostgreSQL instance on Google Cloud, Azure, or AWS. This is the core of your data architecture, where all information is stored safely and centrally.\n\nA managed cloud database handles backups, access control, and performance optimization automatically, letting you focus on the data itself.",
-      step2: "Build table structure",
-      step2Desc: "Download the Cloud SQL script from here. It contains all the logic to build the tables and relationships you designed in Waystones.\n\nFirst, run 'CREATE EXTENSION postgis;' in your database, then execute the full script to create tables with the correct constraints and indexes.",
-      commandLabel: "Import command (psql):"
-    },
-    env: {
-      title: "Execution Environment",
-      desc: "Ensure your machine is properly set up before running the commands.",
-      docker: "Docker",
-      dockerDesc: "You need Docker Desktop installed and running. Docker lets you start servers (containers) without installing Python, QGIS, or databases locally.",
-      terminal: "Terminal",
-      terminalDesc: "Use a modern terminal: Terminal (Mac/Linux) or PowerShell/WSL (Windows). This is where you run the Docker commands.",
-      paths: "Paths & Directories",
-      pathsDesc: "Open your terminal in the directory where you saved the exported files. Use the 'cd' command to navigate to the correct location before running the Docker commands."
-    },
-    hosting: {
-      title: "Cloud Instance & Hosting",
-      desc: "When ready for production, move your solution from your local machine to the cloud. Here are the best options for independent and scalable operation.",
-      vpsTitle: "Full Control (VPS)",
-      vpsDesc: "The most flexible option, especially well-suited for QGIS Server. You get a dedicated Linux server (e.g., Ubuntu) where you install Docker and manage everything yourself.\n\nA VPS provides enough resources to handle heavy cartographic tasks and large data volumes efficiently.",
-      vpsOptions: "Recommended: Hetzner Cloud (best price/performance in Europe), DigitalOcean (user-friendly), Linode.",
-      paasTitle: "Serverless",
-      paasDesc: "Ideal for pygeoapi. You only pay when someone actually uses your API, with no servers to maintain – just upload your container.\n\nPerfect for APIs with varying traffic patterns.",
-      paasOptions: "Recommended: Google Cloud Run (highly scalable), Azure Container Apps.",
-      managedDbTitle: "Managed Database",
-      managedDbDesc: "For your PostGIS tables. The provider handles security updates and backups 24/7, so your data is always available.",
-      managedDbOptions: "Recommended: Google Cloud SQL (integrated with GIS), DigitalOcean Managed Database (simple pricing)."
-    }
   },
   readme: {
     deployKit: "Deploy Kit",

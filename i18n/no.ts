@@ -166,7 +166,7 @@ export const no = {
     deleteRule: "Slett regel",
     noRules: "Ingen valideringsregler definert ennå."
   },
-  visualTab: "Visning", schemaTab: "Skjema", githubTab: "GitHub", exportTab: "Eksport", tutorialTab: "API",
+  visualTab: "Visning", schemaTab: "Skjema", githubTab: "GitHub", exportTab: "Eksport",
   helpTab: "Hjelp",
   mappingTab: "Data Mapper",
   viewDiagram: "ER-diagram", viewCard: "Datakort",
@@ -689,61 +689,6 @@ export const no = {
     csv: "Datamal (.csv)",
     svg: "ER-diagram (.svg)",
     svgDesc: "Last ned ER-diagrammet som en redigerbar vektorfil.",
-  },
-  tutorials: {
-    officialDocs: "Offisiell dokumentasjon",
-    pygeoapi: {
-      title: "Moderne web-API (pygeoapi)",
-      usage: "Passer for: Utviklere som vil servere data som JSON via enkle REST-kall.",
-      step1: "Hva er pygeoapi?",
-      step1Desc: "En moderne Python-basert server som implementerer de nye OGC API-standardene. Den er lettvektig, godt egnet for skyløsninger og støtter datautveksling i moderne formater.\n\npygeoapi sørger for at systemene dine kan snakke sammen på tvers av plattformer uten tunge proprietære løsninger. Den støtter alt fra GeoPackage til store PostgreSQL-databaser.",
-      step2: "Oppsett og datakilder",
-      step2Desc: "Du kan servere data fra enten en GeoPackage (.gpkg) eller en Cloud SQL-database (PostGIS).\n\n• GeoPackage er utmerket for prototyping og mindre datasett som sjelden endres.\n• Cloud SQL anbefales for store datamengder, sanntidsoppdateringer og produksjon med flere samtidige brukere.\n\nDatakilden defineres under «providers» i konfigurasjonsfilen.",
-      step3: "Konfigurasjon",
-      step3Desc: "Last ned konfigurasjonsfilen (.yml) fra eksportfanen. Sjekk at «database»-feltet peker på riktig kilde (filsti til GPKG eller tilkoblingsstreng til PostGIS).\n\nNår filen er på plass, kan du starte serveren med kommandoen nedenfor. Da har du et fullverdig API kjørende lokalt eller i skyen.",
-      commandLabel: "Docker-kommando:"
-    },
-    qgisServer: {
-      title: "Karttjeneste (QGIS Server)",
-      usage: "Passer for: Avansert kartografi der du vil beholde nøyaktig samme utseende som i QGIS Desktop.",
-      step1: "Hva er QGIS Server?",
-      step1Desc: "En kraftfull kartserver som bruker QGIS-prosjektet (.qgs) direkte som konfigurasjon. Alle farger, stiler og regler du setter opp i Waystones, vil se nøyaktig like ut når de publiseres.\n\nDen støtter klassiske tjenester som WMS (bilder), samt de nyeste OGC API-standardene. For stabil drift i skyen anbefales en VPS (se seksjonen om skyinstanser).",
-      step2: "Sjekkliste før publisering",
-      step2Desc: "Åpne prosjektet i QGIS Desktop og gå gjennom disse punktene for å sikre stabil drift:\n\n• Aktiver WMS under Prosjektegenskaper → QGIS Server.\n• Sørg for at alle lag bruker relative filstier (Prosjektegenskaper → Generelt).\n• Aktiver «OGC API – Features» for moderne JSON-tilgang.\n• Definer tittel og beskrivelse under «Service Capabilities» for korrekte metadata.",
-      commandLabel: "Docker-kommando:"
-    },
-    cloudSql: {
-      title: "Skydatabase (PostGIS)",
-      usage: "Passer for: Sanntidssamarbeid, store datamengder og integrasjon mot andre fagsystemer.",
-      step1: "Opprett instans",
-      step1Desc: "Opprett en PostgreSQL-instans hos Google Cloud, Azure eller AWS. Dette er kjernen i dataarkitekturen din, der all informasjon lagres trygt og sentralt.\n\nEn administrert database i skyen tar seg av sikkerhetskopi, tilgangskontroll og ytelsesoptimalisering automatisk, slik at du kan fokusere på dataene.",
-      step2: "Bygg tabellstruktur",
-      step2Desc: "Last ned Cloud SQL-skriptet herfra. Det inneholder all logikk for å bygge tabellene og relasjonene du har designet i Waystones.\n\nKjør først «CREATE EXTENSION postgis;» i databasen, og deretter hele skriptet for å opprette tabellene med riktige restriksjoner og indekser.",
-      commandLabel: "Importkommando (psql):"
-    },
-    env: {
-      title: "Kjøremiljø",
-      desc: "Sørg for at maskinen din er riktig satt opp før du kjører kommandoene.",
-      docker: "Docker",
-      dockerDesc: "Du må ha Docker Desktop installert og kjørende. Med Docker kan du starte servere (containere) uten å installere Python, QGIS eller databaser lokalt.",
-      terminal: "Terminal",
-      terminalDesc: "Bruk en moderne terminal: Terminal (Mac/Linux) eller PowerShell/WSL (Windows). Det er her du kjører Docker-kommandoene.",
-      paths: "Filstier og mapper",
-      pathsDesc: "Åpne terminalen i mappen der du har lagret de eksporterte filene. Bruk «cd»-kommandoen for å navigere til riktig sted før du kjører Docker-kommandoene."
-    },
-    hosting: {
-      title: "Skyinstans og hosting",
-      desc: "Når du er klar for produksjon, bør du flytte løsningen fra din egen maskin til skyen. Her er de beste alternativene for uavhengig og skalerbar drift.",
-      vpsTitle: "Full kontroll (VPS)",
-      vpsDesc: "Det mest fleksible valget, spesielt godt egnet for QGIS Server. Du får en dedikert Linux-server (f.eks. Ubuntu) der du installerer Docker og styrer alt selv.\n\nEn VPS gir nok ressurser til å håndtere tunge kartoppgaver og store datamengder effektivt.",
-      vpsOptions: "Anbefalinger: Hetzner Cloud (best pris/ytelse i Europa), DigitalOcean (brukervennlig), Linode.",
-      paasTitle: "Serverless",
-      paasDesc: "Ideelt for pygeoapi. Du betaler kun når noen faktisk bruker API-et ditt, og trenger ikke vedlikeholde en server – bare last opp containeren.\n\nPasser perfekt for API-er med varierende trafikk.",
-      paasOptions: "Anbefalinger: Google Cloud Run (svært skalerbart), Azure Container Apps.",
-      managedDbTitle: "Administrert database",
-      managedDbDesc: "For PostGIS-tabellene dine. Leverandøren håndterer sikkerhetsoppdateringer og sikkerhetskopi døgnet rundt, slik at dataene alltid er tilgjengelige.",
-      managedDbOptions: "Anbefalinger: Google Cloud SQL (integrert med GIS), DigitalOcean Managed Database (enkel prismodell)."
-    }
   },
   readme: {
     deployKit: "Deploy Kit",

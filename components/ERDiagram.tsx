@@ -20,7 +20,7 @@ const fieldTypeDisplay = (f: Field, t: Translations): string => {
   switch (ft.kind) {
     case 'primitive':       return (t.types?.[ft.baseType] || ft.baseType).toUpperCase();
     case 'codelist':        return (t.types?.codelist || 'CODELIST').toUpperCase();
-    case 'geometry':        return ft.geometryType.toUpperCase();
+    case 'geometry':        return (t.geometryTypes?.[ft.geometryType] || ft.geometryType).toUpperCase();
     case 'feature-ref':     return (t.types?.relation || 'RELATION').toUpperCase();
     case 'datatype-inline': return (t.types?.object || 'OBJECT').toUpperCase();
     case 'datatype-ref': return '';  // will be overridden below
@@ -235,7 +235,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                     <rect x={startX + 2} y={vis.y + mainBoxHeaderH} width={mainBoxW - 4} height={rowH} fill="#f5f7ff" />
                     <circle cx={startX + 20} cy={vis.y + mainBoxHeaderH + rowH/2} r="3" fill={getFieldConfig({ kind: 'geometry' }).color} />
                     <text x={startX + 34} y={vis.y + mainBoxHeaderH + rowH/2 + 4} fill={COLORS.primaryDark} fontSize="12" fontWeight="900" className="mono">{vis.layer.geometryColumnName}*</text>
-                    <text x={startX + mainBoxW - 16} y={vis.y + mainBoxHeaderH + rowH/2 + 4} textAnchor="end" fill={getFieldConfig({ kind: 'geometry' }).color} fontSize="9" fontWeight="900" opacity="0.6">{vis.layer.geometryType.toUpperCase()}</text>
+                    <text x={startX + mainBoxW - 16} y={vis.y + mainBoxHeaderH + rowH/2 + 4} textAnchor="end" fill={getFieldConfig({ kind: 'geometry' }).color} fontSize="9" fontWeight="900" opacity="0.6">{(t.geometryTypes?.[vis.layer.geometryType] || vis.layer.geometryType).toUpperCase()}</text>
                   </g>
                 )}
 

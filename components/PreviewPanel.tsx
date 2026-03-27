@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Translations } from '../i18n/index';
 import {
-  Eye, Code2, Share2, Database, ChevronLeft, ChevronRight
+  Eye, Code2, Share2, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { DataModel } from '../types';
 import VisualTab from './preview/VisualTab';
 import ExportTab from './preview/ExportTab';
-import TutorialTab from './preview/TutorialTab';
 import SchemaTab from './preview/SchemaTab';
 
 interface PreviewPanelProps {
@@ -16,7 +15,7 @@ interface PreviewPanelProps {
 }
 
 const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang }) => {
-  const [tab, setTab] = useState<'schema' | 'export' | 'tutorial'>('schema');
+  const [tab, setTab] = useState<'schema' | 'export'>('schema');
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
@@ -26,7 +25,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang }) => {
   const allTabs = [
     { id: 'schema' as const, icon: Code2, label: t.schemaTab },
     { id: 'export' as const, icon: Share2, label: t.exportTab },
-    { id: 'tutorial' as const, icon: Database, label: t.tutorialTab }
   ];
 
   // Check scroll position to show/hide scroll indicators
@@ -76,7 +74,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang }) => {
 
   // Handle tab selection with auto-scroll
   const handleTabClick = (tabId: string) => {
-    setTab(tabId as 'schema' | 'export' | 'tutorial');
+    setTab(tabId as 'schema' | 'export');
     
     // Auto-scroll to selected tab if needed
     if (tabContainerRef.current) {
@@ -174,7 +172,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang }) => {
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/30 custom-scrollbar min-w-0 min-h-0">
         {tab === 'export' && <ExportTab model={model} t={t} lang={lang} />}
-        {tab === 'tutorial' && <TutorialTab model={model} t={t} lang={lang} />}
         {tab === 'schema' && <SchemaTab model={model} t={t} />}
       </div>
     </div>
