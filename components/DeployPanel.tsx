@@ -189,7 +189,6 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
 
   const handleUpdateModel = (updated: DataModel) => {
     onUpdateModel?.(updated);
-    if (updated.sourceConnection) onSourceChange?.(updated.sourceConnection);
   };
 
   // 6-step flow
