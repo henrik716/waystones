@@ -94,12 +94,31 @@ export const generatePygeoapiConfig = async (
       ? layer.keywords
       : [model.namespace || 'data', layer.name.toLowerCase().replace(/[^a-z0-9]/g, '-')];
 
+    // OGC API Features Part 2 — advertise native CRS + common CRSes when model is not WGS84.
+    const nativeCrsUri = toCrsUri(model.crs);
+    const needsCrsPart2 = !isWgs84(model.crs) && nativeCrsUri !== null;
+
     yaml += `  ${collectionId}:\n`;
     yaml += `    type: collection\n`;
     yaml += `    title: ${layer.title || layer.name}\n`;
     yaml += `    description: ${layer.description || 'Spatial collection'}\n`;
     yaml += `    keywords:\n`;
     layerKeywords.forEach((kw: string) => { yaml += `      - ${kw}\n`; });
+
+    if (needsCrsPart2) {
+      const crsList = [
+        'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
+        nativeCrsUri,
+        ...COMMON_CRS_URIS,
+      ].filter((v, i, arr) => arr.indexOf(v) === i);
+      yaml += `    crs:\n`;
+      crsList.forEach(uri => { yaml += `      - ${uri}\n`; });
+      // storageCrs only for file-based providers — PostGIS handles reprojection
+      // via PostGIS itself, so declaring storageCrs causes double-transformation.
+      if (!usePg) {
+        yaml += `    storageCrs: ${nativeCrsUri}\n`;
+      }
+    }
 
     if (layer.geometryType !== 'None') {
       const ext = model.metadata?.spatialExtent;
@@ -151,12 +170,7 @@ export const generatePygeoapiConfig = async (
       yaml += getCQL2Extensions();
     } else {
       // GeoPackage file provider (Databricks, direct GeoPackage, or no source)
-      const rawCrs = model.crs;
-      const storageCrsUri = rawCrs
-        ? (rawCrs.startsWith('http')
-          ? rawCrs
-          : `http://www.opengis.net/def/crs/EPSG/0/${rawCrs.split(':')[1]}`)
-        : null;
+      const storageCrsUri = toCrsUri(model.crs);
       yaml += `    providers:\n`;
       yaml += `      - type: feature\n`;
       yaml += `        name: SQLiteGPKG\n`;
@@ -201,6 +215,14 @@ export const generatePygeoapiConfig = async (
   return yaml;
 };
 
+// OGC URIs for commonly used CRSes advertised alongside the native model CRS.
+// Mirrors the hardcoded list used in the QGIS WMS config generator.
+const COMMON_CRS_URIS = [
+  'http://www.opengis.net/def/crs/EPSG/0/4326',
+  'http://www.opengis.net/def/crs/EPSG/0/4258',
+  'http://www.opengis.net/def/crs/EPSG/0/3857',
+];
+
 /**
  * Returns the standard OGC API CQL2 extensions block for pygeoapi providers.
  * Activating both cql2-text and cql2-json ensures broad client compatibility.
@@ -212,6 +234,27 @@ function getCQL2Extensions(): string {
   s += `            - cql2-json\n`;
   s += `            - cql-text\n\n`;
   return s;
+}
+
+/**
+ * Converts a CRS identifier to an OGC URI.
+ * Accepts an existing URI (passed through as-is) or "EPSG:XXXX" format.
+ */
+function toCrsUri(crs: string | null | undefined): string | null {
+  if (!crs) return null;
+  if (crs.startsWith('http')) return crs;
+  return `http://www.opengis.net/def/crs/EPSG/0/${crs.split(':')[1]}`;
+}
+
+/**
+ * Returns true when the given CRS is WGS84 / CRS84 in any common encoding.
+ */
+function isWgs84(crs: string | null | undefined): boolean {
+  if (!crs) return true;
+  return (
+    crs === 'EPSG:4326' || crs === '4326' || crs === 'CRS84' ||
+    crs.includes('CRS84') || crs.includes('EPSG/0/4326')
+  );
 }
 
 /**
