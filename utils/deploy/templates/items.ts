@@ -197,7 +197,7 @@ export function generateItemsHtml(_model: DataModel): string {
         },
         onEachFeature: function(feature, layer) {
           var detailsUrl = '{{ data.items_path | default(config.server.url + "/collections/items") }}/' + feature.id;
-          var html = "<div style=\\"min-width:240px; font-family:'DM Sans',sans-serif;\\">";
+          var html = \`<div style="min-width:240px; font-family:'DM Sans',sans-serif;">\`;
 
           // Header
           html += '<div style="padding:10px 0; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">';
