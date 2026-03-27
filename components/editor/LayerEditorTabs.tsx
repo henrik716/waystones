@@ -107,9 +107,8 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
                   type="text"
                   value={activeLayer.name}
                   onChange={(e) => onUpdateLayer({ name: e.target.value })}
-                  className={`w-full bg-slate-50 border-2 border-slate-100 hover:border-indigo-200 text-base sm:text-lg md:text-xl lg:text-2xl font-black px-3 py-2.5 sm:px-4 sm:py-3 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none placeholder:text-slate-200 transition-all ${
-                    isGhostLayer ? 'line-through text-rose-500' : ''
-                  }`}
+                  className={`w-full bg-slate-50 border-2 border-slate-100 hover:border-indigo-200 text-base sm:text-lg md:text-xl lg:text-2xl font-black px-3 py-2.5 sm:px-4 sm:py-3 rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none placeholder:text-slate-200 transition-all ${isGhostLayer ? 'line-through text-rose-500' : ''
+                    }`}
                   placeholder={t.layerNamePlaceholder}
                 />
                 {!isGhostLayer && (
@@ -130,8 +129,8 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
                 {isMetaOpen ? t.hideDetails : t.showDetails}
                 {!isMetaOpen && (
                   <span className="flex items-center gap-1 ml-1">
-                    {activeLayer.description && <span className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] font-bold">desc</span>}
-                    {(activeLayer.keywords?.length ?? 0) > 0 && <span className="bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded text-[8px] font-bold">{activeLayer.keywords!.length} kw</span>}
+                    {activeLayer.description && <span className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] font-bold">{t.description}</span>}
+                    {(activeLayer.keywords?.length ?? 0) > 0 && <span className="bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded text-[8px] font-bold">{activeLayer.keywords!.length} {t.metadata?.keywords || 'Keywords'}</span>}
                   </span>
                 )}
               </button>
@@ -157,7 +156,7 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
                     {/* Keywords */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-[9px] opacity-70 tracking-widest font-black uppercase">{lang === 'no' ? 'NØKKELORD' : 'DISCOVERY KEYWORDS'}</label>
+                        <label className="text-[9px] opacity-70 tracking-widest font-black uppercase">{t.metadata?.keywords || 'Keywords'}</label>
                         <AiTrigger
                           onClick={onSuggestLayerKeywords}
                           isLoading={aiContext.isLoading}
@@ -263,13 +262,12 @@ const LayerEditorTabs: React.FC<LayerEditorTabsProps> = ({
                   <button
                     key={key}
                     onClick={() => onUpdateLayer({ geometryType: key as any })}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-all ${
-                      isActive
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider border transition-all ${isActive
                         ? isNone
                           ? 'bg-slate-700 border-slate-700 text-white shadow-sm'
                           : 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
                         : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-indigo-200 hover:text-slate-700'
-                    }`}
+                      }`}
                   >
                     <Icon size={13} />
                     <span>{t.geometryTypes[key as keyof typeof t.geometryTypes]}</span>

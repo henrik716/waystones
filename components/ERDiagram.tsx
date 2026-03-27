@@ -183,7 +183,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
       </div>
 
       <div className="w-full overflow-x-auto bg-slate-50/50 rounded-2xl border border-slate-200 p-8 shadow-inner custom-scrollbar">
-        <svg ref={svgRef} viewBox={`${-leftPad} 0 ${svgW} ${svgH}`} className="w-full min-w-[700px] drop-shadow-sm" style={{ height: 'auto', maxWidth: '100%' }}>
+        <svg ref={svgRef} viewBox={`${-leftPad} 0 ${svgW} ${svgH}`} width={svgW} height={svgH} className="drop-shadow-sm">
           <defs>
             <linearGradient id="mainHeaderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={COLORS.primary} />
