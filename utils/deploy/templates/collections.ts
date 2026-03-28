@@ -1,10 +1,58 @@
 import { DataModel } from '../../../types';
 
+const COMMON_CRS_URIS = [
+  'http://www.opengis.net/def/crs/EPSG/0/4326',
+  'http://www.opengis.net/def/crs/EPSG/0/4258',
+  'http://www.opengis.net/def/crs/EPSG/0/3857',
+];
+
+function toCrsUri(crs: string | null | undefined): string | null {
+  if (!crs) return null;
+  if (crs.startsWith('http')) return crs;
+  return `http://www.opengis.net/def/crs/EPSG/0/${crs.split(':')[1]}`;
+}
+
+function isWgs84(crs: string | null | undefined): boolean {
+  if (!crs) return true;
+  return (
+    crs === 'EPSG:4326' || crs === '4326' || crs === 'CRS84' ||
+    crs.includes('CRS84') || crs.includes('EPSG/0/4326')
+  );
+}
+
 export function generateCollectionsHtml(model: DataModel): string {
   const geomTypesStr = model.layers.map(l => {
     const id = l.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     return `'${id}': '${l.geometryType}'`;
   }).join(', ');
+
+  // pygeoapi's /collections listing response does not include the full crs array
+  // in each collection object — it only returns the default CRS84. The full list
+  // is only available at /collections/{id}. Pre-bake the CRS list from the model
+  // so the listing page shows all supported CRSes correctly.
+  const nativeCrsUri = toCrsUri(model.crs);
+  const crsList = (!isWgs84(model.crs) && nativeCrsUri)
+    ? [
+        'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
+        nativeCrsUri,
+        ...COMMON_CRS_URIS,
+      ].filter((v, i, arr) => arr.indexOf(v) === i)
+    : ['http://www.opengis.net/def/crs/OGC/1.3/CRS84'];
+
+  const crsItems = crsList
+    .map(uri => uri
+      .replace('http://www.opengis.net/def/crs/EPSG/0/', 'EPSG:')
+      .replace('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'CRS84')
+    )
+    .map(label => `<span style="font-size:0.78rem;font-family:monospace;">${label}</span>`)
+    .join('\n      ');
+
+  const crsMetaBlock = `<div class="col-meta">
+    <div class="col-meta-label">CRS</div>
+    <div class="col-meta-value" style="display:flex;flex-direction:column;gap:0.2rem;">
+      ${crsItems}
+    </div>
+  </div>`;
 
   return `{% extends "_base.html" %}
 {% block title %}{{ super() }} - Collections{% endblock %}
@@ -78,16 +126,7 @@ export function generateCollectionsHtml(model: DataModel): string {
       {% for kw in col.keywords %}<span class="col-tag">{{ kw }}</span>{% endfor %}
     </div>
   </div>
-  {% if col.crs %}
-  <div class="col-meta">
-    <div class="col-meta-label">CRS</div>
-    <div class="col-meta-value" style="display:flex;flex-direction:column;gap:0.2rem;">
-      {% for crs_uri in col.crs %}
-        <span style="font-size:0.78rem;font-family:monospace;">{{ crs_uri | replace('http://www.opengis.net/def/crs/EPSG/0/', 'EPSG:') | replace('http://www.opengis.net/def/crs/OGC/1.3/CRS84', 'CRS84') }}</span>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+  ${crsMetaBlock}
   <div class="col-cta">
     <a href="{{ config.server.url }}/collections/{{ col.id }}">View &rarr;</a>
   </div>
