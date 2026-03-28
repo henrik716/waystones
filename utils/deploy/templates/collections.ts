@@ -107,6 +107,14 @@ export function generateCollectionsHtml(model: DataModel): string {
       width: 100%;
       padding: 0.75rem 1.3rem;
     }
+    .col-desc {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .col-title {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
     .col-meta {
       min-width: 0;
       width: 100%;

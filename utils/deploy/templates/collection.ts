@@ -60,6 +60,14 @@ export function generateCollectionHtml(_model: DataModel): string {
       flex-wrap: wrap;
       gap: 0.4rem;
     }
+    .coll-hero-title {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .coll-hero-desc {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
   }
 </style>
 
