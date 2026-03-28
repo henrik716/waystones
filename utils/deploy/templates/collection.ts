@@ -32,6 +32,35 @@ export function generateCollectionHtml(_model: DataModel): string {
   .sidebar-row:last-child { border-bottom:none; }
   .sidebar-key { color:#94a3b8; font-weight:500; flex-shrink:0; }
   .sidebar-val { color:#0f172a; font-weight:600; text-align:right; word-break:break-all; }
+
+  @media (max-width: 767px) {
+    .coll-hero {
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    #coll-map {
+      width: 100%;
+      height: 180px;
+      flex-shrink: unset;
+    }
+    .url-row {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .url-label {
+      min-width: 0;
+      width: 100%;
+      margin-bottom: 0.25rem;
+    }
+    .url-copy {
+      padding: 0.6rem 0.8rem;
+      min-height: 44px;
+    }
+    .sidebar-row {
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+  }
 </style>
 
 <div class="row g-4">

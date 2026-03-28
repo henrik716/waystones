@@ -171,4 +171,11 @@ export const CORE_STYLES = `
       background: #ffffff;
     }
     main.container { padding-top: 1rem; padding-bottom: 3rem; min-height: 50vh; }
+
+    /* Mobile Responsive Overrides */
+    @media (max-width: 767px) {
+      #map { height: 260px; }
+      .btn { min-height: 44px; }
+      .active-chip button { padding: 0.3rem; }
+    }
 `;

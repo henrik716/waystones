@@ -33,6 +33,15 @@ export function generateItemHtml(_model: DataModel): string {
   .sidebar-row:last-child { border-bottom:none; }
   .sidebar-key { color:#94a3b8; font-weight:500; flex-shrink:0; }
   .sidebar-val { color:#0f172a; font-weight:600; text-align:right; word-break:break-all; }
+
+  @media (max-width: 767px) {
+    .item-map { height: 220px; }
+    .item-prop-table th {
+      width: auto;
+      min-width: 100px;
+      max-width: 140px;
+    }
+  }
 </style>
 
 <div class="row g-4">

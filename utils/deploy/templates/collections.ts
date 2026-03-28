@@ -93,6 +93,34 @@ export function generateCollectionsHtml(model: DataModel): string {
   .col-cta a { font-size: 0.85rem; font-weight: 600; color: var(--brand); white-space: nowrap; text-decoration: none; }
   .col-cta a:hover { text-decoration: underline; }
   #collections-map { height: 380px; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 1.5rem; }
+
+  @media (max-width: 767px) {
+    .col-row {
+      flex-wrap: wrap;
+    }
+    .col-icon {
+      width: 100%;
+      height: 60px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .col-body {
+      width: 100%;
+      padding: 0.75rem 1.3rem;
+    }
+    .col-meta {
+      min-width: 0;
+      width: 100%;
+      border-left: none;
+      border-top: 1px solid #f1f5f9;
+      padding: 0.75rem 1.3rem;
+    }
+    .col-cta {
+      width: 100%;
+      padding: 0.75rem 1.3rem;
+      justify-content: flex-end;
+    }
+    #collections-map { height: 220px; }
+  }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">

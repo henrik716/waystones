@@ -56,6 +56,18 @@ export function generateItemsHtml(_model: DataModel): string {
   .active-chip button:hover { opacity:1; }
   .btn-filter-toggle { display:inline-flex; align-items:center; gap:0.45rem; font-size:0.82rem; font-weight:700; padding:0.38rem 0.85rem; border-radius:0.45rem; cursor:pointer; background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; transition:all 0.15s; white-space:nowrap; }
   .btn-filter-toggle:hover, .btn-filter-toggle.active { background:var(--brand-light); border-color:var(--brand-border); color:var(--brand); }
+
+  @media (max-width: 767px) {
+    .filter-row {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .filter-row-op {
+      width: 100%;
+      flex-shrink: unset;
+    }
+    #items-map { height: 240px; }
+  }
 </style>
 
 <div class="items-header">{{ data.title | default('Collection') }}</div>
@@ -140,9 +152,9 @@ export function generateItemsHtml(_model: DataModel): string {
     <div class="d-flex gap-2">
       {% for link in data.links %}
         {% if link.rel == 'prev' %}
-          <a href="{{ link.href }}" class="nav-btn" style="font-size:0.75rem;padding:0.25rem 0.6rem;">&larr; Prev</a>
+          <a href="{{ link.href }}" class="nav-btn" style="font-size:0.75rem;padding:0.5rem 0.75rem;min-height:44px;display:inline-flex;align-items:center;">&larr; Prev</a>
         {% elif link.rel == 'next' %}
-          <a href="{{ link.href }}" class="nav-btn" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Next &rarr;</a>
+          <a href="{{ link.href }}" class="nav-btn" style="font-size:0.75rem;padding:0.5rem 0.75rem;min-height:44px;display:inline-flex;align-items:center;">Next &rarr;</a>
         {% endif %}
       {% endfor %}
     </div>
@@ -197,7 +209,7 @@ export function generateItemsHtml(_model: DataModel): string {
         },
         onEachFeature: function(feature, layer) {
           var detailsUrl = '{{ data.items_path | default(config.server.url + "/collections/items") }}/' + feature.id;
-          var html = \`<div style="min-width:240px; font-family:'DM Sans',sans-serif;">\`;
+          var html = \`<div style="min-width:180px;max-width:calc(100vw - 80px); font-family:'DM Sans',sans-serif;">\`;
 
           // Header
           html += '<div style="padding:10px 0; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">';

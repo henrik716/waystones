@@ -46,6 +46,15 @@ export function generateIndexHtml(_model: DataModel): string {
   .contact-row:last-child { margin-bottom:0; }
   .contact-lbl { display:block; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.15rem; }
   .contact-val { font-size:0.85rem; color:var(--brand); word-break:break-all; }
+
+  @media (max-width: 767px) {
+    .api-url-box { flex-wrap: wrap; }
+    .api-url-text {
+      white-space: normal;
+      word-break: break-all;
+    }
+    .meta-grid { grid-template-columns: auto 1fr; }
+  }
 </style>
 
 <div class="row">
