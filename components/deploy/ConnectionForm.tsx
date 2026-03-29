@@ -1,6 +1,6 @@
 import React, { useState, useId, useRef } from 'react';
 import type { Translations } from '../../i18n/index';
-import { Eye, EyeOff, Check, Upload, X } from 'lucide-react';
+import { Eye, EyeOff, Check, Upload, X, AlertTriangle } from 'lucide-react';
 import {
   SourceType, PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig,
   S3StorageConfig, S3Provider
@@ -79,6 +79,8 @@ interface ConnectionFormProps {
   isConnectionValid: boolean;
   onBack: () => void;
   onNext: () => void;
+  modelCrs?: string;
+  onBboxDetected?: (bbox: { west: number; south: number; east: number; north: number }) => void;
   t: Translations;
 }
 
@@ -90,11 +92,14 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   s3Config, onS3Change,
   isConnectionValid,
   onBack, onNext,
+  modelCrs,
+  onBboxDetected,
   t,
 }) => {
   const d = t.deploy;
   const gpkgFileInputRef = useRef<HTMLInputElement>(null);
   const isGpkg = sourceType === 'geopackage';
+  const [crsWarning, setCrsWarning] = useState<string | null>(null);
 
   return (
     <section className="bg-white p-6 md:p-10 rounded-[32px] border border-slate-200 shadow-sm space-y-8 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -152,12 +157,33 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
             {!s3Config && (
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">{d.includeDataFile}</label>
-                <input type="file" ref={gpkgFileInputRef} className="hidden" accept=".gpkg,.sqlite" onChange={e => {
+                <input type="file" ref={gpkgFileInputRef} className="hidden" accept=".gpkg,.sqlite" onChange={async e => {
                   const f = e.target.files?.[0];
                   if (f) {
                     onLocalDataFileChange({ blob: f, filename: f.name });
                     onGpkgChange({ ...gpkgConfig, filename: f.name });
                     onIncludeDataChange(true);
+                    // Extract CRS and bbox from uploaded GeoPackage
+                    try {
+                      const { processAnyFile } = await import('../../utils/importUtils');
+                      const { summary } = await processAnyFile(f);
+                      // CRS mismatch check
+                      if (modelCrs && summary.srid) {
+                        const modelSrid = parseInt(modelCrs.replace('EPSG:', ''));
+                        if (summary.srid !== modelSrid) {
+                          const msg = t.deploy.crsMismatchGpkg
+                            .replace('{fileCrs}', summary.srid.toString())
+                            .replace('{modelCrs}', modelCrs);
+                          setCrsWarning(msg);
+                        } else {
+                          setCrsWarning(null);
+                        }
+                      }
+                      // Propagate bbox
+                      if (summary.bbox && onBboxDetected) {
+                        onBboxDetected(summary.bbox);
+                      }
+                    } catch { /* ignore - file may not be a GeoPackage */ }
                   }
                 }} />
                 {localDataFile ? (
@@ -175,6 +201,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                     <Upload size={16} /> {d.includeDataUpload}
                   </button>
                 )}
+              </div>
+            )}
+            {crsWarning && sourceType === 'geopackage' && (
+              <div className="flex items-start gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-700 font-medium">
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                {crsWarning}
               </div>
             )}
           </React.Fragment>

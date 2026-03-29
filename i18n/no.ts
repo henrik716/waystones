@@ -485,6 +485,7 @@ export const no = {
     s3ObjectKeyHint: "For GeoPackage: sti til .gpkg-filen i bucketen (f.eks. datasets/mydata.gpkg). For databasekilder: utdatamappe-prefiks (f.eks. outputs/mymodel/).",
     s3CredentialsNote: "AWS_ACCESS_KEY_ID og AWS_SECRET_ACCESS_KEY må settes som hemmeligheter — aldri commit disse til git. Se README for instruksjoner per deployment target.",
     s3TigrisNote: "Kjør `fly storage create` for å opprette en Tigris-bucket og automatisk injisere credentials i Fly-appen.",
+    crsMismatchGpkg: "Fil-CRS (EPSG:{fileCrs}) samsvarer ikke med modell-CRS ({modelCrs}). Data kan være feiljustert.",
   },
   metadata: {
     sectionTitle: "Metadata for publisering",

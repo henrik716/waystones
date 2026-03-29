@@ -275,6 +275,29 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
           isConnectionValid={isConnectionValid()}
           onBack={() => setStep(0)}
           onNext={() => setStep(2)}
+          modelCrs={model.crs}
+          onBboxDetected={(bbox) => {
+            if (onUpdateModel) {
+              onUpdateModel({
+                ...model,
+                metadata: {
+                  ...(model.metadata || {
+                    contactName: '', contactEmail: '', contactOrganization: '',
+                    keywords: [], theme: '', license: 'CC-BY-4.0', accessRights: 'public',
+                    purpose: '', accrualPeriodicity: 'unknown',
+                    spatialExtent: { westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' },
+                    temporalExtentFrom: '', temporalExtentTo: '',
+                  }),
+                  spatialExtent: {
+                    westBoundLongitude: bbox.west.toString(),
+                    eastBoundLongitude: bbox.east.toString(),
+                    southBoundLatitude: bbox.south.toString(),
+                    northBoundLatitude: bbox.north.toString(),
+                  },
+                },
+              });
+            }
+          }}
           t={t}
         />
       )}

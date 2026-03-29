@@ -22,7 +22,7 @@ interface TransformPanelProps {
   sourceGeomColumns: Record<string, string>;
   sourceUrl: string;
   sourceFilename: string;
-  onTransformedData?: (blob: Blob, filename: string) => void;
+  onTransformedData?: (blob: Blob, filename: string, bbox?: { west: number; south: number; east: number; north: number }) => void;
   t: Translations;
 }
 
@@ -50,6 +50,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
   });
   const [showScript, setShowScript] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [outputBbox, setOutputBbox] = useState<{ west: number; south: number; east: number; north: number } | null>(null);
 
   const generateOgrCommand = () => {
     const lines: string[] = [];
@@ -94,7 +95,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
 
       lines.push(`ogr2ogr ${formatFlag} ${targetOutput} ${sourceString} \\
   -nln "${targetLayerName}" \\
-  -nlt ${modelLayer.geometryType.toUpperCase()} \\
+  -nlt ${modelLayer.geometryType.toUpperCase()} \\${model.crs ? `\n  -t_srs ${model.crs} \\` : ''}
   -sql '${sql}' \\
   ${targetType === 'postgis' ? `-lco SCHEMA=${pgConfig.schema} ` : ''}-update -append \\
   -lco GEOMETRY_NAME=${geomCol}`);
@@ -160,6 +161,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
           '-nln', targetLayerName,
           '-nlt', modelLayer.geometryType.toUpperCase(),
           '-sql', sql,
+          ...(model.crs ? ['-t_srs', model.crs] : []),
         ];
 
         if (outputPath !== null) {
@@ -183,6 +185,17 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
         const bytes = await Gdal.getFileBytes(outputPath);
         const finalBlob = new Blob([bytes], { type: 'application/geopackage+sqlite3' });
         setTransformedBlob(finalBlob);
+
+        // Extract bbox from output GeoPackage
+        let extractedBbox: { west: number; south: number; east: number; north: number } | null = null;
+        try {
+          const outputFile = new File([bytes], 'output.gpkg', { type: 'application/geopackage+sqlite3' });
+          const { processAnyFile } = await import('../../utils/importUtils');
+          const { summary: outSummary } = await processAnyFile(outputFile);
+          if (outSummary.bbox) extractedBbox = outSummary.bbox;
+        } catch { /* ignore */ }
+        setOutputBbox(extractedBbox);
+
         setTransformStatus('done');
       } else {
         throw new Error('No layers were transformed');
@@ -206,7 +219,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
 
   const handleSendToPublish = () => {
     if (!transformedBlob || !onTransformedData) return;
-    onTransformedData(transformedBlob, `${model.name.replace(/\s/g, '_')}.gpkg`);
+    onTransformedData(transformedBlob, `${model.name.replace(/\s/g, '_')}.gpkg`, outputBbox ?? undefined);
   };
 
   const copyToClipboard = () => {

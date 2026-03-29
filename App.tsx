@@ -244,7 +244,24 @@ const App: React.FC = () => {
           handleImportModel(model);
         } catch {
           // Not a DataModel, try as GeoJSON via GDAL
-          const { model } = await processAnyFile(file);
+          const { model, summary } = await processAnyFile(file);
+          if (summary.bbox) {
+            model.metadata = {
+              ...(model.metadata || {
+                contactName: '', contactEmail: '', contactOrganization: '',
+                keywords: [], theme: '', license: 'CC-BY-4.0', accessRights: 'public',
+                purpose: '', accrualPeriodicity: 'unknown',
+                spatialExtent: { westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' },
+                temporalExtentFrom: '', temporalExtentTo: '',
+              }),
+              spatialExtent: {
+                westBoundLongitude: summary.bbox.west.toString(),
+                eastBoundLongitude: summary.bbox.east.toString(),
+                southBoundLatitude: summary.bbox.south.toString(),
+                northBoundLatitude: summary.bbox.north.toString(),
+              },
+            };
+          }
           handleImportModel(model);
         }
       }
@@ -255,7 +272,24 @@ const App: React.FC = () => {
       }
       // Everything else (GPKG, GeoJSON, GML, KML, Shapefile, etc)
       else {
-        const { model } = await processAnyFile(file);
+        const { model, summary } = await processAnyFile(file);
+        if (summary.bbox) {
+          model.metadata = {
+            ...(model.metadata || {
+              contactName: '', contactEmail: '', contactOrganization: '',
+              keywords: [], theme: '', license: 'CC-BY-4.0', accessRights: 'public',
+              purpose: '', accrualPeriodicity: 'unknown',
+              spatialExtent: { westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' },
+              temporalExtentFrom: '', temporalExtentTo: '',
+            }),
+            spatialExtent: {
+              westBoundLongitude: summary.bbox.west.toString(),
+              eastBoundLongitude: summary.bbox.east.toString(),
+              southBoundLatitude: summary.bbox.south.toString(),
+              northBoundLatitude: summary.bbox.north.toString(),
+            },
+          };
+        }
         handleImportModel(model);
       }
     } catch (err) {
@@ -442,8 +476,29 @@ const App: React.FC = () => {
                       <div className="p-2 rounded-xl bg-white border border-slate-200 shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-all"><ChevronLeft size={16} /></div>
                       {t.cancel}
                     </button>
-                    <DataMapper model={selectedModel} t={t} onTransformedData={(blob: Blob, filename: string) => {
+                    <DataMapper model={selectedModel} t={t} onTransformedData={(blob: Blob, filename: string, bbox) => {
                       setTransformedData({ blob, filename });
+                      // Update model bbox if detected from transformed GeoPackage
+                      if (bbox) {
+                        setModels(prev => prev.map(m => m.id === selectedModel.id ? {
+                          ...m,
+                          metadata: {
+                            ...(m.metadata || {
+                              contactName: '', contactEmail: '', contactOrganization: '',
+                              keywords: [], theme: '', license: 'CC-BY-4.0', accessRights: 'public',
+                              purpose: '', accrualPeriodicity: 'unknown',
+                              spatialExtent: { westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' },
+                              temporalExtentFrom: '', temporalExtentTo: '',
+                            }),
+                            spatialExtent: {
+                              westBoundLongitude: bbox.west.toString(),
+                              eastBoundLongitude: bbox.east.toString(),
+                              southBoundLatitude: bbox.south.toString(),
+                              northBoundLatitude: bbox.north.toString(),
+                            },
+                          },
+                        } : m));
+                      }
                       // Generer summary fra modellen slik at QuickPublish har det den trenger
                       const summary = {
                         filename,

@@ -485,6 +485,7 @@ export const en = {
     s3ObjectKeyHint: "For GeoPackage: path to the .gpkg file in the bucket (e.g. datasets/mydata.gpkg). For database sources: output folder prefix (e.g. outputs/mymodel/).",
     s3CredentialsNote: "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set as secrets — never commit them to git. See README for instructions per deployment target.",
     s3TigrisNote: "Run `fly storage create` to provision a Tigris bucket and auto-inject credentials into your Fly app.",
+    crsMismatchGpkg: "File CRS (EPSG:{fileCrs}) does not match model CRS ({modelCrs}). Data may be misaligned.",
   },
   metadata: {
     sectionTitle: "Publishing metadata",
