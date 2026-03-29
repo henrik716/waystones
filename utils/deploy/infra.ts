@@ -330,10 +330,10 @@ ${s3Setup}
 # FIX: Default env vars so the container starts correctly when no .env is present.
 # PORT is overridden automatically by Railway. PYGEOAPI_SERVER_URL must be set
 # manually to the public HTTPS URL after first deploy.
-ENV PORT=80
+ENV PORT=8080
 ENV PYGEOAPI_SERVER_URL=http://localhost:5000
 
-EXPOSE 80
+EXPOSE 8080
 
 # Create AsyncAPI document placeholder (required by pygeoapi startup check)
 RUN echo "asyncapi: 2.6.0" > /pygeoapi/local.asyncapi.yml && \
@@ -372,11 +372,11 @@ primary_region = "ams"
   # FIX: Pre-populated since Fly app names are deterministic.
   # Update if you configure a custom domain.
   PYGEOAPI_SERVER_URL = "https://${slug}-pygeoapi.fly.dev"
-  # Fly routes to internal_port (80) below — PORT env var is not used by Fly.
-  PORT = "80"
+  # Fly routes to internal_port (8080) below — PORT env var is not used by Fly.
+  PORT = "8080"
 
 [http_service]
-  internal_port = 80
+  internal_port = 8080
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
@@ -395,7 +395,7 @@ primary_region = "ams"
 [checks]
   [checks.health]
     type = "http"
-    port = 80
+    port = 8080
     path = "/conformance"
     interval = "30s"
     timeout = "5s"
