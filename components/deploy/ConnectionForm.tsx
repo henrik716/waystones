@@ -2,7 +2,8 @@ import React, { useState, useId, useRef } from 'react';
 import type { Translations } from '../../i18n/index';
 import { Eye, EyeOff, Check, Upload, X } from 'lucide-react';
 import {
-  SourceType, PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig
+  SourceType, PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig,
+  S3StorageConfig, S3Provider
 } from '../../types';
 import { SOURCE_META } from './SourceTypePicker';
 
@@ -52,6 +53,14 @@ const Field: React.FC<{
 
 export { Field };
 
+// Provider presets: endpoint URL and default region
+const S3_PROVIDER_PRESETS: Record<S3Provider, { endpoint: string; region: string }> = {
+  r2:     { endpoint: 'https://<account-id>.r2.cloudflarestorage.com', region: 'auto' },
+  tigris: { endpoint: 'https://fly.storage.tigris.dev',               region: 'auto' },
+  aws:    { endpoint: '',                                               region: 'us-east-1' },
+  custom: { endpoint: '',                                               region: 'us-east-1' },
+};
+
 interface ConnectionFormProps {
   sourceType: SourceType;
   pgConfig: PostgresConfig;
@@ -65,6 +74,8 @@ interface ConnectionFormProps {
   localDataFile: { blob: Blob; filename: string } | null;
   onLocalDataFileChange: (file: { blob: Blob; filename: string } | null) => void;
   onIncludeDataChange: (include: boolean) => void;
+  s3Config: S3StorageConfig | null;
+  onS3Change: (config: S3StorageConfig | null) => void;
   isConnectionValid: boolean;
   onBack: () => void;
   onNext: () => void;
@@ -76,12 +87,14 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   pgConfig, supaConfig, dbConfig, gpkgConfig,
   onPgChange, onSupaChange, onDbChange, onGpkgChange,
   localDataFile, onLocalDataFileChange, onIncludeDataChange,
+  s3Config, onS3Change,
   isConnectionValid,
   onBack, onNext,
   t,
 }) => {
   const d = t.deploy;
   const gpkgFileInputRef = useRef<HTMLInputElement>(null);
+  const isGpkg = sourceType === 'geopackage';
 
   return (
     <section className="bg-white p-6 md:p-10 rounded-[32px] border border-slate-200 shadow-sm space-y-8 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -135,35 +148,118 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
               onChange={v => onGpkgChange({ ...gpkgConfig, filename: v })}
               hint={d.gpkgHint}
             />
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">{d.includeDataFile}</label>
-              <input type="file" ref={gpkgFileInputRef} className="hidden" accept=".gpkg,.sqlite" onChange={e => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  onLocalDataFileChange({ blob: f, filename: f.name });
-                  onGpkgChange({ ...gpkgConfig, filename: f.name });
-                  onIncludeDataChange(true);
-                }
-              }} />
-              {localDataFile ? (
-                <div className="flex items-center gap-3 bg-indigo-50 text-indigo-700 px-5 py-3 rounded-2xl border border-indigo-200">
-                  <Check size={16} strokeWidth={3} />
-                  <span className="text-xs font-black truncate flex-1">{localDataFile.filename}</span>
-                  <span className="text-[10px] font-bold text-indigo-500">{localDataFile.blob.size < 1024 * 1024 ? `${(localDataFile.blob.size / 1024).toFixed(1)} KB` : `${(localDataFile.blob.size / (1024 * 1024)).toFixed(1)} MB`}</span>
-                  <button onClick={() => { onLocalDataFileChange(null); onIncludeDataChange(false); }} className="text-indigo-400 hover:text-rose-500 transition-colors"><X size={16}/></button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => gpkgFileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all text-xs font-bold"
-                >
-                  <Upload size={16} /> {d.includeDataUpload}
-                </button>
-              )}
-            </div>
+            {/* Hide local file upload when S3 storage is configured */}
+            {!s3Config && (
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">{d.includeDataFile}</label>
+                <input type="file" ref={gpkgFileInputRef} className="hidden" accept=".gpkg,.sqlite" onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    onLocalDataFileChange({ blob: f, filename: f.name });
+                    onGpkgChange({ ...gpkgConfig, filename: f.name });
+                    onIncludeDataChange(true);
+                  }
+                }} />
+                {localDataFile ? (
+                  <div className="flex items-center gap-3 bg-indigo-50 text-indigo-700 px-5 py-3 rounded-2xl border border-indigo-200">
+                    <Check size={16} strokeWidth={3} />
+                    <span className="text-xs font-black truncate flex-1">{localDataFile.filename}</span>
+                    <span className="text-[10px] font-bold text-indigo-500">{localDataFile.blob.size < 1024 * 1024 ? `${(localDataFile.blob.size / 1024).toFixed(1)} KB` : `${(localDataFile.blob.size / (1024 * 1024)).toFixed(1)} MB`}</span>
+                    <button onClick={() => { onLocalDataFileChange(null); onIncludeDataChange(false); }} className="text-indigo-400 hover:text-rose-500 transition-colors"><X size={16}/></button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => gpkgFileInputRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all text-xs font-bold"
+                  >
+                    <Upload size={16} /> {d.includeDataUpload}
+                  </button>
+                )}
+              </div>
+            )}
           </React.Fragment>
         )}
       </div>
+      {/* S3-compatible object storage section — shown for all source types */}
+      <div className="border border-slate-100 rounded-[24px] overflow-hidden">
+        <label className="flex items-center gap-3 px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors">
+          <input
+            type="checkbox"
+            checked={!!s3Config}
+            onChange={e => {
+              if (e.target.checked) {
+                const defaultProvider: S3Provider = 'r2';
+                const preset = S3_PROVIDER_PRESETS[defaultProvider];
+                onS3Change({ provider: defaultProvider, endpointUrl: preset.endpoint, bucketName: '', objectKey: isGpkg ? (gpkgConfig.filename || 'datasets/mydata.gpkg') : 'outputs/', region: preset.region });
+              } else {
+                onS3Change(null);
+              }
+            }}
+            className="w-4 h-4 rounded accent-indigo-600"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black text-slate-700">{d.s3StorageLabel}</p>
+            <p className="text-[10px] text-slate-400 font-medium leading-snug">{d.s3StorageHint}</p>
+          </div>
+        </label>
+
+        {s3Config && (
+          <div className="px-6 pb-6 space-y-4 border-t border-slate-100">
+            {/* Provider selector */}
+            <div className="pt-4 space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">{d.s3Provider}</label>
+              <select
+                value={s3Config.provider}
+                onChange={e => {
+                  const p = e.target.value as S3Provider;
+                  const preset = S3_PROVIDER_PRESETS[p];
+                  onS3Change({ ...s3Config, provider: p, endpointUrl: preset.endpoint, region: preset.region });
+                }}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-xs font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all"
+              >
+                <option value="r2">{d.s3ProviderR2}</option>
+                <option value="tigris">{d.s3ProviderTigris}</option>
+                <option value="aws">{d.s3ProviderAws}</option>
+                <option value="custom">{d.s3ProviderCustom}</option>
+              </select>
+              {s3Config.provider === 'tigris' && (
+                <p className="text-[10px] text-indigo-600 font-medium px-1 leading-relaxed">{d.s3TigrisNote}</p>
+              )}
+            </div>
+            <Field
+              label={d.s3Endpoint}
+              value={s3Config.endpointUrl}
+              onChange={v => onS3Change({ ...s3Config, endpointUrl: v, provider: 'custom' })}
+              placeholder="https://..."
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field
+                label={d.s3BucketName}
+                value={s3Config.bucketName}
+                onChange={v => onS3Change({ ...s3Config, bucketName: v })}
+                placeholder="my-geodata"
+              />
+              <Field
+                label={d.s3Region}
+                value={s3Config.region}
+                onChange={v => onS3Change({ ...s3Config, region: v })}
+                placeholder="auto"
+              />
+            </div>
+            <Field
+              label={d.s3ObjectKey}
+              value={s3Config.objectKey}
+              onChange={v => onS3Change({ ...s3Config, objectKey: v })}
+              placeholder={isGpkg ? 'datasets/mydata.gpkg' : 'outputs/mymodel/'}
+              hint={d.s3ObjectKeyHint}
+            />
+            <p className="text-[10px] text-amber-700 font-medium bg-amber-50 px-4 py-3 rounded-xl border border-amber-100 leading-relaxed">
+              {d.s3CredentialsNote}
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between pt-4">
         <button onClick={onBack} className="px-6 py-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-500 font-black text-xs uppercase tracking-widest active:scale-95 transition-all hover:bg-slate-50">{d.back}</button>
         <button onClick={onNext} disabled={!isConnectionValid} className="px-8 py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest disabled:opacity-50 shadow-lg active:scale-95 transition-all hover:bg-indigo-700">{d.next}</button>

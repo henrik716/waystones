@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import {
   DataModel, SourceConnection, SourceType, LayerStyle,
-  PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig, LayerSourceMapping, ImportValidationResult
+  PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig, LayerSourceMapping, ImportValidationResult,
+  S3StorageConfig
 } from '../types';
 import { toTableName } from '../utils/nameSanitizer';
 import { generatePygeoapiConfig } from '../utils/deployUtils';
@@ -60,6 +61,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
   const [gpkgConfig, setGpkgConfig] = useState<GeopackageConfig>({
     filename: `${toTableName(model.name)}.gpkg`
   });
+  const [s3Config, setS3Config] = useState<S3StorageConfig | null>(null);
 
   // Layer mapping state
   const [layerMappings, setLayerMappings] = useState<Record<string, LayerSourceMapping>>(() => {
@@ -133,7 +135,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
     else if (sourceType === 'supabase') config = supaConfig;
     else if (sourceType === 'databricks') config = dbConfig;
     else config = gpkgConfig;
-    return { type: sourceType, config, layerMappings };
+    return { type: sourceType, config, layerMappings, s3: s3Config ?? undefined };
   };
 
   useEffect(() => {
@@ -268,6 +270,8 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
           localDataFile={localDataFile}
           onLocalDataFileChange={setLocalDataFile}
           onIncludeDataChange={setIncludeData}
+          s3Config={s3Config}
+          onS3Change={setS3Config}
           isConnectionValid={isConnectionValid()}
           onBack={() => setStep(0)}
           onNext={() => setStep(2)}

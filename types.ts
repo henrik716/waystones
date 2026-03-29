@@ -184,15 +184,27 @@ export type ViewTab = 'landing' | 'models' | 'editor' | 'preview' | 'mapper' | '
 
 export type SourceType = 'postgis' | 'supabase' | 'databricks' | 'geopackage';
 export type DeployTarget = 'docker-compose' | 'fly' | 'railway' | 'ghcr';
+export type S3Provider = 'r2' | 'tigris' | 'aws' | 'custom';
 
 export interface GeopackageConfig {
   filename: string;
+}
+
+export interface S3StorageConfig {
+  provider: S3Provider;
+  endpointUrl: string;  // empty for standard AWS S3; pre-filled per provider in UI
+  bucketName: string;
+  // For geopackage source: path to input .gpkg ("datasets/mydata.gpkg")
+  // For database sources: prefix/folder for delta output uploads ("outputs/mymodel")
+  objectKey: string;
+  region: string;       // "auto" for R2/Tigris, real region for AWS S3
 }
 
 export interface SourceConnection {
   type: SourceType;
   config: PostgresConfig | SupabaseConfig | DatabricksConfig | GeopackageConfig;
   layerMappings: Record<string, LayerSourceMapping>; // modelLayerId -> mapping
+  s3?: S3StorageConfig; // optional; credentials always go in .env / platform secrets
 }
 
 export interface PostgresConfig {

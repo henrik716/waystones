@@ -285,6 +285,20 @@ def _sha256_checksum(path):
     return "sha256:" + h.hexdigest()
 
 
+def _s3_asset_href(filename):
+    """Build an absolute S3 URL for an asset, or fall back to relative path.
+    Set S3_PUBLIC_BASE_URL in env to enable absolute URLs (recommended for STAC clients).
+    Examples:
+      Tigris:  https://fly.storage.tigris.dev/<bucket>/<prefix>
+      R2:      https://pub-xxx.r2.dev/<prefix>  (or custom domain)
+      AWS S3:  https://<bucket>.s3.<region>.amazonaws.com/<prefix>
+    """
+    base = os.environ.get("S3_PUBLIC_BASE_URL", "").rstrip("/")
+    if base:
+        return f"{base}/{filename}"
+    return f"./{filename}"
+
+
 def write_stac_item(tbl, output_path, export_type, collection_id=STAC_COLLECTION_ID, bbox=None):
     """Write a STAC Item JSON file alongside the GeoPackage."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -292,6 +306,7 @@ def write_stac_item(tbl, output_path, export_type, collection_id=STAC_COLLECTION
     detected_bbox = bbox or _detect_bbox(output_path)
     file_size = os.path.getsize(output_path) if os.path.exists(output_path) else None
     checksum = _sha256_checksum(output_path) if os.path.exists(output_path) else None
+    asset_href = _s3_asset_href(os.path.basename(output_path))
 
     item = {
         "type": "Feature",
@@ -319,7 +334,7 @@ def write_stac_item(tbl, output_path, export_type, collection_id=STAC_COLLECTION
         ],
         "assets": {
             "data": {
-                "href": f"./{os.path.basename(output_path)}",
+                "href": asset_href,
                 "title": f"{tbl} ({export_type})",
                 "type": "application/geopackage+sqlite3",
                 "roles": ["data"],

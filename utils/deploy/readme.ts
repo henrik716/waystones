@@ -2,7 +2,7 @@ import {
   DataModel, SourceConnection, DeployTarget
 } from '../../types';
 import { i18n } from '../../i18n';
-import { getGpkgFilename } from './_helpers';
+import { getGpkgFilename, hasS3Config } from './_helpers';
 import { generateEnvFile } from './infra';
 
 // ============================================================
@@ -13,6 +13,7 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
   const isPg = source.type === 'postgis' || source.type === 'supabase';
   const isGpkg = source.type === 'geopackage';
   const hasWms = model.layers.some(l => l.geometryType !== 'None');
+  const useS3 = hasS3Config(source);
 
   let md = `# ${model.name} — ${s.deployKit}\n\n`;
   md += `${s.generatedBy}\n\n`;
@@ -24,7 +25,7 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
   if (hasWms) {
     md += `| ${s.wmsService} | 8080 | http://localhost:8080/ows/?SERVICE=WMS&REQUEST=GetCapabilities |\n`;
   }
-  if (!isGpkg) {
+  if (!isGpkg && !useS3) {
     md += `| ${s.deltaDownloads} | 8081 | http://localhost:8081 |\n`;
   }
   md += `\n`;
@@ -37,9 +38,17 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
 
   if (isGpkg) {
     const gpkgName = getGpkgFilename(model, source);
-    md += `${s.step2AddData}\n`;
-    md += `${s.addDataHint.replace('{filename}', gpkgName)}\n\n`;
-    md += `${s.step3Start}\n`;
+    if (useS3 && source.s3) {
+      const endpointFlag = source.s3.endpointUrl ? `\\\n  --endpoint-url ${source.s3.endpointUrl}` : '';
+      md += `${s.step2UploadToS3}\n`;
+      md += `aws s3 cp ./${gpkgName} s3://${source.s3.bucketName}/${source.s3.objectKey}${endpointFlag}\n\n`;
+      md += `${s.step3SetS3Creds}\n\n`;
+      md += `${s.step4Start}\n`;
+    } else {
+      md += `${s.step2AddData}\n`;
+      md += `${s.addDataHint.replace('{filename}', gpkgName)}\n\n`;
+      md += `${s.step3Start}\n`;
+    }
   } else if (source.type === 'databricks') {
     md += `${s.step2Databricks}\n`;
     md += `pip install databricks-sql-connector geopandas\n`;
@@ -86,6 +95,9 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
   md += `| \`pygeoapi-config.yml\` | ${isPg ? s.pygeoapiPgFile : s.pygeoapiGpkgFile} |\n`;
   if (hasWms) {
     md += `| \`project.qgs\` | ${s.qgisProjectFile} |\n`;
+  }
+  if (isGpkg && useS3) {
+    md += `| \`startup.sh\` | ${s.startupScriptFile} |\n`;
   }
   if (!isGpkg) {
     md += `| \`delta_export.py\` | ${s.deltaScriptFile} |\n`;
@@ -402,6 +414,7 @@ export const generateReadmeForTarget = (
   const slug = model.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const isGpkg = source.type === 'geopackage';
   const hasWms = model.layers.some(l => l.geometryType !== 'None');
+  const useS3 = hasS3Config(source);
 
   const targetNames: Record<DeployTarget, string> = {
     'docker-compose': s.targetDockerCompose,
@@ -452,9 +465,17 @@ export const generateReadmeForTarget = (
     }
     md += `\n`;
     if (isGpkg) {
-      md += `${s.uploadGpkgData}\n`;
-      md += `fly volumes create geodata --region ams --size 1 -a ${slug}-pygeoapi\n`;
-      md += `${s.copyFileHint}\n\n`;
+      if (useS3 && source.s3) {
+        const endpointFlag = source.s3.endpointUrl ? `\\\n  --endpoint-url ${source.s3.endpointUrl}` : '';
+        md += `${s.uploadGpkgToS3}\n`;
+        md += `aws s3 cp ./${getGpkgFilename(model, source)} s3://${source.s3.bucketName}/${source.s3.objectKey}${endpointFlag}\n\n`;
+        md += `${s.flyS3Secrets}\n`;
+        md += `fly secrets set AWS_ACCESS_KEY_ID=<your-key> AWS_SECRET_ACCESS_KEY=<your-secret> -a ${slug}-pygeoapi\n\n`;
+      } else {
+        md += `${s.uploadGpkgData}\n`;
+        md += `fly volumes create geodata --region ams --size 1 -a ${slug}-pygeoapi\n`;
+        md += `${s.copyFileHint}\n\n`;
+      }
     }
     md += `${s.deployPygeoapi}\n`;
     md += `fly deploy --config fly.toml\n`;
@@ -504,8 +525,19 @@ export const generateReadmeForTarget = (
     }
     if (isGpkg) {
       md += `### ${s.dataSection}\n\n`;
-      md += `${s.gpkgDataDesc}\n`;
-      md += `${s.gpkgUpdateHint}\n\n`;
+      if (useS3 && source.s3) {
+        const endpointFlag = source.s3.endpointUrl ? `\\\n  --endpoint-url ${source.s3.endpointUrl}` : '';
+        md += `${s.gpkgS3Desc}\n\n`;
+        md += `\`\`\`bash\n`;
+        md += `aws s3 cp ./${getGpkgFilename(model, source)} s3://${source.s3.bucketName}/${source.s3.objectKey}${endpointFlag}\n`;
+        md += `\`\`\`\n\n`;
+        md += `${s.railwayS3Vars}\n\n`;
+        md += `| \`AWS_ACCESS_KEY_ID\` | ${s.yourValue} |\n`;
+        md += `| \`AWS_SECRET_ACCESS_KEY\` | ${s.yourValue} |\n\n`;
+      } else {
+        md += `${s.gpkgDataDesc}\n`;
+        md += `${s.gpkgUpdateHint}\n\n`;
+      }
     }
     md += `### ${s.autoDeployTitle}\n\n`;
     md += `${s.autoDeployRailway}\n\n`;
@@ -569,13 +601,17 @@ export const generateReadmeForTarget = (
   if (target === 'railway') md += `| \`railway.json\` | ${s.railwayJsonFile} |\n`;
   if (target === 'railway' && hasWms) md += `| \`railway.qgis.json\` | ${s.railwayQgisJsonFile} |\n`;
   md += `| \`.env.template\` | ${s.envTemplateShort} |\n`;
+  if (isGpkg && useS3) md += `| \`startup.sh\` | ${s.startupScriptFile} |\n`;
   if (!isGpkg) md += `| \`delta_export.py\` | ${s.deltaScriptFile} |\n`;
-  if (!isGpkg) md += `| \`nginx-stac.conf\` | ${s.nginxStacConfFile} |\n`;
+  if (!isGpkg && !useS3) md += `| \`nginx-stac.conf\` | ${s.nginxStacConfFile} |\n`;
 
   // STAC catalog section
   if (!isGpkg) {
     const modelId = model.id || model.name.toLowerCase().replace(/\s+/g, '-');
-    const downloadBase = target === 'fly' ? `https://${slug}-downloads.fly.dev` : 'https://<downloads-url>';
+    const s3Base = (useS3 && source.s3)
+      ? `${(source.s3.endpointUrl || 'https://s3.amazonaws.com').replace(/\/$/, '')}/${source.s3.bucketName}/${source.s3.objectKey.replace(/\/$/, '')}`
+      : null;
+    const downloadBase = s3Base || (target === 'fly' ? `https://${slug}-downloads.fly.dev` : 'https://<downloads-url>');
     md += `\n## ${s.stacCatalogSection}\n\n`;
     md += `| ${s.resource} | ${s.url} |\n`;
     md += `|---------|-----|\n`;

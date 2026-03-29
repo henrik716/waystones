@@ -1,6 +1,7 @@
 import {
   DataModel, SourceConnection, DeployTarget
 } from '../../types';
+import { hasS3Config } from './_helpers';
 import {
   generatePygeoapiConfig
 } from './pygeoapi';
@@ -9,7 +10,7 @@ import {
   generateFlyQgisToml, generateRailwayQgisJson
 } from './qgis';
 import { generateDeltaScript } from './delta';
-import { generateEnvFile, generateDockerCompose, generateDockerfile, generateFlyToml, generateRailwayJson } from './infra';
+import { generateEnvFile, generateDockerCompose, generateDockerfile, generateFlyToml, generateRailwayJson, generateStartupScript } from './infra';
 import { generateReadme, generateGithubActionsWorkflow, generateReadmeForTarget, generateWorkflowForTarget } from './readme';
 import { generatePygeoapiTheme, generateCollectionsHtml, generateItemsHtml, generateItemHtml, generateCollectionHtml, generateIndexHtml } from './pygeoapi-theme';
 import {
@@ -30,6 +31,7 @@ export const generateDeployFiles = async (
 ): Promise<Record<string, string>> => {
   const isGpkg = source.type === 'geopackage';
   const hasWms = model.layers.some(l => l.geometryType !== 'None');
+  const useS3 = hasS3Config(source);
 
   // Shared files — always included
   const files: Record<string, string> = {
@@ -43,10 +45,16 @@ export const generateDeployFiles = async (
     'templates/collections/items/item.html': generateItemHtml(model),
     'templates/collections/collection.html': generateCollectionHtml(model),
     '.env.template': generateEnvFile(source),
-    '.gitignore': '.env\ndata/\n*.gpkg\n__pycache__/\n',
+    // For geopackage+S3: no data/ folder needed, so omit from .gitignore
+    '.gitignore': (isGpkg && useS3) ? '.env\n*.gpkg\n__pycache__/\n' : '.env\ndata/\n*.gpkg\n__pycache__/\n',
     'README.md': generateReadmeForTarget(model, source, target, lang),
     '.github/workflows/deploy.yml': generateWorkflowForTarget(model, source, target),
   };
+
+  // startup.sh for geopackage + S3 deployments
+  if (isGpkg && useS3) {
+    files['startup.sh'] = generateStartupScript(model, source);
+  }
 
   // QGIS project + Dockerfile.qgis
   if (hasWms) {
@@ -71,8 +79,10 @@ export const generateDeployFiles = async (
         files[`data/output/stac/${tbl}/catalog.json`] = generateStacLayerCatalog(layer, model);
       });
 
-    // Nginx config with correct MIME types
-    files['nginx-stac.conf'] = generateNginxStacConf();
+    // Nginx config only when not using S3 (S3 replaces the nginx download server)
+    if (!useS3) {
+      files['nginx-stac.conf'] = generateNginxStacConf();
+    }
   }
 
   // Target-specific files

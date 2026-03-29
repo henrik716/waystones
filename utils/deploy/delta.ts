@@ -448,6 +448,23 @@ def main():
         print(f"  {layer}: {status}")
     print("=== Done ===")
 
+    upload_outputs_to_s3()
+
+
+def upload_outputs_to_s3():
+    """Sync OUTPUT_DIR to S3-compatible storage after delta run.
+    No-op if S3_BUCKET_NAME is not set in environment."""
+    bucket = os.environ.get("S3_BUCKET_NAME", "")
+    if not bucket:
+        return
+    prefix = os.environ.get("S3_OUTPUT_PREFIX", "").rstrip("/")
+    dest = f"s3://{bucket}/{prefix}/" if prefix else f"s3://{bucket}/"
+    cmd = ["aws", "s3", "sync", OUTPUT_DIR, dest]
+    # AWS_ENDPOINT_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY are read from env
+    print(f"[s3] Syncing outputs to {dest}")
+    subprocess.run(cmd, check=True)
+    print("[s3] Sync complete")
+
 
 if __name__ == "__main__":
     main()

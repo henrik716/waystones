@@ -1,6 +1,6 @@
 import {
   DataModel, SourceConnection,
-  PostgresConfig, SupabaseConfig, GeopackageConfig
+  PostgresConfig, SupabaseConfig, GeopackageConfig, S3StorageConfig
 } from '../../types';
 
 // ============================================================
@@ -41,6 +41,23 @@ export const getGpkgFilename = (model: DataModel, source?: SourceConnection): st
     return (source.config as GeopackageConfig).filename || 'data.gpkg';
   }
   return `${model.name.replace(/\s/g, '_') || 'modell'}.gpkg`;
+};
+
+// ============================================================
+// Helper: check if S3-compatible storage is configured
+// ============================================================
+export const hasS3Config = (source: SourceConnection): boolean =>
+  !!(source.s3?.bucketName && source.s3?.objectKey);
+
+// ============================================================
+// Helper: build S3 base URL for STAC catalog asset links
+// ============================================================
+export const buildS3BaseUrl = (s3: S3StorageConfig): string => {
+  const prefix = s3.objectKey.replace(/\/[^/]*\.gpkg$/, '').replace(/\/$/, '');
+  if (s3.endpointUrl) {
+    return `${s3.endpointUrl.replace(/\/$/, '')}/${s3.bucketName}/${prefix}`;
+  }
+  return `https://s3.${s3.region}.amazonaws.com/${s3.bucketName}/${prefix}`;
 };
 
 // ============================================================
