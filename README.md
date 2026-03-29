@@ -13,6 +13,7 @@
 
 Waystones is a modern, web-native platform that bridges the gap between raw spatial data and production-ready geospatial infrastructure. With a focus on developer experience and standards-compliance, it allows you to build OGC API – Features and WMS services in minutes, not days.
 
+
 ## ✨ Key Features
 
 ### 🚀 Quick Publish
@@ -104,6 +105,14 @@ A Waystones project generates a complete deployment ecosystem:
 - **WMS** — Web Map Service
 - **GeoPackage, GeoJSON, GML, Shapefile**
 - **STAC** — SpatioTemporal Asset Catalog
+
+## 🎮 Live Demos
+
+Experience Waystones in action with these live service endpoints:
+
+- **OGC API - Features**: [oapi-waystones.up.railway.app](https://oapi-waystones.up.railway.app/)
+- **WMS (Web Map Service)**: [GetCapabilities](https://wms-waystones.up.railway.app/ows/?SERVICE=WMS&REQUEST=GetCapabilities)
+
 
 ## 📁 Project Structure
 
