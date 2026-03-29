@@ -26,7 +26,7 @@ export const generatePygeoapiConfig = async (
   // FIX: Use env vars for both port and public URL so Railway/Fly/etc work correctly.
   // PORT is injected automatically by Railway; PYGEOAPI_SERVER_URL must be set manually
   // to the public-facing HTTPS URL after first deploy.
-  yaml += `server:\n  bind:\n    host: 0.0.0.0\n    port: \${PORT:-8080}\n`;
+  yaml += `server:\n  bind:\n    host: 0.0.0.0\n    port: \${PORT:-80}\n`;
   yaml += `  url: \${PYGEOAPI_SERVER_URL}\n`;
   yaml += `  mimetype: application/json; charset=UTF-8\n  encoding: utf-8\n  languages:\n    - ${lang === 'no' ? 'nb-NO' : 'en-US'}\n`;
   // Required by pygeoapi's collection.html template — without this the page throws
