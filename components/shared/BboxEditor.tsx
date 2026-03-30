@@ -27,14 +27,22 @@ const isGeographic = (crs?: string) => {
   return n === 'EPSG:4326' || n === 'WGS84' || n === 'CRS84';
 };
 
-const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent, onChange, modelCrs, lang = 'en' }) => {
+const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent, onChange, modelCrs, lang = 'en' }) => {
+  const spatialExtent = useMemo(() => ({
+    westBoundLongitude: '',
+    eastBoundLongitude: '',
+    southBoundLatitude: '',
+    northBoundLatitude: '',
+    ...(rawSpatialExtent || {})
+  }), [rawSpatialExtent]);
+
   const [localInputs, setLocalInputs] = useState({ ...spatialExtent });
   // WGS84 extent for map display — async-transformed from native CRS
   const [mapWgs84, setMapWgs84] = useState<typeof spatialExtent | null>(null);
   // Live WGS84 bbox during a projected-CRS drag (not yet transformed back)
   const [dragWgs84, setDragWgs84] = useState<typeof spatialExtent | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [mode, setMode] = useState<'pan' | 'draw'>(spatialExtent.westBoundLongitude ? 'pan' : 'draw');
+  const [mode, setMode] = useState<'pan' | 'draw'>(spatialExtent?.westBoundLongitude ? 'pan' : 'draw');
   const drawingOriginRef = useRef<L.LatLng | null>(null);
 
   const geographic = isGeographic(modelCrs);

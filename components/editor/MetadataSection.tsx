@@ -107,12 +107,13 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ model, onUpdate, isOp
 
             {isOpen && (() => {
               const md = t.metadata || {};
-              const meta: ModelMetadata = model.metadata || {
-                contactName: '', contactEmail: '', contactOrganization: '',
-                keywords: [], theme: '', license: 'CC-BY-4.0',
-                accessRights: 'public', purpose: '', accrualPeriodicity: 'unknown',
-                spatialExtent: { westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' },
-                temporalExtentFrom: '', temporalExtentTo: '',
+              const meta: ModelMetadata = {
+                ...defaultMeta,
+                ...(model.metadata || {}),
+                spatialExtent: {
+                  ...defaultMeta.spatialExtent,
+                  ...(model.metadata?.spatialExtent || {})
+                }
               };
               const updateMeta = (patch: Partial<ModelMetadata>) => {
                 onUpdate({ ...model, metadata: { ...meta, ...patch } });

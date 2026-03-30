@@ -32,32 +32,39 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
   
   const round4 = (v: number) => Math.round(v * 10000) / 10000;
 
-  const meta: ModelMetadata = model.metadata || {
+  const defaultSpatialExtent = {
+    westBoundLongitude: summary.bbox?.west?.toString() || '',
+    eastBoundLongitude: summary.bbox?.east?.toString() || '',
+    southBoundLatitude: summary.bbox?.south?.toString() || '',
+    northBoundLatitude: summary.bbox?.north?.toString() || '',
+  };
+
+  const defaultMetadata: ModelMetadata = {
     contactName: '', contactEmail: '', contactOrganization: '',
     keywords: [], theme: '', license: 'CC-BY-4.0', accessRights: 'public',
     purpose: '', accrualPeriodicity: 'unknown',
-    spatialExtent: {
-      westBoundLongitude: summary.bbox?.west?.toString() || '',
-      eastBoundLongitude: summary.bbox?.east?.toString() || '',
-      southBoundLatitude: summary.bbox?.south?.toString() || '',
-      northBoundLatitude: summary.bbox?.north?.toString() || '',
-    },
+    spatialExtent: defaultSpatialExtent,
     temporalExtentFrom: '', temporalExtentTo: '',
+  };
+
+  const meta: ModelMetadata = {
+    ...defaultMetadata,
+    ...(model.metadata || {}),
+    spatialExtent: {
+      ...defaultMetadata.spatialExtent,
+      ...(model.metadata?.spatialExtent || {})
+    }
   };
 
   const updateMeta = (partial: Partial<ModelMetadata>) => {
     const m = modelRef.current;
-    const currentMeta: ModelMetadata = m.metadata || {
-      contactName: '', contactEmail: '', contactOrganization: '',
-      keywords: [], theme: '', license: 'CC-BY-4.0', accessRights: 'public',
-      purpose: '', accrualPeriodicity: 'unknown',
+    const currentMeta: ModelMetadata = {
+      ...defaultMetadata,
+      ...(m.metadata || {}),
       spatialExtent: {
-        westBoundLongitude: summary.bbox?.west?.toString() || '',
-        eastBoundLongitude: summary.bbox?.east?.toString() || '',
-        southBoundLatitude: summary.bbox?.south?.toString() || '',
-        northBoundLatitude: summary.bbox?.north?.toString() || '',
-      },
-      temporalExtentFrom: '', temporalExtentTo: '',
+        ...defaultMetadata.spatialExtent,
+        ...(m.metadata?.spatialExtent || {})
+      }
     };
     onUpdateModel({ ...m, metadata: { ...currentMeta, ...partial } });
   };
