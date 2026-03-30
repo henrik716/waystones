@@ -135,7 +135,7 @@ const App: React.FC = () => {
           setActiveTab('editor');
         } else {
           setSelectedId(null);
-          setActiveTab('models');
+          setActiveTab('landing');
         }
       }
       return updated;
@@ -647,7 +647,7 @@ const App: React.FC = () => {
               </button>
             )}
 
-            {activeTab === 'editor' && (
+            {(activeTab === 'editor' || activeTab === 'preview') && (
             <aside
               style={isDesktop ? {
                 width: `${previewWidth}px`,

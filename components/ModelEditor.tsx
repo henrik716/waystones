@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import type { Translations } from '../i18n/index';
-import { Eye, ChevronDown, Menu, Send } from 'lucide-react';
+import { Eye, ChevronDown, Menu, Send, Settings2, Plus, Layers, Database, Globe, Github, Trash2 } from 'lucide-react';
 import { DataModel } from '../types';
 import { reprojectCoordinates } from '../utils/gdalService';
 import { validateModel, groupIssuesByLayer } from '../utils/validationUtils';
@@ -75,8 +75,10 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   onOpenGithubPublish,
 }) => {
   // --- UI state
-  const [activeNavSection, setActiveNavSection] = useState<NavSection>('layer');
+  const [activeNavSection, setActiveNavSection] = useState<'layer' | 'model' | 'types' | 'rules'>('layer');
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isMobileModelSwitcherOpen, setIsMobileModelSwitcherOpen] = useState(false);
+  const [isMobileImportMenuOpen, setIsMobileImportMenuOpen] = useState(false);
   const [isModelHeaderOpen, setIsModelHeaderOpen] = useState(true);
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isRenderingOrderOpen, setIsRenderingOrderOpen] = useState(true);
@@ -284,16 +286,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
         )}
 
       {/* Body: two-panel split */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Mobile nav toggle button */}
-        <button
-          onClick={() => setIsNavOpen(true)}
-          className="lg:hidden fixed bottom-6 left-4 z-40 w-11 h-11 bg-white border border-slate-200 rounded-2xl shadow-lg flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-all"
-          aria-label="Open navigation"
-        >
-          <Menu size={18} />
-        </button>
-
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* Left nav */}
         <EditorLeftNav
           model={model}
@@ -325,9 +318,87 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
         />
 
         {/* Right panel */}
-        <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col min-w-0 overflow-hidden bg-white">
+          {/* Mobile Top Bar */}
+          <div className="lg:hidden shrink-0 flex flex-col border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-30 pointer-events-auto">
+            {/* Top row: Model Switcher & Import */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100/50 relative z-40">
+              <button
+                onClick={() => { setIsMobileModelSwitcherOpen(!isMobileModelSwitcherOpen); setIsMobileImportMenuOpen(false); }}
+                className="flex items-center gap-2 max-w-[70%] px-2 py-1.5 rounded-xl hover:bg-slate-50 transition-all text-left"
+              >
+                <div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                <span className="text-sm font-black text-slate-800 truncate">{model.name || 'Untitled'}</span>
+                <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${isMobileModelSwitcherOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <div className="relative shrink-0 flex items-center">
+                <button
+                  onClick={() => { setIsMobileImportMenuOpen(!isMobileImportMenuOpen); setIsMobileModelSwitcherOpen(false); }}
+                  className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 transition-all shadow-sm flex items-center justify-center"
+                >
+                  <Plus size={16} />
+                </button>
+
+                {/* Mobile Import Dropdown */}
+                {isMobileImportMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsMobileImportMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden w-48 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <button onClick={() => { onNewModel(); setIsMobileImportMenuOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold text-indigo-600 hover:bg-slate-50 text-left"><Plus size={14} /> {t.newModel || 'New blank'}</button>
+                      <button onClick={() => { onGithubImport(); setIsMobileImportMenuOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 text-left"><Github size={14} /> {t.github?.importTitle || 'GitHub'}</button>
+                      <button onClick={() => { onImportGis(); setIsMobileImportMenuOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 text-left"><Layers size={14} /> {t.importGis || 'Import GIS'}</button>
+                      <button onClick={() => { onImportDatabase(); setIsMobileImportMenuOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 text-left"><Database size={14} /> {t.importDatabase?.title || 'Database'}</button>
+                      <button onClick={() => { onImportUrl(); setIsMobileImportMenuOpen(false); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 text-left"><Globe size={14} /> {t.importUrl || 'Import URL'}</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom row: Hamburger & Context */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50/50">
+              <button
+                onClick={() => setIsNavOpen(true)}
+                className="p-1.5 -ml-1.5 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-white active:scale-95 transition-all shadow-sm border border-transparent hover:border-slate-200"
+                aria-label="Open navigation"
+              >
+                <Menu size={16} />
+              </button>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex-1 truncate">
+                {activeNavSection === 'model' ? t.modelSettings || 'Model Settings' : 
+                 activeNavSection === 'types' ? t.sharedTypes || 'Shared Types' : 
+                 layerActions.activeLayer ? layerActions.activeLayer.name || t.layerNamePlaceholder || 'Unnamed Layer' : 
+                 t.selectLayer || 'Select Layer'}
+              </span>
+            </div>
+
+            {/* Mobile Model Switcher Dropdown */}
+            {isMobileModelSwitcherOpen && models.length > 0 && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setIsMobileModelSwitcherOpen(false)} />
+                <div className="absolute top-[48px] left-0 right-0 z-40 bg-white border-b border-slate-200 shadow-xl overflow-hidden animate-in slide-in-from-top-1 duration-200 max-h-64 overflow-y-auto w-full">
+                  <div className="p-2 space-y-1 bg-slate-50/50">
+                    {models.map(m => (
+                      <div key={m.id} className="relative flex items-center group">
+                        <button 
+                           onClick={() => { onSelectModelById(m.id); setIsMobileModelSwitcherOpen(false); }}
+                           className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all ${m.id === model.id ? 'bg-indigo-50 text-indigo-700 font-black' : 'text-slate-600 font-bold hover:bg-white'}`}
+                        >
+                           <span className="flex-1 text-[11px] truncate">{m.name || 'Untitled'}</span>
+                           <span className="text-[9px] text-slate-400 shrink-0">{m.layers.length} {t.layers?.toLowerCase() || 'layers'}</span>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); onDeleteModel(m.id); setIsMobileModelSwitcherOpen(false); }} className="absolute right-2 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50"><Trash2 size={14}/></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Review controls header */}
-          <div className="shrink-0 flex flex-wrap items-center justify-end gap-2 px-4 py-2 border-b border-slate-200 bg-white">
+          <div className="shrink-0 flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-b border-slate-200 bg-white shadow-sm sm:shadow-none relative z-20">
             <button
               onClick={onOpenGithubPublish}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-300"
@@ -494,6 +565,34 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
                 onGenerateLayerDescription={handleGenerateLayerDescription}
                 onSuggestLayerKeywords={handleSuggestLayerKeywords}
               />
+            )}
+            
+            {activeNavSection === 'layer' && !layerActions.activeLayer && (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in h-full min-h-[400px]">
+                <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-300 mb-6 shadow-inner mx-auto">
+                  <Menu size={24} />
+                </div>
+                <h3 className="text-sm md:text-base font-black text-slate-800 mb-2 tracking-tight">{t.noLayerSelected || 'No Layer Selected'}</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400 max-w-xs mx-auto mb-8 leading-relaxed">
+                  {t.selectLayerToEdit || 'Please select a layer from the menu to edit its properties, style, and rules.'}
+                </p>
+                <div className="flex flex-col gap-3 w-full max-w-[200px] mx-auto">
+                  <button
+                    onClick={() => setIsNavOpen(true)}
+                    className="flex justify-center items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 lg:hidden"
+                  >
+                    <Menu size={14} />
+                    {t.openMenu || 'Open Menu'}
+                  </button>
+                  <button
+                    onClick={() => setActiveNavSection('model')}
+                    className="flex justify-center items-center gap-2 px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:border-indigo-300 hover:text-indigo-600 shadow-sm transition-all active:scale-95"
+                  >
+                    <Settings2 size={14} />
+                    {t.modelSettings || 'Model Settings'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
