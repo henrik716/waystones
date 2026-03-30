@@ -629,19 +629,23 @@ export const en = {
   },
   guide: {
     title: "Welcome to Waystones",
-    subtitle: "Everything you need to design, validate, and share geodata.",
+    subtitle: "The easiest way to transform geodata into standards-compliant web services.",
     close: "Get started",
+    next: "Next",
+    back: "Back",
+    step: "Step",
+    of: "of",
     sections: {
-      quickPublish: "1. Quick Publish",
+      quickPublish: "Quick Publish",
       quickPublishDesc: "The fastest way to OGC API. Drop a GeoPackage, style your layers, and deploy to GitHub in seconds.",
-      ai: "2. AI Assistant",
-      aiDesc: "Our built-in AI helps you with metadata, descriptions, and keywords to make your data easier to discover. Look for the Sparkles symbol!",
-      connect: "3. Connect & Deploy",
-      connectDesc: "Already have data? Connect directly to PostGIS or Supabase. We'll help you map your tables to a live service.",
-      design: "4. Design & Mapping",
-      designDesc: "Advanced modeling with custom properties, constraints, and codelists. Use the Data Mapper to migrate legacy files into your model.",
-      collaboration: "5. GitHub & Hosting",
-      collaborationDesc: "Store your models and configs in GitHub. Get full version history and automatic CI/CD deployment to Fly.io or Docker."
+      ai: "AI Assistant",
+      aiDesc: "Our built-in AI helps you with metadata, descriptions, and keywords. Look for the Sparkles symbol!",
+      connect: "Connect Database",
+      connectDesc: "Already running PostGIS or Supabase? Connect your database directly and we'll help you map your tables to a live service.",
+      design: "Design & Mapping",
+      designDesc: "Advanced modeling with custom properties and constraints. Use the Data Mapper to migrate legacy files.",
+      collaboration: "Cloud & Docker",
+      collaborationDesc: "Deploy to Railway, Fly.io, or your own server with Docker. Automatic CI/CD and full version history included."
     }
   },
   github: {

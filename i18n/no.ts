@@ -629,19 +629,23 @@ export const no = {
   },
   guide: {
     title: "Velkommen til Waystones",
-    subtitle: "Alt du trenger for å designe, kvalitetssikre og dele geodata.",
+    subtitle: "Den enkleste måten å transformere geodata til standardiserte webtjenester.",
     close: "Kom i gang",
+    next: "Neste",
+    back: "Tilbake",
+    step: "Steg",
+    of: "av",
     sections: {
-      quickPublish: "1. Hurtigpublisering",
+      quickPublish: "Hurtigpublisering",
       quickPublishDesc: "Den raskeste veien til OGC API. Slipp en GeoPackage, style lagene dine, og deploy til GitHub på sekunder.",
-      ai: "2. AI-assistent",
-      aiDesc: "Vår innebygde AI hjelper deg med metadata, beskrivelser og nøkkelord slik at dataene dine blir lettere å finne. Se etter Sparkles-symbolet!",
-      connect: "3. Koble til & Deploy",
-      connectDesc: "Har du allerede data? Koble direkte til PostGIS eller Supabase. Vi hjelper deg med å kartlegge tabellene dine til en live tjeneste.",
-      design: "4. Design & Mapping",
-      designDesc: "Avansert modellering med egne egenskaper, restriksjoner og kodelister. Bruk Data Mapper for å migrere eldre filer inn i modellen din.",
-      collaboration: "5. GitHub & Hosting",
-      collaborationDesc: "Lagre modeller og konfigurasjon i GitHub. Få full endringshistorikk og automatisk deployment til Fly.io eller Docker."
+      ai: "AI-assistent",
+      aiDesc: "Vår innebygde AI hjelper deg med metadata, beskrivelser og nøkkelord. Se etter Sparkles-symbolet!",
+      connect: "Koble til database",
+      connectDesc: "Kjører du PostGIS eller Supabase? Koble til databasen din direkte, så hjelper vi deg med å rulle ut tjenesten.",
+      design: "Design & Mapping",
+      designDesc: "Avansert modellering med egne egenskaper og restriksjoner. Bruk Data Mapper for å migrere eldre filer.",
+      collaboration: "Sky & Docker",
+      collaborationDesc: "Deploy til Railway, Fly.io eller egen server med Docker. Inkluderer automatisert CI/CD og full versjonshistorikk."
     }
   },
   github: {
