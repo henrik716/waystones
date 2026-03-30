@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Translations } from '../i18n/index';
 import { Eye, ChevronDown, Menu, Send } from 'lucide-react';
 import { DataModel } from '../types';
+import { reprojectCoordinates } from '../utils/gdalService';
 import { validateModel, groupIssuesByLayer } from '../utils/validationUtils';
 import { 
   generateModelAbstract, 
@@ -127,6 +128,54 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   });
 
   const aiContext = useAiContext();
+
+  // --- CRS change handler: reproject spatialExtent when CRS changes
+  const handleUpdateWithCrsReproject = useCallback(async (updated: DataModel) => {
+    const oldCrs = model.crs;
+    const newCrs = updated.crs;
+    const extent = updated.metadata?.spatialExtent;
+
+    const hasExtent = extent &&
+      extent.westBoundLongitude && extent.eastBoundLongitude &&
+      extent.southBoundLatitude && extent.northBoundLatitude;
+
+    if (newCrs && oldCrs && newCrs !== oldCrs && hasExtent) {
+      const w = parseFloat(extent.westBoundLongitude);
+      const e = parseFloat(extent.eastBoundLongitude);
+      const s = parseFloat(extent.southBoundLatitude);
+      const n = parseFloat(extent.northBoundLatitude);
+
+      try {
+        const [[rw, rs], [re, rn]] = await reprojectCoordinates(
+          [[w, s], [e, n]], oldCrs, newCrs
+        );
+        const round4 = (v: number) => Math.round(v * 10000) / 10000;
+        onUpdate({
+          ...updated,
+          metadata: {
+            ...updated.metadata!,
+            spatialExtent: {
+              westBoundLongitude: String(round4(rw)),
+              eastBoundLongitude: String(round4(re)),
+              southBoundLatitude: String(round4(rs)),
+              northBoundLatitude: String(round4(rn)),
+            },
+          },
+        });
+      } catch {
+        // Reprojection failed — clear the extent to avoid silently wrong coordinates
+        onUpdate({
+          ...updated,
+          metadata: {
+            ...updated.metadata!,
+            spatialExtent: { westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' },
+          },
+        });
+      }
+    } else {
+      onUpdate(updated);
+    }
+  }, [model.crs, onUpdate]);
 
   // --- Validation
   const validationIssues = useMemo(() => validateModel(model), [model]);
@@ -352,7 +401,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
                 <ModelHeaderSection
                   model={model}
                   baselineModel={baselineModel}
-                  onUpdate={onUpdate}
+                  onUpdate={handleUpdateWithCrsReproject}
                   reviewMode={versionReview.reviewMode}
                   t={t}
                   lang={lang}
