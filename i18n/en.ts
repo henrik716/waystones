@@ -889,4 +889,22 @@ export const en = {
     FIELD_SHARED_ENUM_REF_MISSING: 'Missing shared codelist reference',
     LAYER_EXTENDS_CIRCULAR_DEEP: 'Circular inheritance detected',
   },
+  bboxEditor: {
+    fitToBounds: "Fit to bounds",
+    worldView: "World view",
+    clearExtent: "Clear extent",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    pan: "Pan",
+    drawExtent: "Draw extent",
+    clickAndDrag: "Click and drag to define extent",
+    coordinates: "Coordinates",
+    copy: "Copy",
+    north: "NORTH",
+    south: "SOUTH",
+    west: "WEST",
+    east: "EAST",
+    width: "W",
+    height: "H"
+  },
 };

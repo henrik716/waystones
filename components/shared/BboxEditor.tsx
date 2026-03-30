@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { Grab, Plus, Minus, Square, Globe, Maximize, Trash2, MousePointer2, Compass } from 'lucide-react';
 import { ModelMetadata } from '../../types';
 import { reprojectCoordinates } from '../../utils/gdalService';
+import type { Translations } from '../../i18n/index';
 
 // Fix for default marker icons in Leaflet with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -18,6 +19,7 @@ interface BboxEditorProps {
   spatialExtent: ModelMetadata['spatialExtent'];
   onChange?: (extent: ModelMetadata['spatialExtent']) => void;
   modelCrs?: string;
+  t: Translations;
   lang?: string;
 }
 
@@ -132,14 +134,14 @@ const MapController: React.FC<{
   return null;
 };
 
-const FitBoundsButton = ({ bounds, lang }: { bounds: L.LatLngBoundsExpression | null, lang: string }) => {
+const FitBoundsButton = ({ bounds, t }: { bounds: L.LatLngBoundsExpression | null, t: Translations['bboxEditor'] }) => {
   const map = useMap();
   if (!bounds) return null;
   return (
     <button
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); map.fitBounds(bounds, { padding: [10, 10] }); }}
       onMouseDown={e => e.stopPropagation()}
-      title={lang === 'no' ? 'Tilpass visning' : 'Fit to bounds'}
+      title={t.fitToBounds}
       className="p-2 rounded-lg transition-all duration-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
     >
       <Maximize size={18} strokeWidth={2} />
@@ -147,13 +149,13 @@ const FitBoundsButton = ({ bounds, lang }: { bounds: L.LatLngBoundsExpression | 
   );
 };
 
-const WorldViewButton = ({ lang }: { lang: string }) => {
+const WorldViewButton = ({ t }: { t: Translations['bboxEditor'] }) => {
   const map = useMap();
   return (
     <button
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); map.setView([20, 0], 1); }}
       onMouseDown={e => e.stopPropagation()}
-      title={lang === 'no' ? 'Verdensvisning' : 'World view'}
+      title={t.worldView}
       className="p-2 rounded-lg transition-all duration-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
     >
       <Globe size={18} strokeWidth={2} />
@@ -161,20 +163,20 @@ const WorldViewButton = ({ lang }: { lang: string }) => {
   );
 };
 
-const ClearButton = ({ lang, onClear }: { lang: string, onClear: () => void }) => (
+const ClearButton = ({ t, onClear }: { t: Translations['bboxEditor'], onClear: () => void }) => (
   <button
     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClear(); }}
     onMouseDown={e => e.stopPropagation()}
-    title={lang === 'no' ? 'Tøm utstrekning' : 'Clear extent'}
+    title={t.clearExtent}
     className="p-2 rounded-lg transition-all duration-200 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50"
   >
     <Trash2 size={18} strokeWidth={2} />
   </button>
 );
 
-const ZoomButton = ({ type, lang }: { type: 'in' | 'out', lang: string }) => {
+const ZoomButton = ({ type, t }: { type: 'in' | 'out', t: Translations['bboxEditor'] }) => {
   const map = useMap();
-  const label = type === 'in' ? (lang === 'no' ? 'Zoom inn' : 'Zoom in') : (lang === 'no' ? 'Zoom ut' : 'Zoom out');
+  const label = type === 'in' ? t.zoomIn : t.zoomOut;
   return (
     <button
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (type === 'in') map.zoomIn(); else map.zoomOut(); }}
@@ -216,7 +218,7 @@ const Handle = ({ position, type, activeHandle, setActiveHandle }: { position: L
   );
 };
 
-const DimensionBadge = ({ extent, unit, lang }: { extent: any | null, unit: string, lang: string }) => {
+const DimensionBadge = ({ extent, unit, t }: { extent: any | null, unit: string, t: Translations['bboxEditor'] }) => {
   if (!extent) return null;
   const w = parse(extent.westBoundLongitude);
   const e = parse(extent.eastBoundLongitude);
@@ -227,8 +229,8 @@ const DimensionBadge = ({ extent, unit, lang }: { extent: any | null, unit: stri
   return (
     <div className="absolute bottom-3 right-3 z-[1000] bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-200/60 shadow-lg flex items-center gap-3 pointer-events-none ring-1 ring-black/[0.03]">
       <div className="flex items-center gap-3 font-mono text-[10px] font-bold text-slate-500">
-        <div className="flex items-center gap-1"><span className="text-slate-300">W:</span><span>{round4(Math.abs(e - w))}{unit}</span></div>
-        <div className="flex items-center gap-1"><span className="text-slate-300">H:</span><span>{round4(Math.abs(n - s))}{unit}</span></div>
+        <div className="flex items-center gap-1"><span className="text-slate-300">{t.width}:</span><span>{round4(Math.abs(e - w))}{unit}</span></div>
+        <div className="flex items-center gap-1"><span className="text-slate-300">{t.height}:</span><span>{round4(Math.abs(n - s))}{unit}</span></div>
       </div>
     </div>
   );
@@ -256,7 +258,8 @@ const CoordInput: React.FC<{ label: string, value: string, placeholder: string, 
 
 // --- Main Component ---
 
-const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent, onChange, modelCrs, lang = 'en' }) => {
+const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent, onChange, modelCrs, t, lang = 'en' }) => {
+  const b = t.bboxEditor;
   const spatialExtent = useMemo(() => ({
     westBoundLongitude: '',
     eastBoundLongitude: '',
@@ -271,8 +274,42 @@ const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent
   const [isDrawing, setIsDrawing] = useState(false);
   const [mode, setMode] = useState<'pan' | 'draw'>(spatialExtent?.westBoundLongitude ? 'pan' : 'draw');
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
+  const [liveNativeExt, setLiveNativeExt] = useState<any | null>(null);
 
   const geographic = isGeographic(modelCrs);
+
+  // Sync liveNativeExt with displayExt
+  useEffect(() => {
+    const ext = dragWgs84 ?? mapWgs84;
+    if (!ext) {
+      setLiveNativeExt(null);
+      return;
+    }
+
+    if (geographic) {
+      setLiveNativeExt(ext);
+      return;
+    }
+
+    // If not dragging, we can use the native spatialExtent directly
+    if (!dragWgs84) {
+      setLiveNativeExt(spatialExtent);
+      return;
+    }
+
+    // If dragging, reproject to get native dimensions live
+    const w = parse(dragWgs84.westBoundLongitude);
+    const ee = parse(dragWgs84.eastBoundLongitude);
+    const s = parse(dragWgs84.southBoundLatitude);
+    const n = parse(dragWgs84.northBoundLatitude);
+
+    let cancelled = false;
+    reprojectCoordinates([[w, s], [ee, n]], 'EPSG:4326', modelCrs!).then(([[rw, rs], [re, rn]]) => {
+      if (!cancelled) setLiveNativeExt(toNativeExtent(rw, re, rs, rn));
+    }).catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [dragWgs84, mapWgs84, geographic, modelCrs, spatialExtent]);
 
   useEffect(() => { setLocalInputs({ ...spatialExtent }); }, [spatialExtent]);
 
@@ -355,27 +392,27 @@ const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent
             </>
           )}
           <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2" onMouseDown={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} onDoubleClick={e => e.stopPropagation()}>
-            <div className="flex items-center bg-white/90 backdrop-blur-md rounded-xl border border-slate-200/60 shadow-xl p-1 gap-1 ring-1 ring-black/[0.03]">
-              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMode('pan'); }} onMouseDown={e => e.stopPropagation()} title={lang === 'no' ? 'Panorere' : 'Pan'} className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${mode === 'pan' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}><MousePointer2 size={18} strokeWidth={2} /></button>
-              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMode('draw'); }} onMouseDown={e => e.stopPropagation()} title={lang === 'no' ? 'Tegn utstrekning' : 'Draw extent'} className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${mode === 'draw' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}><Square size={18} strokeWidth={2} /></button>
+            <div className="flex items-center bg-white/90 backdrop-blur-md rounded-xl border border-slate-200/60 shadow-xl p-1 translation-all duration-200 gap-1 ring-1 ring-black/[0.03]">
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMode('pan'); }} onMouseDown={e => e.stopPropagation()} title={b.pan} className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${mode === 'pan' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}><MousePointer2 size={18} strokeWidth={2} /></button>
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMode('draw'); }} onMouseDown={e => e.stopPropagation()} title={b.drawExtent} className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${mode === 'draw' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}><Square size={18} strokeWidth={2} /></button>
               <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
-              <ZoomButton type="in" lang={lang} /><ZoomButton type="out" lang={lang} />
+              <ZoomButton type="in" t={b} /><ZoomButton type="out" t={b} />
               <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
-              <WorldViewButton lang={lang} />
+              <WorldViewButton t={b} />
               {bounds && (
                 <>
-                  <FitBoundsButton bounds={bounds} lang={lang} />
-                  <ClearButton lang={lang} onClear={() => { commitWgs84({ westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' }); setLocalInputs({ westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' }); }} />
+                  <FitBoundsButton bounds={bounds} t={b} />
+                  <ClearButton t={b} onClear={() => { commitWgs84({ westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' }); setLocalInputs({ westBoundLongitude: '', eastBoundLongitude: '', southBoundLatitude: '', northBoundLatitude: '' }); }} />
                 </>
               )}
             </div>
           </div>
-          <DimensionBadge extent={displayExt} unit={unit} lang={lang} />
+          <DimensionBadge extent={liveNativeExt} unit={unit} t={b} />
         </MapContainer>
         {!bounds && onChange && !isDrawing && mode === 'draw' && (
           <div className="absolute inset-0 z-[1000] flex items-center justify-center pointer-events-none">
             <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-slate-600 text-xs font-semibold italic text-center max-w-[200px]">
-              {lang === 'no' ? 'Klikk og dra for å velge utstrekning' : 'Click and drag to define extent'}
+              {b.clickAndDrag}
             </div>
           </div>
         )}
@@ -385,23 +422,23 @@ const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-indigo-50 flex items-center justify-center text-indigo-600"><Compass size={14} /></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{lang === 'no' ? 'Koordinater' : 'Coordinates'} ({modelCrs || 'WGS84'})</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{b.coordinates} ({modelCrs || 'WGS84'})</span>
           </div>
           {inputsValid && (
             <button onClick={() => { navigator.clipboard.writeText(`[${localInputs.westBoundLongitude}, ${localInputs.southBoundLatitude}, ${localInputs.eastBoundLongitude}, ${localInputs.northBoundLatitude}]`); }} className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-sm active:scale-95 transition-all">
-              {lang === 'no' ? 'Kopier' : 'Copy'} [W,S,E,N]
+              {b.copy} [W,S,E,N]
             </button>
           )}
         </div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 relative">
           <div className="absolute left-1/2 top-2 bottom-2 w-px bg-slate-200/60 -translate-x-1/2" />
           <div className="space-y-4">
-            <CoordInput label={lang === 'no' ? 'Nord' : 'NORTH'} value={localInputs.northBoundLatitude} placeholder={geographic ? '90' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, northBoundLatitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, northBoundLatitude: String(val) }); else setLocalInputs(p => ({ ...p, northBoundLatitude: spatialExtent.northBoundLatitude })); }} />
-            <CoordInput label={lang === 'no' ? 'Sør' : 'SOUTH'} value={localInputs.southBoundLatitude} placeholder={geographic ? '−90' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, southBoundLatitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, southBoundLatitude: String(val) }); else setLocalInputs(p => ({ ...p, southBoundLatitude: spatialExtent.southBoundLatitude })); }} />
+            <CoordInput label={b.north} value={localInputs.northBoundLatitude} placeholder={geographic ? '90' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, northBoundLatitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, northBoundLatitude: String(val) }); else setLocalInputs(p => ({ ...p, northBoundLatitude: spatialExtent.northBoundLatitude })); }} />
+            <CoordInput label={b.south} value={localInputs.southBoundLatitude} placeholder={geographic ? '−90' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, southBoundLatitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, southBoundLatitude: String(val) }); else setLocalInputs(p => ({ ...p, southBoundLatitude: spatialExtent.southBoundLatitude })); }} />
           </div>
           <div className="space-y-4">
-            <CoordInput label={lang === 'no' ? 'Vest' : 'WEST'} value={localInputs.westBoundLongitude} placeholder={geographic ? '−180' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, westBoundLongitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, westBoundLongitude: String(val) }); else setLocalInputs(p => ({ ...p, westBoundLongitude: spatialExtent.westBoundLongitude })); }} />
-            <CoordInput label={lang === 'no' ? 'Øst' : 'EAST'} value={localInputs.eastBoundLongitude} placeholder={geographic ? '180' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, eastBoundLongitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, eastBoundLongitude: String(val) }); else setLocalInputs(p => ({ ...p, eastBoundLongitude: spatialExtent.eastBoundLongitude })); }} />
+            <CoordInput label={b.west} value={localInputs.westBoundLongitude} placeholder={geographic ? '−180' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, westBoundLongitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, westBoundLongitude: String(val) }); else setLocalInputs(p => ({ ...p, westBoundLongitude: spatialExtent.westBoundLongitude })); }} />
+            <CoordInput label={b.east} value={localInputs.eastBoundLongitude} placeholder={geographic ? '180' : ''} readOnly={!onChange} unit={unit} onChange={v => setLocalInputs(p => ({ ...p, eastBoundLongitude: v }))} onCommit={v => { if (!onChange) return; const val = parseFloat(v); if (!isNaN(val)) onChange({ ...localInputs, eastBoundLongitude: String(val) }); else setLocalInputs(p => ({ ...p, eastBoundLongitude: spatialExtent.eastBoundLongitude })); }} />
           </div>
         </div>
       </div>

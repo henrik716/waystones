@@ -280,6 +280,7 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ model, onUpdate, isOp
                       spatialExtent={meta.spatialExtent}
                       onChange={(extent) => updateMeta({ spatialExtent: extent })}
                       modelCrs={model.crs}
+                      t={t}
                       lang={lang}
                     />
                   </div>

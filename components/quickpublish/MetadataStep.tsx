@@ -379,6 +379,7 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
               spatialExtent={meta.spatialExtent}
               onChange={(extent) => updateMeta({ spatialExtent: extent })}
               modelCrs={model.crs}
+              t={t}
               lang={lang}
             />
           </div>

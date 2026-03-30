@@ -889,4 +889,22 @@ export const no = {
     FIELD_SHARED_ENUM_REF_MISSING: 'Manglende referanse til delt kodeliste',
     LAYER_EXTENDS_CIRCULAR_DEEP: 'Sirkulær arv oppdaget',
   },
+  bboxEditor: {
+    fitToBounds: "Tilpass visning",
+    worldView: "Verdensvisning",
+    clearExtent: "Tøm utstrekning",
+    zoomIn: "Zoom inn",
+    zoomOut: "Zoom ut",
+    pan: "Panorere",
+    drawExtent: "Tegn utstrekning",
+    clickAndDrag: "Klikk og dra for å velge utstrekning",
+    coordinates: "Koordinater",
+    copy: "Kopier",
+    north: "Nord",
+    south: "Sør",
+    west: "Vest",
+    east: "Øst",
+    width: "B",
+    height: "H"
+  },
 };
