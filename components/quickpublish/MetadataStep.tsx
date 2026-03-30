@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Translations } from '../../i18n/index';
-import { X, ArrowRight, ChevronDown, ChevronUp, Layers, Tag } from 'lucide-react';
+import { X, ArrowRight, ChevronDown, ChevronUp, Layers, Tag, Square } from 'lucide-react';
 import { DataModel, Layer, ModelMetadata } from '../../types';
 import { InferredDataSummary } from '../../utils/importUtils';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../utils/aiService';
 import { useAiContext } from '../../contexts/AiContext';
 import AiTrigger from '../ai/AiTrigger';
+import BboxEditor from '../shared/BboxEditor';
 
 interface MetadataStepProps {
   model: DataModel;
@@ -28,6 +29,8 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
   const aiContext = useAiContext();
   const modelRef = useRef(model);
   useEffect(() => { modelRef.current = model; }, [model]);
+  
+  const round4 = (v: number) => Math.round(v * 10000) / 10000;
 
   const meta: ModelMetadata = model.metadata || {
     contactName: '', contactEmail: '', contactOrganization: '',
@@ -61,6 +64,7 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
 
   const [kwInput, setKwInput] = useState('');
   const [expandedLayers, setExpandedLayers] = useState<Set<string>>(new Set());
+  const [isBboxExpanded, setIsBboxExpanded] = useState(false);
   const [layerKwInputs, setLayerKwInputs] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState(false);
 
@@ -336,6 +340,42 @@ const MetadataStep: React.FC<MetadataStepProps> = ({ model, summary, onUpdateMod
             className="flex-1 min-w-[160px] bg-transparent text-sm font-medium outline-none placeholder:text-slate-300"
           />
         </div>
+      </div>
+
+      {/* Spatial Extent */}
+      <div className={`space-y-4 rounded-2xl border-2 transition-all ${isBboxExpanded ? 'border-indigo-200 ring-4 ring-indigo-500/5 shadow-sm p-5 bg-white' : 'border-slate-100 p-4 bg-slate-50/30'}`}>
+        <button
+          onClick={() => setIsBboxExpanded(!isBboxExpanded)}
+          className="w-full flex items-center justify-between text-left group"
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isBboxExpanded ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
+              <Square size={16} />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer block">
+                {lang === 'no' ? 'Romlig utstrekning' : 'Spatial Extent'}
+              </label>
+              {!isBboxExpanded && meta.spatialExtent && (
+                <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  {round4(parseFloat(meta.spatialExtent.westBoundLongitude))}, {round4(parseFloat(meta.spatialExtent.southBoundLatitude))} to {round4(parseFloat(meta.spatialExtent.eastBoundLongitude))}, {round4(parseFloat(meta.spatialExtent.northBoundLatitude))}
+                </p>
+              )}
+            </div>
+          </div>
+          {isBboxExpanded ? <ChevronUp size={18} className="text-indigo-400" /> : <ChevronDown size={18} className="text-slate-300 group-hover:text-slate-400 transition-colors" />}
+        </button>
+
+        {isBboxExpanded && (
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+            <BboxEditor
+              spatialExtent={meta.spatialExtent}
+              onChange={(extent) => updateMeta({ spatialExtent: extent })}
+              modelCrs={model.crs}
+              lang={lang}
+            />
+          </div>
+        )}
       </div>
 
       {/* Layer Metadata (Optional) */}

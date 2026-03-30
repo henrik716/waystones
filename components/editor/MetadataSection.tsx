@@ -7,6 +7,7 @@ import {
 } from '../../utils/aiService';
 import { useAiContext } from '../../contexts/AiContext';
 import AiTrigger from '../ai/AiTrigger';
+import BboxEditor from '../shared/BboxEditor';
 
 interface MetadataSectionProps {
   model: DataModel;
@@ -274,25 +275,12 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ model, onUpdate, isOp
                   {/* Spatial extent (bbox) */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{md.spatialExtent}</label>
-                    <div className="grid grid-cols-4 gap-3">
-                      {[
-                        { key: 'westBoundLongitude', label: md.west },
-                        { key: 'southBoundLatitude', label: md.south },
-                        { key: 'eastBoundLongitude', label: md.east },
-                        { key: 'northBoundLatitude', label: md.north },
-                      ].map(({ key, label }) => (
-                        <div key={key}>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">{label}</span>
-                          <input
-                            type="text"
-                            value={(meta.spatialExtent as any)?.[key] || ''}
-                            onChange={e => updateMeta({ spatialExtent: { ...meta.spatialExtent, [key]: e.target.value } })}
-                            placeholder="0.0"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all"
-                          />
-                        </div>
-                      ))}
-                    </div>
+                    <BboxEditor
+                      spatialExtent={meta.spatialExtent}
+                      onChange={(extent) => updateMeta({ spatialExtent: extent })}
+                      modelCrs={model.crs}
+                      lang={lang}
+                    />
                   </div>
 
                   {/* Temporal extent */}

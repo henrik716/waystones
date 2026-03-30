@@ -731,6 +731,25 @@ export const reprojectCoordinates = async (
   return result;
 };
 
+/**
+ * Transform a bbox from a given CRS to WGS84 (EPSG:4326).
+ * Returns the bbox unchanged if sourceCrs is already WGS84.
+ * Throws on GDAL transform failure so callers can fall back.
+ */
+export const bboxToWgs84 = async (
+  bbox: { west: number; south: number; east: number; north: number },
+  sourceCrs: string
+): Promise<{ west: number; south: number; east: number; north: number }> => {
+  const norm = sourceCrs.trim().toUpperCase();
+  if (norm === 'EPSG:4326' || norm === 'WGS84' || norm === 'CRS84') return bbox;
+  const [[west, south], [east, north]] = await reprojectCoordinates(
+    [[bbox.west, bbox.south], [bbox.east, bbox.north]],
+    sourceCrs,
+    'EPSG:4326'
+  );
+  return { west, south, east, north };
+};
+
 // ============================================================
 // Geometry validation
 // ============================================================
