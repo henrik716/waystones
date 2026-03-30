@@ -111,7 +111,7 @@ const Guide: React.FC<GuideProps> = ({ onClose, t }) => {
         </div>
 
         {/* Top Header Controls */}
-        <div className="relative z-10 flex items-center justify-between px-8 py-6">
+        <div className="relative z-10 flex items-center justify-between px-6 sm:px-8 py-6">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 bg-white/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/50 shadow-sm">
             {t.guide.step} {currentStep + 1} {t.guide.of} {sections.length}
           </div>
@@ -125,7 +125,7 @@ const Guide: React.FC<GuideProps> = ({ onClose, t }) => {
         </div>
 
         {/* Content Area */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-10 sm:px-20 py-4">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 sm:px-20 py-4">
           <div key={currentStep} className="animate-in fade-in slide-in-from-bottom-8 duration-500 flex flex-col items-center">
             <div className={`w-24 h-24 ${activeSection.color} ${activeSection.accent} border-4 rounded-[42px] flex items-center justify-center mb-10 shadow-xl relative`}>
               {activeSection.icon}
@@ -144,7 +144,7 @@ const Guide: React.FC<GuideProps> = ({ onClose, t }) => {
         </div>
 
         {/* Footer Navigation */}
-        <div className="relative z-10 p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="relative z-10 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex gap-2">
             {sections.map((_, idx) => (
               <button
@@ -156,11 +156,11 @@ const Guide: React.FC<GuideProps> = ({ onClose, t }) => {
             ))}
           </div>
 
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
             {currentStep > 0 && (
               <button 
                 onClick={handleBack}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-600 px-8 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest border border-slate-200 transition-all active:scale-95 group"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 bg-white hover:bg-slate-50 text-slate-600 px-4 sm:px-8 py-4 rounded-[22px] font-black text-[10px] sm:text-xs uppercase tracking-widest border border-slate-200 transition-all active:scale-95 group"
               >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 {t.guide.back}
@@ -169,7 +169,7 @@ const Guide: React.FC<GuideProps> = ({ onClose, t }) => {
             
             <button 
               onClick={handleNext}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-4 ${currentStep === sections.length - 1 ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-slate-900 hover:bg-black shadow-slate-200'} text-white px-10 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 group`}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-4 ${currentStep === sections.length - 1 ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-slate-900 hover:bg-black shadow-slate-200'} text-white px-6 sm:px-10 py-4 rounded-[22px] font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 group`}
             >
               {currentStep === sections.length - 1 ? t.guide.close : t.guide.next}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
