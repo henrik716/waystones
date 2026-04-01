@@ -59,9 +59,7 @@ export const generateDeployFiles = async (
   // QGIS project + Dockerfile.qgis
   if (hasWms) {
     files['project.qgs'] = generateQgisProject(model, source);
-    if (target !== 'docker-compose') {
-      files['Dockerfile.qgis'] = generateQgisDockerfile(model, source);
-    }
+    files['Dockerfile.qgis'] = generateQgisDockerfile(model, source);
   }
 
   // Delta script + STAC helpers for database sources

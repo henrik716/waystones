@@ -94,6 +94,7 @@ export const generateReadme = (model: DataModel, source: SourceConnection, lang:
   md += `| \`docker-compose.yml\` | ${s.dockerComposeFile} |\n`;
   md += `| \`pygeoapi-config.yml\` | ${isPg ? s.pygeoapiPgFile : s.pygeoapiGpkgFile} |\n`;
   if (hasWms) {
+    md += `| \`Dockerfile.qgis\` | ${s.dockerfileQgisFile} |\n`;
     md += `| \`project.qgs\` | ${s.qgisProjectFile} |\n`;
   }
   if (isGpkg && useS3) {

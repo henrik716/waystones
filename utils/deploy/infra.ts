@@ -180,7 +180,9 @@ services:
   # public URL when running behind an HTTPS reverse proxy (Railway, Fly, nginx).
   # Set QGIS_SERVER_PUBLIC_URL in your .env file after first deploy.
   qgis-server:
-    image: qgis/qgis-server:ltr
+    build:
+      context: .
+      dockerfile: Dockerfile.qgis
     ports:
       - "8080:80"
     volumes:
