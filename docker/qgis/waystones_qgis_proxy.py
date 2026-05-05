@@ -17,6 +17,7 @@ import socketserver
 NGINX_INTERNAL_PORT = int(os.environ.get("NGINX_INTERNAL_PORT", "8080"))
 LISTEN_PORT = int(os.environ.get("CONTAINER_PORT", "80"))
 PROJECT_PATH = "/data/project.qgs"
+FCGI_SOCKET = "/tmp/qgis-fcgi.sock"
 
 _init_lock = threading.Lock()
 _STARTED = False
@@ -39,18 +40,23 @@ def _start_qgis_stack() -> bool:
     if os.path.exists(PROJECT_PATH):
         subprocess.run(["chmod", "644", PROJECT_PATH], check=False)
 
+    # Remove stale socket if it exists (e.g. from a crashed previous run)
+    if os.path.exists(FCGI_SOCKET):
+        os.unlink(FCGI_SOCKET)
+
     fcgi = subprocess.Popen(
         [
             "spawn-fcgi", "-u", "www-data", "-g", "www-data",
-            "-d", "/var/lib/qgis", "-p", "9993",
+            "-d", "/var/lib/qgis", "-s", FCGI_SOCKET,
             "--", "/usr/local/bin/qgis-wrapper.sh",
         ],
         stderr=subprocess.PIPE,
     )
     time.sleep(0.5)
-    if fcgi.poll() is not None:
+    # spawn-fcgi forks the child and exits with rc=0 on success — only fail on non-zero
+    if fcgi.poll() is not None and fcgi.returncode != 0:
         err = (fcgi.stderr.read() if fcgi.stderr else b"").decode("utf-8", errors="replace")
-        print(f"[waystones_qgis_proxy] spawn-fcgi exited early (rc={fcgi.returncode}): {err}", flush=True)
+        print(f"[waystones_qgis_proxy] spawn-fcgi failed (rc={fcgi.returncode}): {err}", flush=True)
         return False
 
     subprocess.Popen(["nginx", "-g", "daemon off;"])
