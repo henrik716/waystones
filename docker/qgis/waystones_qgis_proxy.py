@@ -37,9 +37,13 @@ def _wait_for_nginx(timeout=60):
 
 
 def _inject_credentials(headers) -> None:
-    """Inject R2/S3 credentials from X-Waystones-Config into os.environ so that
-    spawn-fcgi and its QGIS child inherit them. Without explicit credentials GDAL
-    falls back to EC2 instance metadata (169.254.169.254) and hangs indefinitely.
+    """Inject R2/S3 credentials from X-Waystones-Config into:
+      1. os.environ  — inherited by spawn-fcgi and its QGIS child
+      2. /tmp/qgis-env.sh — sourced by qgis-wrapper.sh before exec
+      3. nginx fastcgi_params — passed as FastCGI params to QGIS per-request
+
+    Without this, the entrypoint would write empty fastcgi_params at boot
+    (credentials aren't available yet) and GDAL would hang on 169.254.169.254.
     """
     os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
     raw_config = headers.get("X-Waystones-Config")
@@ -49,7 +53,34 @@ def _inject_credentials(headers) -> None:
         machine_env = json.loads(raw_config).get("machine_env") or {}
         for k, v in machine_env.items():
             os.environ[k] = str(v)
-        print(f"[waystones_qgis_proxy] Injected {len(machine_env)} credentials from machine_env", flush=True)
+
+        # Write env file sourced by qgis-wrapper.sh
+        with open("/tmp/qgis-env.sh", "w") as f:
+            for k, v in machine_env.items():
+                f.write(f'export {k}="{v}"\n')
+            f.write('export AWS_EC2_METADATA_DISABLED="true"\n')
+
+        # Inject into nginx fastcgi_params so QGIS receives them per-request
+        aws_id     = machine_env.get("AWS_ACCESS_KEY_ID", "")
+        aws_secret = machine_env.get("AWS_SECRET_ACCESS_KEY", "")
+        raw_ep     = machine_env.get("AWS_ENDPOINT_URL", machine_env.get("AWS_S3_ENDPOINT", ""))
+        clean_ep   = raw_ep.replace("https://", "").replace("http://", "")
+
+        nginx_params = "\n".join([
+            f'fastcgi_param AWS_ACCESS_KEY_ID "{aws_id}";',
+            f'fastcgi_param AWS_SECRET_ACCESS_KEY "{aws_secret}";',
+            f'fastcgi_param AWS_S3_ENDPOINT "{clean_ep}";',
+            'fastcgi_param AWS_VIRTUAL_HOSTING "FALSE";',
+            'fastcgi_param AWS_HTTPS "YES";',
+            'fastcgi_param AWS_EC2_METADATA_DISABLED "true";',
+            'fastcgi_param CPL_VSIL_CURL_USE_HEAD "FALSE";',
+        ])
+        for nginx_file in ["/etc/nginx/fastcgi_params", "/etc/nginx/fastcgi.conf"]:
+            if os.path.exists(nginx_file):
+                with open(nginx_file, "a") as f:
+                    f.write("\n" + nginx_params + "\n")
+
+        print(f"[waystones_qgis_proxy] Injected {len(machine_env)} credentials into env, wrapper, and nginx", flush=True)
     except Exception as e:
         print(f"[waystones_qgis_proxy] Warning: could not parse X-Waystones-Config: {e}", flush=True)
 
