@@ -11,6 +11,9 @@ _pygeoapi_app = None
 CONFIG_PATH = os.environ.get("PYGEOAPI_CONFIG", "/pygeoapi/local.config.yml")
 OPENAPI_PATH = os.environ.get("PYGEOAPI_OPENAPI", "/pygeoapi/local.openapi.yml")
 _TASKS_FLAG = "/tmp/waystones_tasks_triggered"
+# Written after the real tenant config is installed (either by boot.sh or by this
+# wrapper). Guards against loading the base-image demo config on cold start.
+_TENANT_FLAG = "/tmp/waystones_tenant_config_written"
 
 
 def _inject_machine_env(raw_config_json: str) -> None:
@@ -153,6 +156,7 @@ def application(environ, start_response):
                     with open(tmp, "wb") as f:
                         f.write(config_bytes)
                     os.replace(tmp, CONFIG_PATH)
+                    open(_TENANT_FLAG, "w").close()
 
                     print(f"[waystones_wsgi] Config written to {CONFIG_PATH}", flush=True)
 
@@ -163,9 +167,9 @@ def application(environ, start_response):
                     # Background: upload openapi to S3 cache, asyncapi, warmup
                     _trigger_background_tasks()
 
-                elif os.path.exists(CONFIG_PATH):
-                    # No header but config on disk: SIGHUP reload, or a second worker
-                    # that raced past the first before openapi.yml was fully generated.
+                elif os.path.exists(CONFIG_PATH) and os.path.exists(_TENANT_FLAG):
+                    # Real tenant config is on disk (written by boot.sh or a previous
+                    # worker in this container boot). Safe to load.
                     print(f"[waystones_wsgi] Using existing config at {CONFIG_PATH}", flush=True)
                     _ensure_openapi_ready()
 

@@ -44,6 +44,7 @@ fi
 if [ -n "${PYGEOAPI_CONFIG_B64:-}" ]; then
     echo "[startup] Writing pygeoapi config from PYGEOAPI_CONFIG_B64..."
     echo "$PYGEOAPI_CONFIG_B64" | base64 -d > "$PYGEOAPI_CONFIG"
+    touch /tmp/waystones_tenant_config_written
 fi
 
 # ─── Process Management ───────────────────────────────────────────────────
