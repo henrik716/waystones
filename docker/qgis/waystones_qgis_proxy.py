@@ -55,6 +55,7 @@ def _start_qgis_stack() -> bool:
 
     subprocess.Popen(["nginx", "-g", "daemon off;"])
     subprocess.Popen(["tail", "-f", "/tmp/qgis-server.log"])
+    subprocess.Popen(["tail", "-f", "/tmp/nginx-error.log"])
 
     if not _wait_for_nginx():
         print("[waystones_qgis_proxy] FATAL: nginx did not become ready in time", flush=True)

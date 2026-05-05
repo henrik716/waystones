@@ -94,8 +94,8 @@ exec /usr/lib/cgi-bin/qgis_mapserv.fcgi
 EOF
 
 chmod +x /usr/local/bin/qgis-wrapper.sh
-touch /tmp/qgis-server.log
-chown www-data:www-data /tmp/qgis-server.log
+touch /tmp/qgis-server.log /tmp/nginx-error.log /tmp/nginx-access.log
+chown www-data:www-data /tmp/qgis-server.log /tmp/nginx-error.log /tmp/nginx-access.log
 
 # ─── Hand off to the proxy wrapper ────────────────────────────────────────
 # The proxy writes the project file (if not already present), starts
