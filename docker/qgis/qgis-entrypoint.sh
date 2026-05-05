@@ -60,20 +60,13 @@ for file in /etc/nginx/fastcgi_params /etc/nginx/fastcgi.conf; do
     fi
 done
 
-# ─── Move nginx off port 80 so the proxy wrapper can own it ───────────────
-# The Python proxy (waystones_qgis_proxy.py) binds :80 and starts nginx
-# on NGINX_INTERNAL_PORT (default 8080) after the project file is ready.
+# nginx-qgis.conf (baked into the image) already listens on 8080.
+# No runtime port rebinding needed.
 export NGINX_INTERNAL_PORT="${NGINX_INTERNAL_PORT:-8080}"
-echo "[qgis-startup] Reconfiguring nginx to listen on internal port ${NGINX_INTERNAL_PORT}..."
-for f in /etc/nginx/nginx.conf \
-          /etc/nginx/sites-enabled/default \
-          /etc/nginx/sites-available/default \
-          /etc/nginx/conf.d/default.conf; do
-    [ -f "$f" ] && sed -i \
-        "s/listen\s\+80\b/listen ${NGINX_INTERNAL_PORT}/g; \
-         s/listen\s\+\[::\]:80\b/listen [::]:${NGINX_INTERNAL_PORT}/g" \
-        "$f" || true
-done
+
+# Validate nginx config early so startup failures are obvious in logs.
+echo "[qgis-startup] Testing nginx config..."
+nginx -t 2>&1 || { echo "[qgis-startup] nginx config test FAILED — aborting"; exit 1; }
 
 # ─── Generate QGIS FastCGI Wrapper ─────────────────────────────────────────
 echo "[qgis-startup] Generating FastCGI wrapper..."

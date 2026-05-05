@@ -34,26 +34,34 @@ def _wait_for_nginx(timeout=60):
     return False
 
 
-def _start_qgis_stack():
+def _start_qgis_stack() -> bool:
     subprocess.run(["chown", "-R", "www-data:www-data", "/data"], check=False)
     if os.path.exists(PROJECT_PATH):
         subprocess.run(["chmod", "644", PROJECT_PATH], check=False)
 
-    subprocess.Popen([
-        "spawn-fcgi", "-u", "www-data", "-g", "www-data",
-        "-d", "/var/lib/qgis", "-p", "9993",
-        "--", "/usr/local/bin/qgis-wrapper.sh",
-    ])
+    fcgi = subprocess.Popen(
+        [
+            "spawn-fcgi", "-u", "www-data", "-g", "www-data",
+            "-d", "/var/lib/qgis", "-p", "9993",
+            "--", "/usr/local/bin/qgis-wrapper.sh",
+        ],
+        stderr=subprocess.PIPE,
+    )
     time.sleep(0.5)
+    if fcgi.poll() is not None:
+        err = (fcgi.stderr.read() if fcgi.stderr else b"").decode("utf-8", errors="replace")
+        print(f"[waystones_qgis_proxy] spawn-fcgi exited early (rc={fcgi.returncode}): {err}", flush=True)
+        return False
 
     subprocess.Popen(["nginx", "-g", "daemon off;"])
-
     subprocess.Popen(["tail", "-f", "/tmp/qgis-server.log"])
 
     if not _wait_for_nginx():
-        print("[waystones_qgis_proxy] Warning: nginx did not become ready in time", flush=True)
-    else:
-        print("[waystones_qgis_proxy] nginx ready on internal port", flush=True)
+        print("[waystones_qgis_proxy] FATAL: nginx did not become ready in time", flush=True)
+        return False
+
+    print("[waystones_qgis_proxy] nginx ready on internal port", flush=True)
+    return True
 
 
 _STRIP_HEADERS = {"x-waystones-qgis-b64", "x-waystones-config", "x-waystones-config-b64"}
@@ -70,7 +78,10 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
 
             if os.path.exists(PROJECT_PATH):
                 print("[waystones_qgis_proxy] Project found on disk, starting stack", flush=True)
-                _start_qgis_stack()
+                if not _start_qgis_stack():
+                    self._send_plain(503, b"QGIS stack failed to start. Check container logs.",
+                                     extra=[("Retry-After", "10")])
+                    return False
                 _STARTED = True
                 return True
 
@@ -93,7 +104,10 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
             os.replace(tmp, PROJECT_PATH)
             print(f"[waystones_qgis_proxy] Project written to {PROJECT_PATH}", flush=True)
 
-            _start_qgis_stack()
+            if not _start_qgis_stack():
+                self._send_plain(503, b"QGIS stack failed to start. Check container logs.",
+                                 extra=[("Retry-After", "10")])
+                return False
             _STARTED = True
             return True
 
