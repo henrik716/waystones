@@ -54,6 +54,11 @@ COPY html-templates/ /pygeoapi/local-templates/
 RUN printf 'openapi: "3.0.2"\ninfo:\n  title: API\n  description: booting\n  version: "0.0.0"\npaths: {}\n' \
     > /pygeoapi/local.openapi.yml
 
+# Remove the base-image demo config. Without this, boot.sh sets the tenant flag
+# because the file exists, a CF health probe then loads the demo app before the
+# real config header arrives, and _CONFIG_LOADED gets permanently locked on demo.
+RUN rm -f /pygeoapi/local.config.yml
+
 # Make the pygeoapi directory writable for the nobody user
 RUN chown -R nobody:nogroup /pygeoapi && \
     chmod -R 755 /pygeoapi
