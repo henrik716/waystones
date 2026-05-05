@@ -9,7 +9,8 @@ import urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
 CONFIG_PATH = os.getenv('PYGEOAPI_CONFIG', '/pygeoapi/local.config.yml')
-BASE_URL = 'http://127.0.0.1:5001'
+_port = os.getenv('CONTAINER_PORT', os.getenv('PORT', '5001'))
+BASE_URL = f'http://127.0.0.1:{_port}'
 WORKERS = int(os.getenv('CONTAINER_WORKERS', 2))
 
 def wait_for_ready(timeout=60):
