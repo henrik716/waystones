@@ -47,6 +47,11 @@ if [ -n "${PYGEOAPI_CONFIG_B64:-}" ]; then
     touch /tmp/waystones_tenant_config_written
 fi
 
+# If config exists (either injected above or volume-mounted), signal readiness
+if [ -f "$PYGEOAPI_CONFIG" ]; then
+    touch /tmp/waystones_tenant_config_written
+fi
+
 # ─── Process Management ───────────────────────────────────────────────────
 USE_SIDECAR="${DEPLOY_SIDE_GATEWAY:-0}"
 

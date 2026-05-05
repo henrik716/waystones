@@ -46,43 +46,60 @@ def _inject_credentials(headers) -> None:
     (credentials aren't available yet) and GDAL would hang on 169.254.169.254.
     """
     os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
+    
     raw_config = headers.get("X-Waystones-Config")
-    if not raw_config:
+    machine_env = {}
+    
+    if raw_config:
+        try:
+            machine_env = json.loads(raw_config).get("machine_env") or {}
+        except Exception as e:
+            print(f"[waystones_qgis_proxy] Warning: could not parse X-Waystones-Config: {e}", flush=True)
+    else:
+        # Fallback for Open Source / Docker Compose: use container environment variables
+        # Filter for the same set of variables the cloud provisioner sends.
+        prefixes = ("AWS_", "S3_", "CPL_", "GDAL_")
+        for k, v in os.environ.items():
+            if k.startswith(prefixes):
+                machine_env[k] = v
+        
+        # Ensure AWS_S3_ENDPOINT is derived if only URL is present
+        if "AWS_ENDPOINT_URL" in machine_env and "AWS_S3_ENDPOINT" not in machine_env:
+            machine_env["AWS_S3_ENDPOINT"] = machine_env["AWS_ENDPOINT_URL"].replace("https://", "").replace("http://", "")
+
+    if not machine_env:
         return
-    try:
-        machine_env = json.loads(raw_config).get("machine_env") or {}
+
+    for k, v in machine_env.items():
+        os.environ[k] = str(v)
+
+    # Write env file sourced by qgis-wrapper.sh
+    with open("/tmp/qgis-env.sh", "w") as f:
         for k, v in machine_env.items():
-            os.environ[k] = str(v)
+            f.write(f'export {k}="{v}"\n')
+        f.write('export AWS_EC2_METADATA_DISABLED="true"\n')
 
-        # Write env file sourced by qgis-wrapper.sh
-        with open("/tmp/qgis-env.sh", "w") as f:
-            for k, v in machine_env.items():
-                f.write(f'export {k}="{v}"\n')
-            f.write('export AWS_EC2_METADATA_DISABLED="true"\n')
+    # Inject into nginx fastcgi_params so QGIS receives them per-request
+    aws_id     = machine_env.get("AWS_ACCESS_KEY_ID", "")
+    aws_secret = machine_env.get("AWS_SECRET_ACCESS_KEY", "")
+    raw_ep     = machine_env.get("AWS_S3_ENDPOINT") or machine_env.get("AWS_ENDPOINT_URL", "")
+    clean_ep   = raw_ep.replace("https://", "").replace("http://", "")
 
-        # Inject into nginx fastcgi_params so QGIS receives them per-request
-        aws_id     = machine_env.get("AWS_ACCESS_KEY_ID", "")
-        aws_secret = machine_env.get("AWS_SECRET_ACCESS_KEY", "")
-        raw_ep     = machine_env.get("AWS_ENDPOINT_URL", machine_env.get("AWS_S3_ENDPOINT", ""))
-        clean_ep   = raw_ep.replace("https://", "").replace("http://", "")
+    nginx_params = "\n".join([
+        f'fastcgi_param AWS_ACCESS_KEY_ID "{aws_id}";',
+        f'fastcgi_param AWS_SECRET_ACCESS_KEY "{aws_secret}";',
+        f'fastcgi_param AWS_S3_ENDPOINT "{clean_ep}";',
+        'fastcgi_param AWS_VIRTUAL_HOSTING "FALSE";',
+        'fastcgi_param AWS_HTTPS "YES";',
+        'fastcgi_param AWS_EC2_METADATA_DISABLED "true";',
+        'fastcgi_param CPL_VSIL_CURL_USE_HEAD "FALSE";',
+    ])
+    for nginx_file in ["/etc/nginx/fastcgi_params", "/etc/nginx/fastcgi.conf"]:
+        if os.path.exists(nginx_file):
+            with open(nginx_file, "a") as f:
+                f.write("\n" + nginx_params + "\n")
 
-        nginx_params = "\n".join([
-            f'fastcgi_param AWS_ACCESS_KEY_ID "{aws_id}";',
-            f'fastcgi_param AWS_SECRET_ACCESS_KEY "{aws_secret}";',
-            f'fastcgi_param AWS_S3_ENDPOINT "{clean_ep}";',
-            'fastcgi_param AWS_VIRTUAL_HOSTING "FALSE";',
-            'fastcgi_param AWS_HTTPS "YES";',
-            'fastcgi_param AWS_EC2_METADATA_DISABLED "true";',
-            'fastcgi_param CPL_VSIL_CURL_USE_HEAD "FALSE";',
-        ])
-        for nginx_file in ["/etc/nginx/fastcgi_params", "/etc/nginx/fastcgi.conf"]:
-            if os.path.exists(nginx_file):
-                with open(nginx_file, "a") as f:
-                    f.write("\n" + nginx_params + "\n")
-
-        print(f"[waystones_qgis_proxy] Injected {len(machine_env)} credentials into env, wrapper, and nginx", flush=True)
-    except Exception as e:
-        print(f"[waystones_qgis_proxy] Warning: could not parse X-Waystones-Config: {e}", flush=True)
+    print(f"[waystones_qgis_proxy] Injected {len(machine_env)} credentials into env, wrapper, and nginx", flush=True)
 
 
 def _start_qgis_stack() -> bool:
@@ -226,6 +243,15 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 
 if __name__ == "__main__":
+    mode = os.environ.get("WAYSTONES_MODE", "cloud")
+    
+    # Eager startup for Open Source users to avoid first-request delay
+    if mode == "open-source" and os.path.exists(PROJECT_PATH):
+        print("[waystones_qgis_proxy] Open Source mode detected; performing eager startup", flush=True)
+        _inject_credentials({}) # Pass empty headers to trigger env fallback
+        if _start_qgis_stack():
+            _STARTED = True
+
     server = ThreadedHTTPServer(("0.0.0.0", LISTEN_PORT), ProxyHandler)
     print(f"[waystones_qgis_proxy] Listening on :{LISTEN_PORT}, nginx internal :{NGINX_INTERNAL_PORT}", flush=True)
     server.serve_forever()

@@ -6,6 +6,7 @@ services:
     environment:
       # Point to your pygeoapi config file mounted below.
       PYGEOAPI_CONFIG: /pygeoapi/local.config.yml
+      WAYSTONES_MODE: open-source
       # Optional: base64-encode your config and pass it here instead of mounting.
       # PYGEOAPI_CONFIG_B64: <base64-encoded pygeoapi-config.yml>
     volumes:
@@ -19,5 +20,6 @@ services:
       - "8080:80"
     environment:
       QGIS_PROJECT_B64: ""  # base64-encoded .qgs project file
+      WAYSTONES_MODE: open-source
     profiles:
       - wms  # only started with: docker compose --profile wms up
