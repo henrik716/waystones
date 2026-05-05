@@ -24,12 +24,13 @@ Waystones converts geospatial data models into production-ready OGC API and WMS 
 - **Dynamic Styling**: Built-in Layer Style Editor for consistent cartography across WMS and OGC API services.
 
 ### 🍱 Deployment Kit Generation
-**Generate production-ready OGC API and WMS services.**
+**Generate production-ready OGC API, WMS, and Vector Tile services.**
 - **Automated Configuration**: Generates `pygeoapi` (REST) and **QGIS Server** (WMS) configurations.
-- **Cloud-Optimized Streaming**: Kits serve static GeoParquet/FlatGeobuf from local disk or stream directly from S3/R2 via HTTP Range Requests. No heavy database connections, no massive file downloads into memory.
+- **Cloud-Optimized Streaming**: Kits serve static GeoParquet/FlatGeobuf from local disk or stream directly from S3/R2 via HTTP Range Requests. No heavy database connections.
+- **STAC Generation**: Automated **STAC** (SpatioTemporal Asset Catalog) generation for searchable metadata catalogs.
+- **High-Performance Tiles**: Built-in **tippecanoe** integration for generating optimized **PMTiles** (vector tiles).
 - **Self-Contained Kits**: Deployment kits include all necessary Dockerfiles and boot scripts.
 - **Multiple Targets**: Deploy to Docker Compose, Railway, Render, Fly.io, or Waystones Cloud.
-- **Metadata Support**: Built-in support for **STAC** (SpatioTemporal Asset Catalog) catalogs.
 
 ### 🔍 GitHub Integration
 **Version control and collaborative workflows.**
@@ -48,7 +49,8 @@ Connect Claude or Gemini to auto-generate metadata, field descriptions, and infe
 | Layer | Technology |
 |---|---|
 | **Frontend** | React 19, TypeScript, Vite 6 |
-| **Geospatial** | GDAL3.js, jszip, js-yaml, STAC |
+| **Geospatial** | GDAL3.js, DuckDB, tippecanoe, PMTiles, STAC |
+| **Mapping** | MapLibre GL, Leaflet |
 | **Icons** | Lucide React |
 | **Sources** | PostGIS (pg), Supabase, GeoPackage |
 | **Engines** | pygeoapi, QGIS Server |
@@ -94,7 +96,9 @@ Waystones uses a **Snapshot Architecture**. Source data is converted to cloud-na
 
 ```text
 [ 1. CONVERSION ]
-GeoPackage / PostGIS → [ Worker ] → GeoParquet & FlatGeobuf (S3/R2/Disk)
+Snapshot Worker ──┬──> [ Snapshot ] ──> GeoParquet & FlatGeobuf (REST/WMS)
+(DuckDB/GDAL)     ├──> [ Tiles    ] ──> PMTiles (Vector Tiles)
+                  └──> [ STAC     ] ──> STAC Catalog (Metadata)
 
 [ 2. STARTUP (boot.sh) ]
 Container Start ──┬──> [ Fast Path ] ─> Download pre-baked OpenAPI cache
@@ -105,6 +109,7 @@ Container Start ──┬──> [ Fast Path ] ─> Download pre-baked OpenAPI c
 [ 3. SERVING ]
 pygeoapi (DuckDB) ───> [ GeoParquet ] ───> OGC API Features (N-workers)
 QGIS Server       ───> [ FlatGeobuf ] ───> WMS (Fast CGI)
+Static Tiles      ───> [ .pmtiles   ] ───> Vector Tiles (MapLibre GL)
 ```
 
 The conversion worker typically runs once on first boot or during a CI/CD build, persisting data to immutable storage. pygeoapi and QGIS Server then read those static files at serve time.
@@ -145,6 +150,7 @@ The Waystones Docker images support advanced configuration via environment varia
 - **WMS** — Web Map Service
 - **GeoPackage, GeoJSON, GML, Shapefile**
 - **STAC** — SpatioTemporal Asset Catalog
+- **PMTiles** — Cloud-native Vector Tiles
 
 
 ## 📁 Project Structure

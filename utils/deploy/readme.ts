@@ -50,7 +50,9 @@ const renderArchitecture = (ctx: RenderContext): string => {
   
   md += '```text\n';
   md += `[ 1. CONVERSION ]\n`;
-  md += `${sourceName} → [ Worker ] → GeoParquet & FlatGeobuf (Storage)\n\n`;
+  md += `Snapshot Worker ──┬──> [ Snapshot ] ──> GeoParquet & FlatGeobuf (Storage)\n`;
+  md += `(DuckDB/GDAL)     ├──> [ Tiles    ] ──> PMTiles (Vector Tiles)\n`;
+  md += `                  └──> [ STAC     ] ──> STAC Catalog (Metadata)\n\n`;
   
   md += `[ 2. STARTUP (boot.sh) ]\n`;
   md += `Container Start ──┬──> [ Fast Path ] ─> Download pre-baked OpenAPI cache\n`;
@@ -65,11 +67,13 @@ const renderArchitecture = (ctx: RenderContext): string => {
     if (hasWms) {
       md += `QGIS Server       ───> [ FlatGeobuf ] ───> WMS (${firstLayer})\n`;
     }
+    md += `Static Tiles      ───> [ .pmtiles   ] ───> Vector Tiles (${firstLayer})\n`;
   } else {
     md += `pygeoapi (DuckDB) ───> [ GeoParquet ] ───> OGC API Features\n`;
     if (hasWms) {
       md += `QGIS Server       ───> [ FlatGeobuf ] ───> WMS\n`;
     }
+    md += `Static Tiles      ───> [ .pmtiles   ] ───> Vector Tiles\n`;
   }
   md += '```\n\n';
 
@@ -103,9 +107,8 @@ const renderServices = (ctx: RenderContext): string => {
   if (hasWms) {
     md += `| **WMS Service** | Styled map layers |\n`;
   }
-  if (target === 'docker-compose') {
-    md += `| **STAC / Downloads** | Data snapshots |\n`;
-  }
+  md += `| **${s.vectorTileService}** | ${s.vectorTileDesc} |\n`;
+  md += `| **${s.stacService}** | ${s.stacDesc} |\n`;
   md += '\n';
   return md;
 };
