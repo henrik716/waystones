@@ -6,6 +6,7 @@ nginx on an internal port and proxies all traffic there.
 """
 import os
 import base64
+import json
 import subprocess
 import threading
 import time
@@ -33,6 +34,24 @@ def _wait_for_nginx(timeout=60):
         except OSError:
             time.sleep(0.5)
     return False
+
+
+def _inject_credentials(headers) -> None:
+    """Inject R2/S3 credentials from X-Waystones-Config into os.environ so that
+    spawn-fcgi and its QGIS child inherit them. Without explicit credentials GDAL
+    falls back to EC2 instance metadata (169.254.169.254) and hangs indefinitely.
+    """
+    os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
+    raw_config = headers.get("X-Waystones-Config")
+    if not raw_config:
+        return
+    try:
+        machine_env = json.loads(raw_config).get("machine_env") or {}
+        for k, v in machine_env.items():
+            os.environ[k] = str(v)
+        print(f"[waystones_qgis_proxy] Injected {len(machine_env)} credentials from machine_env", flush=True)
+    except Exception as e:
+        print(f"[waystones_qgis_proxy] Warning: could not parse X-Waystones-Config: {e}", flush=True)
 
 
 def _start_qgis_stack() -> bool:
@@ -85,6 +104,7 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
 
             if os.path.exists(PROJECT_PATH):
                 print("[waystones_qgis_proxy] Project found on disk, starting stack", flush=True)
+                _inject_credentials(self.headers)
                 if not _start_qgis_stack():
                     self._send_plain(503, b"QGIS stack failed to start. Check container logs.",
                                      extra=[("Retry-After", "10")])
@@ -111,6 +131,7 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
             os.replace(tmp, PROJECT_PATH)
             print(f"[waystones_qgis_proxy] Project written to {PROJECT_PATH}", flush=True)
 
+            _inject_credentials(self.headers)
             if not _start_qgis_stack():
                 self._send_plain(503, b"QGIS stack failed to start. Check container logs.",
                                  extra=[("Retry-After", "10")])
@@ -138,7 +159,7 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
                        if k.lower() not in _STRIP_HEADERS}
 
         try:
-            conn = http.client.HTTPConnection("127.0.0.1", NGINX_INTERNAL_PORT, timeout=120)
+            conn = http.client.HTTPConnection("127.0.0.1", NGINX_INTERNAL_PORT, timeout=300)
             conn.request(self.command, self.path, body=body, headers=fwd_headers)
             resp = conn.getresponse()
 

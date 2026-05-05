@@ -90,6 +90,10 @@ export QGIS_SERVER_LOG_LEVEL=0
 export QGIS_SERVER_LOG_FILE="/tmp/qgis-server.log"
 export QGIS_SERVER_LOG_STDERR=1
 
+# Skip per-layer S3 validation on GetCapabilities — avoids multi-second hangs
+# on cold start when projects have many /vsis3/ layers
+export QGIS_SERVER_TRUST_LAYER_METADATA=1
+
 exec /usr/lib/cgi-bin/qgis_mapserv.fcgi
 EOF
 
