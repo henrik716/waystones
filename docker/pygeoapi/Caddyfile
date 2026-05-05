@@ -32,7 +32,7 @@ http://:5000 {
         respond @privateNoHeader "Unauthorized" 401
         respond @privateBadHeader "Unauthorized" 401
 
-        # Non-public deployments must never be cached by Cloudflare or any CDN.
+        # Non-public deployments must never be cached by the Edge Proxy or any CDN.
         # Overrides pygeoapi's own Cache-Control header on the way out.
         @private expression `"{$IS_PRIVATE}" != "0"`
         header @private Cache-Control "no-store"

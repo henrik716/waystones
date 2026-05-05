@@ -23,7 +23,7 @@ export HOME=/tmp
 export XDG_CONFIG_HOME=/tmp/caddy_config
 export XDG_DATA_HOME=/tmp/caddy_data
 
-# When the host injects a TLS cert (SaaS path: Cloudflare Origin wildcard cert
+# When the host injects a TLS cert (SaaS path: Edge SSL Certificate
 # mounted by the provisioner), use the wrapper Caddyfile that adds a :443 TLS
 # site. Otherwise stick with the base Caddyfile (Railway / self-hosted / local).
 CADDY_CONFIG="/etc/caddy/Caddyfile"

@@ -38,7 +38,7 @@ export const generateEnvFile = (source: SourceConnection): string => {
   } else if (source.type === 'geopackage' && hasS3Config(source) && source.s3) {
     const s3 = source.s3;
     const providerLabels: Record<string, string> = {
-      r2: 'Cloudflare R2', tigris: 'Tigris', aws: 'AWS S3', custom: 'Custom S3',
+      r2: 'Object Storage (R2)', tigris: 'Tigris', aws: 'AWS S3', custom: 'Custom S3',
     };
     env += `# --- S3-compatible storage (GeoPackage downloaded by init container) ---\n`;
     env += `# Provider: ${providerLabels[s3.provider] || s3.provider}\n`;

@@ -1,9 +1,9 @@
 """
-Custom pygeoapi provider for GeoParquet files on Cloudflare R2 (or public HTTPS).
+Custom pygeoapi provider for GeoParquet files on Edge S3 Storage (or public HTTPS).
 Uses DuckDB with httpfs + spatial — no file downloads, proper LIMIT/OFFSET pagination.
 
 Two connection modes based on the `data` URL scheme:
-  s3://bucket/path/file.parquet   — Cloudflare R2, credentials from env or provider options
+  s3://bucket/path/file.parquet   — Edge S3 Storage, credentials from env or provider options
   https://cdn.example.com/...     — public, CDN-cached range requests (no credentials)
 """
 import json
@@ -108,7 +108,7 @@ class GeoParquetDuckDBProvider(BaseProvider):
                         # connection.execute(), not cursor.execute(). CREATE SECRET applies
                         # to all execution contexts, including cursors used in query().
                         conn.execute(f"""
-                            CREATE OR REPLACE SECRET r2_s3_secret (
+                            CREATE OR REPLACE SECRET edge_s3_secret (
                                 TYPE S3,
                                 KEY_ID '{key}',
                                 SECRET '{secret}',

@@ -13,7 +13,7 @@ local directory and a manifest is written there.
 
 Required environment variables (S3 mode only):
     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
-    S3_ENDPOINT   (full URL, e.g. https://abc123.r2.cloudflarestorage.com)
+    S3_ENDPOINT   (full URL, e.g. https://<id>.r2.cloudflarestorage.com)
     R2_BUCKET     (bucket name, used for manifest key derivation)
 """
 

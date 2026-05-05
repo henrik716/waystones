@@ -7,7 +7,7 @@ mkdir -p /data
 chown -R www-data:www-data /data
 
 # Decode QGIS project from env var (backward-compat: Fly.io / Railway / local dev).
-# In Cloudflare Containers this env var may not be set; the proxy handles it via
+# In Edge Containers this env var may not be set; the proxy handles it via
 # the X-Waystones-Qgis-B64 request header instead.
 if [ -n "${QGIS_PROJECT_B64:-}" ] && [ ! -f "/data/project.qgs" ]; then
     echo "[qgis-startup] Writing QGIS project from env..."

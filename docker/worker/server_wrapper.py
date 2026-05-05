@@ -5,7 +5,7 @@ import sys
 import json
 import logging
 
-# Configure logging to stdout so it shows up in Cloudflare Container logs
+# Configure logging to stdout so it shows up in platform logs
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -87,7 +87,7 @@ def run_task_subprocess(env_vars: dict):
 @app.post("/internal-task")
 async def handle_internal_task(request: Request, background_tasks: BackgroundTasks):
     """
-    Receives JSON payload from the Cloudflare Worker proxy,
+    Receives JSON payload from the Edge Proxy,
     translates it to environment variables, and triggers the worker script.
     """
     try:
@@ -153,6 +153,6 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    # Defaulting to 8080 as it's common for Cloudflare Containers
+    # Defaulting to 8080 as it's common for Edge Containers
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)

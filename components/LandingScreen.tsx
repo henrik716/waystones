@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useAmbient } from '../contexts/AmbientContext';
 import type { Translations } from '../i18n/index';
-import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload, Package, Map } from 'lucide-react';
+import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload, Package, Map, Search } from 'lucide-react';
 import { DataModel } from '../types';
 
 interface LandingScreenProps {
@@ -75,6 +75,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
               <Tag label="OGC API" color="bg-emerald-50 text-emerald-600" icon={Globe} />
               <Tag label="Vector Tiles" color="bg-sky-50 text-sky-600" icon={Map} />
               <Tag label="WMS" color="bg-teal-50 text-teal-600" icon={Layers} />
+              <Tag label="STAC" color="bg-sky-50 text-sky-600" icon={Search} />
               <Tag label="Docker" color="bg-indigo-50 text-indigo-600" icon={Server} />
               <Tag label="CI/CD" color="bg-indigo-50 text-indigo-600" icon={GitBranch} />
               <Tag label="OpenAPI" color="bg-violet-50 text-violet-600" icon={Code2} />
