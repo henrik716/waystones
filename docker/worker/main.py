@@ -68,7 +68,10 @@ def report_done(status, error_msg=None):
 
         callback_url = f"{app_url.rstrip('/')}/api/projects/{proj_id}/worker/report-done"
         secret = os.environ.get("PEON_CALLBACK_SECRET", "").strip()
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "Waystones-Peon/1.0"
+        }
         if secret:
             headers["Authorization"] = f"Bearer {secret}"
         
