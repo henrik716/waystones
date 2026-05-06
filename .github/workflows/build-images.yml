@@ -57,7 +57,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          tags: ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:v2026-05-06x
+          tags: ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:v2026-05-11x
           target: ${{ matrix.target }}
           load: true
           push: false
@@ -70,4 +70,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
-          command: containers push ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:v2026-05-06x
+          command: containers push ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:v2026-05-11x
