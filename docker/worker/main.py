@@ -19,6 +19,7 @@ injected so postgis-snapshot.py's build_pg_connection_string() works unchanged.
 
 import os
 import sys
+import time
 import subprocess
 from urllib.parse import urlparse
 
