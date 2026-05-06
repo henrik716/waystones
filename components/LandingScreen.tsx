@@ -70,15 +70,19 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
           </div>
 
           {/* Output showcase - Matching Cloud's Tag system */}
-          <div className="pt-2 flex flex-col items-center gap-4">
-            <div className="flex flex-wrap justify-center items-center gap-3">
-              <Tag label="OGC API" color="bg-emerald-50 text-emerald-600" icon={Globe} />
-              <Tag label="Vector Tiles" color="bg-sky-50 text-sky-600" icon={Map} />
-              <Tag label="WMS" color="bg-teal-50 text-teal-600" icon={Layers} />
-              <Tag label="STAC" color="bg-sky-50 text-sky-600" icon={Search} />
-              <Tag label="Docker" color="bg-indigo-50 text-indigo-600" icon={Server} />
-              <Tag label="CI/CD" color="bg-indigo-50 text-indigo-600" icon={GitBranch} />
-              <Tag label="OpenAPI" color="bg-violet-50 text-violet-600" icon={Code2} />
+          <div className="pt-2 flex flex-col items-center gap-6">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-wrap justify-center items-center gap-3">
+                <Tag label="OGC API" color="bg-emerald-50 text-emerald-600" icon={Globe} />
+                <Tag label="Vector Tiles" color="bg-sky-50 text-sky-600" icon={Map} />
+                <Tag label="WMS" color="bg-teal-50 text-teal-600" icon={Layers} />
+                <Tag label="STAC" color="bg-sky-50 text-sky-600" icon={Search} />
+              </div>
+              <div className="flex flex-wrap justify-center items-center gap-3">
+                <Tag label="Docker" color="bg-indigo-50 text-indigo-600" icon={Server} />
+                <Tag label="CI/CD" color="bg-indigo-50 text-indigo-600" icon={GitBranch} />
+                <Tag label="OpenAPI" color="bg-violet-50 text-violet-600" icon={Code2} />
+              </div>
             </div>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
               {l.heroOutputLabel}

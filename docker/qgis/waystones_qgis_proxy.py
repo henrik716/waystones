@@ -197,6 +197,10 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _proxy(self):
+        if self.path == "/health":
+            self._send_plain(200, b"OK")
+            return
+
         if not self._ensure_started():
             return
 
