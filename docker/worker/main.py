@@ -81,13 +81,21 @@ def report_done(status, error_msg=None):
             "payload": payload
         }).encode()
         
+        # Custom opener that follows 307/308 redirects while preserving POST method
+        class _PostRedirectHandler(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                if code in (307, 308):
+                    return urllib.request.Request(newurl, data=req.data, headers=dict(req.headers), method=req.get_method())
+                return super().redirect_request(req, fp, code, msg, headers, newurl)
+        opener = urllib.request.build_opener(_PostRedirectHandler)
+
         # Simple retry logic for the cloud callback
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 print(f"[main] Reporting {status} to {callback_url} (Attempt {attempt+1}/{max_retries})...", flush=True)
                 rq = urllib.request.Request(callback_url, data=body, headers=headers, method="POST")
-                with urllib.request.urlopen(rq, timeout=15) as resp:
+                with opener.open(rq, timeout=15) as resp:
                     print(f"[main] Cloud reported: {resp.status} {resp.reason}", flush=True)
                     return # Success!
             except Exception as e:
