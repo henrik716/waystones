@@ -5,6 +5,7 @@ the QGIS project file from X-Waystones-Qgis-B64, then starts spawn-fcgi +
 nginx on an internal port and proxies all traffic there.
 """
 import os
+import signal
 import base64
 import json
 import subprocess
@@ -258,4 +259,10 @@ if __name__ == "__main__":
 
     server = ThreadedHTTPServer(("0.0.0.0", LISTEN_PORT), ProxyHandler)
     print(f"[waystones_qgis_proxy] Listening on :{LISTEN_PORT}, nginx internal :{NGINX_INTERNAL_PORT}", flush=True)
+
+    def _handle_sigterm(signum, frame):
+        print("[waystones_qgis_proxy] SIGTERM received — exiting", flush=True)
+        os._exit(0)
+
+    signal.signal(signal.SIGTERM, _handle_sigterm)
     server.serve_forever()
