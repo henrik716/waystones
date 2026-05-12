@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Translations } from '../i18n/index';
 import {
-  Code2, Share2, ChevronLeft, ChevronRight, FileText, Network, Layout, Globe
+  Code2, Share2, ChevronLeft, ChevronRight, FileText, Network, Layout
 } from 'lucide-react';
 import { DataModel } from '../types';
 import ExportTab from './preview/ExportTab';
 import SchemaTab from './preview/SchemaTab';
 import DataCard from './DataCard';
 import ERDiagram from './ERDiagram';
-import MapPreview from './MapPreview';
 
 interface PreviewPanelProps {
   model: DataModel;
@@ -17,7 +16,7 @@ interface PreviewPanelProps {
   activeLayerId?: string | null;
 }
 
-type PreviewTab = 'card' | 'diagram' | 'schema' | 'export' | 'map';
+type PreviewTab = 'card' | 'diagram' | 'schema' | 'export';
 
 const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang, activeLayerId }) => {
   const [tab, setTab] = useState<PreviewTab>('card');
@@ -27,7 +26,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang, activeLayer
 
   const allTabs = [
     { id: 'card' as const, icon: FileText, label: t.viewCard || 'Data Card' },
-    { id: 'map' as const, icon: Globe, label: t.viewMap || 'Map Preview' },
     { id: 'diagram' as const, icon: Network, label: t.viewDiagram || 'ER Diagram' },
     { id: 'schema' as const, icon: Code2, label: t.schemaTab || 'Schema' },
     { id: 'export' as const, icon: Share2, label: t.exportTab || 'Export' },
@@ -149,7 +147,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ model, t, lang, activeLayer
           ${tab === 'diagram' ? 'flex-1 h-full' : 'p-4 md:p-6 lg:p-8'}
         `}>
           {tab === 'card' && <DataCard model={model} t={t} activeLayerId={activeLayerId} />}
-          {tab === 'map' && <MapPreview model={model} />}
           {tab === 'diagram' && <ERDiagram model={model} t={t} />}
           {tab === 'schema' && <SchemaTab model={model} t={t} />}
           {tab === 'export' && <ExportTab model={model} t={t} lang={lang} />}

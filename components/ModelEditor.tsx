@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Translations } from '../i18n/index';
-import { Eye, ChevronDown, Menu, Send, Settings2, Plus, Layers, Database, Globe, Github, Trash2 } from 'lucide-react';
+import { Eye, ChevronDown, Menu, Send, Settings2, Plus, Layers, Database, Globe, Github, Trash2, Search, Command } from 'lucide-react';
 import { DataModel } from '../types';
 import { reprojectCoordinates } from '../utils/gdalService';
 import { validateModel, groupIssuesByLayer } from '../utils/validationUtils';
@@ -478,6 +478,18 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* Review controls header */}
           <div className="shrink-0 flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-b border-slate-200 bg-white shadow-sm sm:shadow-none relative z-20">
+            <button
+              onClick={() => setIsOmnibarOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-300"
+              title="Navigate (⌘K)"
+            >
+              <Search size={13} />
+              <span className="hidden sm:inline">Navigate</span>
+              <span className="hidden sm:flex items-center gap-0.5 ml-0.5 opacity-50">
+                <Command size={9} />
+                <span>K</span>
+              </span>
+            </button>
             <button
               id="editor-publish-button"
               onClick={onOpenGithubPublish}
