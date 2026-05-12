@@ -26,6 +26,7 @@ import SharedTypesTab from './editor/SharedTypesTab';
 import EditorLeftNav from './editor/EditorLeftNav';
 import LayerEditorTabs from './editor/LayerEditorTabs';
 import AiTrigger from './ai/AiTrigger';
+import ModelEditorOmnibar from './editor/ModelEditorOmnibar';
 
 interface ModelEditorProps {
   model: DataModel;
@@ -87,6 +88,7 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
   const [activeLayerTab, setActiveLayerTab] = useState<'fields' | 'style' | 'rules' | 'settings' | undefined>(undefined);
   const [forcedLayerDetailsOpen, setForcedLayerDetailsOpen] = useState(false);
   const [isRenderingOrderOpen, setIsRenderingOrderOpen] = useState(true);
+  const [isOmnibarOpen, setIsOmnibarOpen] = useState(false);
 
   // --- Extracted hooks
   const versionReview = useVersionReview({
@@ -194,6 +196,19 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
       setActiveNavSection('rules');
     }
   }, [lastQuestAction, triggerWhisper]);
+
+  // --- Omnibar keyboard shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsOmnibarOpen((prev: boolean) => !prev);
+      }
+      if (e.key === 'Escape') setIsOmnibarOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   // --- CRS change handler: reproject spatialExtent when CRS changes
   const handleUpdateWithCrsReproject = useCallback(async (updated: DataModel) => {
@@ -667,6 +682,18 @@ const ModelEditor: React.FC<ModelEditorProps> = ({
           </div>
         </div>
       </div>
+      <ModelEditorOmnibar
+        isOpen={isOmnibarOpen}
+        onClose={() => setIsOmnibarOpen(false)}
+        layers={model.layers}
+        activeLayerId={layerActions.activeLayerId}
+        setActiveNavSection={setActiveNavSection}
+        setActiveLayerId={layerActions.setActiveLayerId}
+        setActiveLayerTab={setActiveLayerTab}
+        setIsModelHeaderOpen={setIsModelHeaderOpen}
+        setIsMetadataOpen={setIsMetadataOpen}
+        setIsRenderingOrderOpen={setIsRenderingOrderOpen}
+      />
     </div>
   );
 };
