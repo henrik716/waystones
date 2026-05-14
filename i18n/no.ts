@@ -664,7 +664,7 @@ export const no = {
       design: "Design & Mapping",
       designDesc: "Avansert modellering med egne egenskaper og restriksjoner. Bruk Data Mapper for å migrere eldre filer.",
       collaboration: "Sky & Docker",
-      collaborationDesc: "Deploy til Railway eller egen server med Docker. Inkluderer automatisert CI/CD og full versjonshistorikk."
+      collaborationDesc: "Kjør på egen server med Docker eller deploy til valgfri container-plattform. Automatisert CI/CD og full versjonshistorikk inkludert."
     }
   },
   github: {

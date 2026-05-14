@@ -664,7 +664,7 @@ export const en = {
       design: "Design & Mapping",
       designDesc: "Advanced modeling with custom properties and constraints. Use the Data Mapper to migrate legacy files.",
       collaboration: "Cloud & Docker",
-      collaborationDesc: "Deploy to Railway or your own server with Docker. Automatic CI/CD and full version history included."
+      collaborationDesc: "Self-host with Docker or deploy to any container platform. Automatic CI/CD and full version history included."
     }
   },
   github: {
