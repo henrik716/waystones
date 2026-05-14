@@ -137,7 +137,20 @@ class GeoParquetDuckDBProvider(BaseProvider):
             self._conn = _SHARED_CONN
 
             if self.data not in _META_CACHE:
-                _META_CACHE[self.data] = self._init_metadata()
+                pre = provider_def.get('_waystones_metadata')
+                if pre and 'geom_col' in pre:
+                    LOGGER.info("Using pre-baked metadata for %s (skipping DuckDB DESCRIBE)", self.data)
+                    _META_CACHE[self.data] = {
+                        'geom_col':        pre['geom_col'],
+                        'geom_is_native':  bool(pre.get('geom_is_native', True)),
+                        'source_crs':      pre.get('source_crs') or None,
+                        'fields_cache':    pre.get('fields_cache') or {},
+                        'count_cache':     {},
+                        'has_bbox_struct': bool(pre.get('has_bbox_struct', False)),
+                        'has_bbox_cols':   bool(pre.get('has_bbox_cols', True)),
+                    }
+                else:
+                    _META_CACHE[self.data] = self._init_metadata()
 
             self._apply_metadata(_META_CACHE[self.data])
             self._fields = self.get_fields()

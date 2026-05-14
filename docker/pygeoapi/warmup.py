@@ -39,7 +39,7 @@ def _run_internal_warmup(config: dict) -> None:
     print(f'[warmup] Internal: warming {len(targets)} provider(s) directly...', flush=True)
 
     results = {}
-    with ThreadPoolExecutor(max_workers=len(targets)) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = {executor.submit(_warmup_provider_direct, pdef): name
                    for name, pdef in targets}
         for fut in as_completed(futures, timeout=timeout):
