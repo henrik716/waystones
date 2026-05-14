@@ -449,7 +449,7 @@ export const en = {
       'railway': "Railway",
       'railwayDesc': "Connect your GitHub repo and deploy with one click. Zero configuration.",
       'waystones-cloud': "Waystones Cloud",
-      'waystones-cloudDesc': "Fully managed hosting. Opens in a new tab — no GitHub required.",
+      'waystones-cloudDesc': "Fully managed. No GitHub, no config, no infrastructure",
     },
     cloudHandoffDesc: "Your model will be sent to Waystones Cloud where you can configure hosting, access controls, and deployment.",
     cloudHandoffBtn: "Open in Waystones Cloud",
