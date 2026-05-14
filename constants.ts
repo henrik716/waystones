@@ -52,7 +52,7 @@ export const SERVICE_ICONS: Record<string, any> = {
   STAC: Library,
   WMS: Layers,
   Storage: Database,
-  CloudNative: Cloud,
+  CloudOptimized: Cloud,
 };
 
 export const SERVICE_COLORS = {
@@ -61,7 +61,7 @@ export const SERVICE_COLORS = {
   STAC: "bg-emerald-50 text-emerald-600 border-emerald-100",
   WMS: "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100",
   Storage: "bg-amber-50 text-amber-600 border-amber-100",
-  CloudNative: "bg-amber-50 text-amber-600 border-amber-100",
+  CloudOptimized: "bg-rose-50 text-rose-600 border-rose-100",
 };
 
 export const COMMON_CRS = [

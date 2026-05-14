@@ -78,11 +78,11 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
                 <Tag label="Vector Tiles" color={SERVICE_COLORS.Tiles} icon={SERVICE_ICONS.Tiles} />
                 <Tag label="WMS" color={SERVICE_COLORS.WMS} icon={SERVICE_ICONS.WMS} />
                 <Tag label="STAC" color={SERVICE_COLORS.STAC} icon={SERVICE_ICONS.STAC} />
-                <Tag label="Cloud Native" color={SERVICE_COLORS.CloudNative} icon={SERVICE_ICONS.CloudNative} />
+                <Tag label="Cloud Optimized" color={SERVICE_COLORS.CloudOptimized} icon={SERVICE_ICONS.CloudOptimized} />
               </div>
               <div className="flex flex-wrap justify-center items-center gap-3">
-                <Tag label="Docker" color="bg-indigo-50 text-indigo-600" icon={Server} />
-                <Tag label="CI/CD" color="bg-indigo-50 text-indigo-600" icon={GitBranch} />
+                <Tag label="Docker" color="bg-slate-100 text-slate-500" icon={Server} />
+                <Tag label="CI/CD" color="bg-slate-100 text-slate-500" icon={GitBranch} />
                 <Tag label="OpenAPI" color="bg-violet-50 text-violet-600" icon={Code2} />
               </div>
             </div>
