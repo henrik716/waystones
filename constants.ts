@@ -43,8 +43,24 @@ export const getFieldConfig = (fieldType: { kind: string; baseType?: string }) =
 };
 
 import {
-  MapPin, GitCommit, Square, Hash, Shapes, LayoutList, Package, Database
+  MapPin, GitCommit, Square, Hash, Shapes, LayoutList, Package, Database, Globe, Grid, Library, Layers
 } from 'lucide-react';
+
+export const SERVICE_ICONS: Record<string, any> = {
+  OAPIF: Globe,
+  Tiles: Grid,
+  STAC: Library,
+  WMS: Layers,
+  Storage: Database,
+};
+
+export const SERVICE_COLORS = {
+  OAPIF: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  Tiles: "bg-sky-50 text-sky-600 border-sky-100",
+  STAC: "bg-emerald-50 text-emerald-600 border-emerald-100",
+  WMS: "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100",
+  Storage: "bg-amber-50 text-amber-600 border-amber-100",
+};
 
 export const COMMON_CRS = [
   { code: 'EPSG:4326', name: 'WGS 84 (Global)' },

@@ -3,7 +3,7 @@ import {
   Plus, Layers, Box, Settings, AlertCircle, AlertTriangle, X,
   ChevronDown, Link2, Rocket, Github, Globe, Database, Trash2,
 } from 'lucide-react';
-import { GEOM_ICONS } from '../../constants';
+import { GEOM_ICONS, SERVICE_ICONS } from '../../constants';
 import type { Translations } from '../../i18n/index';
 import type { DataModel, Layer } from '../../types';
 import type { ModelValidationIssue } from '../../utils/validationUtils';
@@ -85,8 +85,8 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
     { label: t.newModel || 'New blank', Icon: Plus, onClick: () => { onNewModel(); setIsImportMenuOpen(false); }, cls: 'text-indigo-600' },
     { label: t.github?.importTitle || 'Import from GitHub', Icon: Github, onClick: () => { onGithubImport(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
     { label: t.importGis || 'Import GIS file', Icon: Layers, onClick: () => { onImportGis(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
-    { label: t.importDatabase?.title || 'Import Database', Icon: Database, onClick: () => { onImportDatabase(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
-    { label: t.importUrl || 'Import from URL', Icon: Globe, onClick: () => { onImportUrl(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.importDatabase?.title || 'Import Database', Icon: SERVICE_ICONS.Storage, onClick: () => { onImportDatabase(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
+    { label: t.importUrl || 'Import from URL', Icon: SERVICE_ICONS.OAPIF, onClick: () => { onImportUrl(); setIsImportMenuOpen(false); }, cls: 'text-slate-600' },
   ];
 
   return (
@@ -213,10 +213,10 @@ const EditorLeftNav: React.FC<EditorLeftNavProps> = ({
           <div className="flex gap-1.5">
             <button
               onClick={onOpenMapper}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100 transition-all text-[10px] font-bold"
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-fuchsia-50 text-fuchsia-600 hover:bg-fuchsia-100 border border-fuchsia-100 transition-all text-[10px] font-bold"
               title={t.mappingTab || 'Mapper'}
             >
-              <Link2 size={13} />
+              <SERVICE_ICONS.WMS size={13} />
               <span className="hidden xl:inline">{t.mappingTab || 'Mapper'}</span>
             </button>
             <button

@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Command, ChevronRight, Database, Globe, FileText,
   AlignJustify, Layers, Palette, ShieldCheck, Settings2, MapPin,
-  Tags, Users, Calendar, Link,
+  Tags, Users, Calendar, Link
 } from 'lucide-react';
 import type { DataModel } from '../../types';
+import { SERVICE_ICONS } from '../../constants';
 
 interface ModelEditorOmnibarProps {
   isOpen: boolean;
@@ -61,7 +62,7 @@ const ModelEditorOmnibar: React.FC<ModelEditorOmnibarProps> = ({
       id: 'model-settings',
       label: 'Model Settings',
       hint: 'name, namespace, CRS, description',
-      icon: Database,
+      icon: SERVICE_ICONS.Storage,
       category: 'Model',
       action: () => navigate(() => {
         setActiveNavSection('model');
@@ -107,7 +108,7 @@ const ModelEditorOmnibar: React.FC<ModelEditorOmnibarProps> = ({
       id: 'pub-metadata',
       label: 'Publishing Metadata',
       hint: 'contact, license, extent',
-      icon: FileText,
+      icon: SERVICE_ICONS.STAC,
       category: 'Publishing',
       action: () => navigate(() => {
         setActiveNavSection('model');

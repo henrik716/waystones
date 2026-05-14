@@ -2,6 +2,7 @@ import React from 'react';
 import type { Translations } from '../../i18n/index';
 import { Database, Zap, Package, Cloud, HardDrive } from 'lucide-react';
 import { SourceType } from '../../types';
+import { SERVICE_ICONS } from '../../constants';
 
 interface SourceTypePickerProps {
   sourceType: SourceType | null;
@@ -79,8 +80,8 @@ const SourceTypePicker: React.FC<SourceTypePickerProps> = ({
   return (
     <section className="bg-white p-6 md:p-10 rounded-[32px] border border-slate-200 shadow-sm space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-6">
-        <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 border border-violet-100 shrink-0">
-          <Cloud size={28} />
+        <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shrink-0">
+          <SERVICE_ICONS.Storage size={28} />
         </div>
         <div>
           <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">{d.sourceTitle}</h3>

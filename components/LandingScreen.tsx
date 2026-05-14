@@ -3,6 +3,7 @@ import { useAmbient } from '../contexts/AmbientContext';
 import type { Translations } from '../i18n/index';
 import { Upload, PenTool, Github, Plus, ArrowRight, Database, Loader2, Layers, Globe, Server, Cloud, Zap, GitBranch, Code2, Rocket, CloudUpload, Package, Map, Search } from 'lucide-react';
 import { DataModel } from '../types';
+import { SERVICE_ICONS, SERVICE_COLORS } from '../constants';
 
 interface LandingScreenProps {
   t: Translations;
@@ -73,10 +74,11 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
           <div className="pt-2 flex flex-col items-center gap-6">
             <div className="flex flex-col items-center gap-3">
               <div className="flex flex-wrap justify-center items-center gap-3">
-                <Tag label="OGC API" color="bg-emerald-50 text-emerald-600" icon={Globe} />
-                <Tag label="Vector Tiles" color="bg-sky-50 text-sky-600" icon={Map} />
-                <Tag label="WMS" color="bg-teal-50 text-teal-600" icon={Layers} />
-                <Tag label="STAC" color="bg-sky-50 text-sky-600" icon={Search} />
+                <Tag label="OGC API" color={SERVICE_COLORS.OAPIF} icon={SERVICE_ICONS.OAPIF} />
+                <Tag label="Vector Tiles" color={SERVICE_COLORS.Tiles} icon={SERVICE_ICONS.Tiles} />
+                <Tag label="WMS Engine" color={SERVICE_COLORS.WMS} icon={SERVICE_ICONS.WMS} />
+                <Tag label="STAC Catalog" color={SERVICE_COLORS.STAC} icon={SERVICE_ICONS.STAC} />
+                <Tag label="Cloud Storage" color={SERVICE_COLORS.Storage} icon={SERVICE_ICONS.Storage} />
               </div>
               <div className="flex flex-wrap justify-center items-center gap-3">
                 <Tag label="Docker" color="bg-indigo-50 text-indigo-600" icon={Server} />

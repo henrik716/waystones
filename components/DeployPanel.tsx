@@ -6,6 +6,7 @@ import {
   Check, Layers, Tag, Github,
   Link2, Table, Paintbrush, GripVertical, RotateCcw, ArrowRight
 } from 'lucide-react';
+import { GEOM_ICONS, SERVICE_ICONS } from '../constants';
 import {
   DataModel, SourceConnection, SourceType, LayerStyle,
   PostgresConfig, SupabaseConfig, DatabricksConfig, GeopackageConfig, LayerSourceMapping, ImportValidationResult,
@@ -25,10 +26,7 @@ import LayerStyleEditor from './LayerStyleEditor';
 import MetadataStep from './quickpublish/MetadataStep';
 import PublishStep from './quickpublish/PublishStep';
 
-const GEOM_ICONS: Record<string, string> = {
-  Point: '●', MultiPoint: '●●', LineString: '╱', MultiLineString: '╱╱',
-  Polygon: '◆', MultiPolygon: '◆◆', GeometryCollection: '◇', None: '○'
-};
+// Geometry icons removed from local definition to use central constants
 
 interface DeployPanelProps {
   model: DataModel;
@@ -287,12 +285,12 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
   // 6-step flow
   // 6-step flow - uses d.steps array for all labels if possible, falling back to English defaults
   const steps = [
-    { icon: Database,   label: d.steps?.[0] || 'Source' },
-    { icon: Link2,      label: d.steps?.[1] || 'Connection' },
-    { icon: Table,      label: d.steps?.[2] || 'Mapping' },
-    { icon: Paintbrush, label: d.steps?.[3] || q.stepStyleTitle || st.title || 'Styling' },
-    { icon: Tag,        label: d.steps?.[4] || q.step2Title     || 'Metadata' },
-    { icon: Github,     label: d.steps?.[5] || d.steps?.[3]     || 'Publish' },
+    { icon: SERVICE_ICONS.Storage,   label: d.steps?.[0] || 'Source' },
+    { icon: Link2,                  label: d.steps?.[1] || 'Connection' },
+    { icon: SERVICE_ICONS.WMS,       label: d.steps?.[2] || 'Mapping' },
+    { icon: Paintbrush,             label: d.steps?.[3] || q.stepStyleTitle || st.title || 'Styling' },
+    { icon: SERVICE_ICONS.OAPIF,     label: d.steps?.[4] || q.step2Title     || 'Metadata' },
+    { icon: Github,                 label: d.steps?.[5] || d.steps?.[3]     || 'Publish' },
   ];
 
   return (
@@ -398,8 +396,8 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
       {step === 2 && (
         <section className="bg-white p-6 md:p-10 rounded-[32px] border border-slate-200 shadow-sm space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shrink-0">
-              <Layers size={28} />
+            <div className="w-14 h-14 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-600 border border-fuchsia-100 shrink-0">
+              <SERVICE_ICONS.WMS size={28} />
             </div>
             <div>
               <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">{d.mappingTitle}</h3>
@@ -484,7 +482,10 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
                      <div id="dp-style-layer-handle" className="flex items-center gap-2">
                       <GripVertical size={16} className="text-slate-400 cursor-move" />
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors ${isCollapsed ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'}`}>
-                        {GEOM_ICONS[layer.geometryType] || '◇'}
+                        {(() => {
+                          const Icon = GEOM_ICONS[layer.geometryType] || Layers;
+                          return typeof Icon === 'string' ? Icon : <Icon size={20} />;
+                        })()}
                       </div>
                     </div>
                     <div className="flex-1 text-left">
