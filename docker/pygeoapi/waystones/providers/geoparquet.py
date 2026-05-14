@@ -144,7 +144,8 @@ class GeoParquetDuckDBProvider(BaseProvider):
                         'geom_col':        pre['geom_col'],
                         'geom_is_native':  bool(pre.get('geom_is_native', True)),
                         'source_crs':      pre.get('source_crs') or None,
-                        'fields_cache':    pre.get('fields_cache') or {},
+                        'fields_cache':    {col: {'type': 'string', 'title': col}
+                                            for col in (pre.get('columns') or [])},
                         'count_cache':     {},
                         'has_bbox_struct': bool(pre.get('has_bbox_struct', False)),
                         'has_bbox_cols':   bool(pre.get('has_bbox_cols', True)),
