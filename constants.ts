@@ -43,7 +43,7 @@ export const getFieldConfig = (fieldType: { kind: string; baseType?: string }) =
 };
 
 import {
-  MapPin, GitCommit, Square, Hash, Shapes, LayoutList, Package, Database, Globe, Grid, Library, Layers
+  MapPin, GitCommit, Square, Hash, Shapes, LayoutList, Package, Database, Globe, Grid, Library, Layers, Cloud
 } from 'lucide-react';
 
 export const SERVICE_ICONS: Record<string, any> = {
@@ -52,6 +52,7 @@ export const SERVICE_ICONS: Record<string, any> = {
   STAC: Library,
   WMS: Layers,
   Storage: Database,
+  CloudNative: Cloud,
 };
 
 export const SERVICE_COLORS = {
@@ -60,6 +61,7 @@ export const SERVICE_COLORS = {
   STAC: "bg-emerald-50 text-emerald-600 border-emerald-100",
   WMS: "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100",
   Storage: "bg-amber-50 text-amber-600 border-amber-100",
+  CloudNative: "bg-amber-50 text-amber-600 border-amber-100",
 };
 
 export const COMMON_CRS = [

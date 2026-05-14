@@ -6,12 +6,56 @@ import os
 import time
 import urllib.request
 import urllib.error
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 CONFIG_PATH = os.getenv('PYGEOAPI_CONFIG', '/pygeoapi/local.config.yml')
 _port = os.getenv('CONTAINER_PORT', os.getenv('PORT', '5001'))
 BASE_URL = f'http://127.0.0.1:{_port}'
 WORKERS = int(os.getenv('CONTAINER_WORKERS', 2))
+
+def _warmup_provider_direct(provider_def: dict) -> None:
+    from waystones.providers.geoparquet import GeoParquetDuckDBProvider
+    provider = GeoParquetDuckDBProvider(provider_def)
+    provider.get_fields()
+
+
+def _run_internal_warmup(config: dict) -> None:
+    """Directly instantiate each GeoParquetDuckDBProvider to warm OS page cache
+    (spatial extension) and prime R2 Parquet footer reads before the HTTP loop."""
+    timeout = float(os.getenv('INTERNAL_WARMUP_TIMEOUT', 60))
+    t0 = time.monotonic()
+
+    targets = []
+    for coll_name, resource in config.get('resources', {}).items():
+        for p in resource.get('providers', []):
+            if 'geoparquet' in str(p.get('name', '')).lower():
+                targets.append((coll_name, p))
+                break
+
+    if not targets:
+        print('[warmup] Internal: no GeoParquet providers found, skipping', flush=True)
+        return
+
+    print(f'[warmup] Internal: warming {len(targets)} provider(s) directly...', flush=True)
+
+    results = {}
+    with ThreadPoolExecutor(max_workers=len(targets)) as executor:
+        futures = {executor.submit(_warmup_provider_direct, pdef): name
+                   for name, pdef in targets}
+        for fut in as_completed(futures, timeout=timeout):
+            name = futures[fut]
+            try:
+                fut.result()
+                results[name] = True
+                print(f'[warmup] Internal: {name} OK', flush=True)
+            except Exception as exc:
+                results[name] = False
+                print(f'[warmup] Internal: {name} failed: {exc}', flush=True)
+
+    elapsed = time.monotonic() - t0
+    ok = sum(results.values())
+    print(f'[warmup] Internal: done — {ok}/{len(targets)} OK in {elapsed:.1f}s', flush=True)
+
 
 def wait_for_ready(timeout=60):
     """Wait for pygeoapi to start responding on the internal port."""
@@ -71,6 +115,18 @@ def main():
     if not collections:
         print('[warmup] No GeoParquet collections found', flush=True)
         return
+
+    # ---------------------------------------------------------
+    # PHASE 0: Internal provider warmup
+    # ---------------------------------------------------------
+    # Directly instantiate each provider to force DuckDB to load the spatial
+    # extension (warms OS page cache) and read R2 Parquet footers (primes the
+    # network path). Runs before the HTTP loop so Phase 1 finds warm caches.
+    # Failures are logged and skipped — Phase 1/2 remain the fallback.
+    try:
+        _run_internal_warmup(config)
+    except Exception as exc:
+        print(f'[warmup] Internal warmup error: {exc}', flush=True)
 
     all_targets = collections * WORKERS
 
