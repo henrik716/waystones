@@ -61,7 +61,7 @@ export const SERVICE_COLORS = {
   STAC: "bg-emerald-50 text-emerald-600 border-emerald-100",
   WMS: "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100",
   Storage: "bg-amber-50 text-amber-600 border-amber-100",
-  CloudOptimized: "bg-rose-50 text-rose-600 border-rose-100",
+  CloudOptimized: "bg-cyan-50 text-cyan-600 border-cyan-100",
 };
 
 export const COMMON_CRS = [
