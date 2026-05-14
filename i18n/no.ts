@@ -447,7 +447,7 @@ export const no = {
       'docker-compose': "Docker Compose",
       'docker-composeDesc': "Kjør på egen server med Docker. Full kontroll, krever SSH-tilgang.",
       'railway': "Railway",
-      'railwayDesc': "Koble GitHub-repo og deploy med ett klikk. Null konfigurasjon.",
+      'railwayDesc': "Koble til GitHub-repo og deploy. Fellesskapsstøttet.",
       'waystones-cloud': "Waystones Cloud",
       'waystones-cloudDesc': "Fullt administrert. Ingen GitHub, ingen konfigurasjon, ingen infrastruktur",
     },

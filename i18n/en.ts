@@ -447,7 +447,7 @@ export const en = {
       'docker-compose': "Docker Compose",
       'docker-composeDesc': "Run on your own server with Docker. Full control, requires SSH.",
       'railway': "Railway",
-      'railwayDesc': "Connect your GitHub repo and deploy with one click. Zero configuration.",
+      'railwayDesc': "Connect your GitHub repo and deploy. Community supported.",
       'waystones-cloud': "Waystones Cloud",
       'waystones-cloudDesc': "Fully managed. No GitHub, no config, no infrastructure",
     },
