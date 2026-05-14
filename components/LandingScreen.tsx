@@ -76,9 +76,8 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
               <div className="flex flex-wrap justify-center items-center gap-3">
                 <Tag label="OGC API" color={SERVICE_COLORS.OAPIF} icon={SERVICE_ICONS.OAPIF} />
                 <Tag label="Vector Tiles" color={SERVICE_COLORS.Tiles} icon={SERVICE_ICONS.Tiles} />
-                <Tag label="WMS Engine" color={SERVICE_COLORS.WMS} icon={SERVICE_ICONS.WMS} />
-                <Tag label="STAC Catalog" color={SERVICE_COLORS.STAC} icon={SERVICE_ICONS.STAC} />
-                <Tag label="Cloud Storage" color={SERVICE_COLORS.Storage} icon={SERVICE_ICONS.Storage} />
+                <Tag label="WMS" color={SERVICE_COLORS.WMS} icon={SERVICE_ICONS.WMS} />
+                <Tag label="STAC" color={SERVICE_COLORS.STAC} icon={SERVICE_ICONS.STAC} />
               </div>
               <div className="flex flex-wrap justify-center items-center gap-3">
                 <Tag label="Docker" color="bg-indigo-50 text-indigo-600" icon={Server} />
