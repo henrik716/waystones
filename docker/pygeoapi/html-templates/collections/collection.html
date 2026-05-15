@@ -169,7 +169,10 @@
   }
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('coll-map', { zoomControl: false, attributionControl: false }).setView([0, 0], 1);
-    L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
+    L.maplibreGL({ 
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      pane: 'tilePane'
+    }).addTo(map);
     {% if data.extent and data.extent.spatial and data.extent.spatial.bbox %}
       var bbox = {{ data.extent.spatial.bbox[0] | tojson }};
       var sw = [bbox[1], bbox[0]], ne = [bbox[3], bbox[2]];

@@ -140,7 +140,10 @@ export function generateItemHtml(_model: DataModel): string {
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('item-map').setView([0, 0], 1);
-    L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
+    L.maplibreGL({ 
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      pane: 'tilePane'
+    }).addTo(map);
 
     var itemData = {{ data | to_json | safe }};
     if (itemData && itemData.geometry) {
@@ -154,7 +157,13 @@ export function generateItemHtml(_model: DataModel): string {
           });
         }
       }).addTo(map);
-      try { map.fitBounds(layer.getBounds(), { padding: [40, 40] }); } catch(e) {}
+      
+      setTimeout(function() {
+        map.invalidateSize();
+        try { map.fitBounds(layer.getBounds(), { padding: [40, 40], animate: false }); } catch(e) {
+          console.warn('fitBounds failed', e);
+        }
+      }, 100);
     }
 
     // --- Navigation Logic ---

@@ -195,7 +195,10 @@ export function generateItemsHtml(_model: DataModel): string {
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('items-map').setView([0, 0], 1);
-    L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
+    L.maplibreGL({ 
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      pane: 'tilePane'
+    }).addTo(map);
     var featuresData = {{ data | to_json | safe }};
     if (featuresData && featuresData.features && featuresData.features.length > 0) {
       var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
@@ -239,7 +242,13 @@ export function generateItemsHtml(_model: DataModel): string {
           layer.bindPopup(html);
         }
       }).addTo(map);
-      try { map.fitBounds(layer.getBounds(), { padding: [24, 24] }); } catch(e) {}
+      
+      setTimeout(function() {
+        map.invalidateSize();
+        try { map.fitBounds(layer.getBounds(), { padding: [24, 24], animate: false }); } catch(e) {
+          console.warn('fitBounds failed', e);
+        }
+      }, 100);
     }
 
     var params = (new URL(document.location)).searchParams;

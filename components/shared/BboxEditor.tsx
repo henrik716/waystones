@@ -55,7 +55,10 @@ const toNativeExtent = (ww: number, ee: number, ss: number, nn: number) => ({
 const MaplibreGLLayer: React.FC = () => {
   const map = useMap();
   useEffect(() => {
-    const gl = (L as any).maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
+    const gl = (L as any).maplibreGL({ 
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      pane: 'tilePane'
+    }).addTo(map);
     return () => { try { gl.remove(); } catch { /* ignore */ } };
   }, [map]);
   return null;
