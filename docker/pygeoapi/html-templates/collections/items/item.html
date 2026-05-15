@@ -161,9 +161,7 @@
       
       var bounds = layer.getBounds();
       if (bounds.isValid()) {
-        var sw = bounds.getSouthWest(), ne = bounds.getNorthEast();
-        if (sw.lat === ne.lat && sw.lng === ne.lng) {
-          // Point geometry — fitBounds on zero-area bounds causes NaN in leaflet-maplibre-gl
+        if (bounds.getSouthWest().equals(bounds.getNorthEast())) {
           map.setView(bounds.getCenter(), 13, { animate: false });
         } else {
           map.fitBounds(bounds, { padding: [40, 40], animate: false });
