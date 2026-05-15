@@ -164,7 +164,11 @@ export function generateItemHtml(_model: DataModel): string {
       
       var bounds = layer.getBounds();
       if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [40, 40], animate: false });
+        if (bounds.getSouthWest().equals(bounds.getNorthEast())) {
+          map.setView(bounds.getCenter(), 13, { animate: false });
+        } else {
+          map.fitBounds(bounds, { padding: [40, 40], animate: false });
+        }
       }
     }
 
