@@ -140,10 +140,14 @@ export function generateItemHtml(_model: DataModel): string {
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('item-map').setView([0, 0], 1);
-    L.maplibreGL({ 
-      style: 'https://tiles.openfreemap.org/styles/positron',
-      pane: 'tilePane'
-    }).addTo(map);
+    
+    // Add GL layer only after map is ready to avoid NaN during initial layout
+    map.whenReady(function() {
+      L.maplibreGL({ 
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        pane: 'tilePane'
+      }).addTo(map);
+    });
 
     var itemData = {{ data | to_json | safe }};
     if (itemData && itemData.geometry) {
@@ -158,12 +162,10 @@ export function generateItemHtml(_model: DataModel): string {
         }
       }).addTo(map);
       
-      setTimeout(function() {
-        map.invalidateSize();
-        try { map.fitBounds(layer.getBounds(), { padding: [40, 40], animate: false }); } catch(e) {
-          console.warn('fitBounds failed', e);
-        }
-      }, 100);
+      var bounds = layer.getBounds();
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [40, 40], animate: false });
+      }
     }
 
     // --- Navigation Logic ---

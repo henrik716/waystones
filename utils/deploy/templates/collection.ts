@@ -172,16 +172,23 @@ export function generateCollectionHtml(_model: DataModel): string {
   }
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('coll-map', { zoomControl: false, attributionControl: false }).setView([0, 0], 1);
-    L.maplibreGL({ 
-      style: 'https://tiles.openfreemap.org/styles/positron',
-      pane: 'tilePane'
-    }).addTo(map);
+    
+    map.whenReady(function() {
+      L.maplibreGL({ 
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        pane: 'tilePane'
+      }).addTo(map);
+    });
+
     {% if data.extent and data.extent.spatial and data.extent.spatial.bbox %}
       var bbox = {{ data.extent.spatial.bbox[0] | tojson }};
       var sw = [bbox[1], bbox[0]], ne = [bbox[3], bbox[2]];
       var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
-      L.rectangle([sw, ne], { color: brandColor, weight: 2, fillOpacity: 0.15 }).addTo(map);
-      map.fitBounds([sw, ne], { padding: [8, 8] });
+      var bounds = L.latLngBounds(sw, ne);
+      L.rectangle(bounds, { color: brandColor, weight: 2, fillOpacity: 0.15 }).addTo(map);
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [8, 8], animate: false });
+      }
     {% endif %}
   });
 </script>

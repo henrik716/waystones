@@ -177,10 +177,13 @@ export function generateCollectionsHtml(model: DataModel): string {
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('collections-map').setView([0, 0], 1);
-    L.maplibreGL({ 
-      style: 'https://tiles.openfreemap.org/styles/positron',
-      pane: 'tilePane'
-    }).addTo(map);
+    
+    map.whenReady(function() {
+      L.maplibreGL({ 
+        style: 'https://tiles.openfreemap.org/styles/positron',
+        pane: 'tilePane'
+      }).addTo(map);
+    });
     var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
     var bounds = L.latLngBounds();
     var hasBounds = false;
