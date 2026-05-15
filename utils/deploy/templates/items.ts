@@ -195,10 +195,7 @@ export function generateItemsHtml(_model: DataModel): string {
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('items-map').setView([0, 0], 1);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      maxZoom: 19
-    }).addTo(map);
+    L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
     var featuresData = {{ data | to_json | safe }};
     if (featuresData && featuresData.features && featuresData.features.length > 0) {
       var brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();

@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Rectangle, useMap, useMapEvents, CircleMarker } from 'react-leaflet';
+import { MapContainer, Rectangle, useMap, useMapEvents, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import '@maplibre/maplibre-gl-leaflet';
 import { Grab, Plus, Minus, Square, Globe, Maximize, Trash2, MousePointer2, Compass } from 'lucide-react';
 import { ModelMetadata } from '../../types';
 import { reprojectCoordinates } from '../../utils/gdalService';
@@ -49,6 +51,15 @@ const toNativeExtent = (ww: number, ee: number, ss: number, nn: number) => ({
 });
 
 // --- Sub-components ---
+
+const MaplibreGLLayer: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    const gl = (L as any).maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
+    return () => { try { gl.remove(); } catch { /* ignore */ } };
+  }, [map]);
+  return null;
+};
 
 const InvalidateSize: React.FC = () => {
   const map = useMap();
@@ -367,7 +378,7 @@ const BboxEditor: React.FC<BboxEditorProps> = ({ spatialExtent: rawSpatialExtent
     <div className="space-y-4">
       <div className={`relative rounded-xl overflow-hidden border-2 shadow-sm transition-colors duration-200 h-[300px] ${inputsValid ? 'border-indigo-300' : 'border-slate-200'}`}>
         <MapContainer center={[20, 0]} zoom={1} scrollWheelZoom={true} doubleClickZoom={false} boxZoom={false} zoomControl={false} className="w-full h-full" style={{ cursor: mode === 'draw' ? 'crosshair' : 'grab' }}>
-          <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          <MaplibreGLLayer />
           <InvalidateSize />
           <MapController 
             bounds={bounds} isDrawing={isDrawing} activeHandle={activeHandle} mode={mode} 

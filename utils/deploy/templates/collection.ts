@@ -172,7 +172,7 @@ export function generateCollectionHtml(_model: DataModel): string {
   }
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('coll-map', { zoomControl: false, attributionControl: false }).setView([0, 0], 1);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+    L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
     {% if data.extent and data.extent.spatial and data.extent.spatial.bbox %}
       var bbox = {{ data.extent.spatial.bbox[0] | tojson }};
       var sw = [bbox[1], bbox[0]], ne = [bbox[3], bbox[2]];

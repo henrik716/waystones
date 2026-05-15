@@ -137,10 +137,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var map = L.map('item-map').setView([0, 0], 1);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      maxZoom: 19
-    }).addTo(map);
+    L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map);
 
     var itemData = {{ data | to_json | safe }};
     if (itemData && itemData.geometry) {
