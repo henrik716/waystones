@@ -16,24 +16,24 @@ _TASKS_FLAG = "/tmp/waystones_tasks_triggered"
 _TENANT_FLAG = "/tmp/waystones_tenant_config_written"
 
 
-def _inject_machine_env(raw_config_json: str) -> None:
-    """Inject machine_env credentials into os.environ before pygeoapi loads.
+def _inject_container_env(raw_config_json: str) -> None:
+    """Inject container_env credentials into os.environ before pygeoapi loads.
 
     Fallback for when this.start({ envVars }) in the CF Container Durable Object
     fails to inject environment variables on cold start.
     """
     try:
         payload = json.loads(raw_config_json)
-        machine_env = payload.get("machine_env") or {}
+        container_env = payload.get("container_env") or payload.get("machine_env") or {}
         injected = 0
-        for k, v in machine_env.items():
+        for k, v in container_env.items():
             if k not in os.environ or not os.environ[k]:
                 os.environ[k] = str(v)
                 injected += 1
         if injected:
-            print(f"[waystones_wsgi] Injected {injected} env vars from machine_env", flush=True)
+            print(f"[waystones_wsgi] Injected {injected} env vars from container_env", flush=True)
     except Exception as e:
-        print(f"[waystones_wsgi] Warning: could not parse machine_env: {e}", flush=True)
+        print(f"[waystones_wsgi] Warning: could not parse container_env: {e}", flush=True)
 
 
 def _is_stub_openapi() -> bool:
@@ -130,7 +130,7 @@ def application(environ, start_response):
                 # before pygeoapi loads, regardless of which config path we take below.
                 raw_config = environ.get("HTTP_X_WAYSTONES_CONFIG")
                 if raw_config:
-                    _inject_machine_env(raw_config)
+                    _inject_container_env(raw_config)
 
                 # Priority 1: clean base64 header set by containers.ts
                 b64 = environ.get("HTTP_X_WAYSTONES_CONFIG_B64")
