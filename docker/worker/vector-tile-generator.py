@@ -27,8 +27,10 @@ def parse_args():
     p.add_argument("--output-prefix", required=True,  help="Output destination: local dir or s3:// prefix")
     p.add_argument("--user-id",       required=True,  help="User ID (for logging)")
     p.add_argument("--model",         required=False, default=None, help="Path to model.json for layer mapping")
-    p.add_argument("--min-zoom",      type=int, default=0,  help="Min zoom level")
-    p.add_argument("--max-zoom",      type=int, default=14, help="Max zoom level")
+    p.add_argument("--min-zoom",      type=int,   default=0,    help="Min zoom level")
+    p.add_argument("--max-zoom",      type=int,   default=14,   help="Max zoom level")
+    p.add_argument("--auto-zoom",     action="store_true",      help="Let tippecanoe pick max zoom from feature density (-zg)")
+    p.add_argument("--simplification",type=float, default=None, help="Geometry simplification factor (tippecanoe --simplification)")
     return p.parse_args()
 
 # ---------------------------------------------------------------------------
@@ -228,16 +230,21 @@ def main():
         tile_cmd = [
             "tippecanoe",
             "-o", combined_pmtiles,
-            "-z", str(args.max_zoom),
             "-Z", str(args.min_zoom),
             "--drop-densest-as-needed",
-            "--extend-zooms-if-still-dropping",
             "--force",
         ]
+        if args.auto_zoom:
+            tile_cmd.append("-zg")
+        else:
+            tile_cmd.extend(["-z", str(args.max_zoom)])
+        if args.simplification is not None:
+            tile_cmd.extend(["--simplification", str(args.simplification)])
         for orig_name, safe_name, geojsonseq_path in extracted:
             tile_cmd.extend(["-L", f"{safe_name}:{geojsonseq_path}"])
 
-        print(f"[tiles] Tiling {len(extracted)} layer(s) into combined.pmtiles (Z{args.min_zoom}-Z{args.max_zoom})...", flush=True)
+        zoom_label = f"Z{args.min_zoom}-auto" if args.auto_zoom else f"Z{args.min_zoom}-Z{args.max_zoom}"
+        print(f"[tiles] Tiling {len(extracted)} layer(s) into combined.pmtiles ({zoom_label})...", flush=True)
         result = subprocess.run(tile_cmd)
         if result.returncode != 0:
             print("[tiles] ERROR: tippecanoe failed.", file=sys.stderr, flush=True)

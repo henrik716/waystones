@@ -191,7 +191,12 @@ def main() -> None:
         min_z = os.environ.get("MIN_ZOOM")
         max_z = os.environ.get("MAX_ZOOM")
         if min_z: cmd.append(f"--min-zoom={min_z}")
-        if max_z: cmd.append(f"--max-zoom={max_z}")
+        if os.environ.get("AUTO_ZOOM", "").lower() in ("1", "true", "yes"):
+            cmd.append("--auto-zoom")
+        elif max_z:
+            cmd.append(f"--max-zoom={max_z}")
+        simplification = os.environ.get("SIMPLIFICATION")
+        if simplification: cmd.append(f"--simplification={simplification}")
 
     elif task_type == "stac":
         script = os.path.join(SCRIPTS_DIR, "duckdb-stac-generator.py")
