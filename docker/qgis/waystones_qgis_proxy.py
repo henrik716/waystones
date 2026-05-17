@@ -53,7 +53,8 @@ def _inject_credentials(headers) -> None:
     
     if raw_config:
         try:
-            machine_env = json.loads(raw_config).get("machine_env") or {}
+            cfg = json.loads(raw_config)
+            machine_env = cfg.get("container_env") or cfg.get("machine_env") or {}
         except Exception as e:
             print(f"[waystones_qgis_proxy] Warning: could not parse X-Waystones-Config: {e}", flush=True)
     else:
