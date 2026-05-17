@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Translations } from '../i18n/index';
 import { Palette } from 'lucide-react';
 import { Layer, LayerStyle } from '../types';
@@ -26,7 +26,9 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
   const isLine = layer.geometryType.includes('Line') || layer.geometryType.includes('Polygon') || layer.geometryType === 'GeometryCollection';
   const isPolygon = layer.geometryType.includes('Polygon') || layer.geometryType === 'GeometryCollection';
 
-  const codelistProps = layer.properties.filter(p => p.fieldType.kind === 'codelist' && p.fieldType.mode === 'inline' && p.fieldType.values.length > 0);
+  const [newCatValue, setNewCatValue] = useState('');
+
+  const categorizableProps = layer.properties.filter(p => ['primitive', 'codelist'].includes(p.fieldType.kind));
 
   // Theme classes
   const isDark = variant === 'dark';
@@ -131,6 +133,13 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                     <input type="range" min="2" max="48" value={style.pointSize || 8} onChange={e => onUpdate({ pointSize: parseInt(e.target.value) })} className={`w-full h-2 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`} />
                   </div>
                   <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label}`}>{st.pointOpacity || 'Opacity'}</label>
+                      <span className={`text-xs font-black ${cls.badge} px-2 py-0.5 rounded-md`}>{Math.round((style.pointOpacity ?? 1) * 100)}%</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.01" value={style.pointOpacity ?? 1} onChange={e => onUpdate({ pointOpacity: parseFloat(e.target.value) })} className={`w-full h-2 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`} />
+                  </div>
+                  <div className="space-y-3">
                     <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label}`}>{st.pointIcon}</label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {Object.entries(st.icons || {}).map(([k, v]) => (
@@ -143,8 +152,8 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                 </>
               )}
 
-              {/* Line controls */}
-              {isLine && (
+              {/* Line controls — hidden for polygon-only layers when outline is off */}
+              {isLine && !(isPolygon && !layer.geometryType.includes('Line') && style.showOutline === false) && (
                 <>
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
@@ -152,6 +161,13 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                       <span className={`text-xs font-black ${cls.badge} px-2 py-0.5 rounded-md`}>{style.lineWidth || 2}px</span>
                     </div>
                     <input type="range" min="1" max="24" value={style.lineWidth || 2} onChange={e => onUpdate({ lineWidth: parseInt(e.target.value) })} className={`w-full h-2 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`} />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label}`}>{st.lineOpacity || 'Opacity'}</label>
+                      <span className={`text-xs font-black ${cls.badge} px-2 py-0.5 rounded-md`}>{Math.round((style.lineOpacity ?? 1) * 100)}%</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.01" value={style.lineOpacity ?? 1} onChange={e => onUpdate({ lineOpacity: parseFloat(e.target.value) })} className={`w-full h-2 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`} />
                   </div>
                   <div className="space-y-3">
                     <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label}`}>{st.lineDash}</label>
@@ -177,6 +193,15 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                     <select value={style.hatchStyle || 'solid'} onChange={e => onUpdate({ hatchStyle: e.target.value as any })} className={`w-full border rounded-xl px-4 py-3 text-xs font-bold outline-none cursor-pointer transition-all ${cls.select}`}>
                       {Object.entries(st.hatches || {}).map(([k, v]) => <option key={k} value={k}>{v as string}</option>)}
                     </select>
+                  </div>
+                  <div className="flex items-center justify-between col-span-full">
+                    <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label}`}>{st.showOutline || 'Show border'}</label>
+                    <button
+                      onClick={() => onUpdate({ showOutline: style.showOutline === false ? true : false })}
+                      className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${style.showOutline !== false ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                    >
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${style.showOutline !== false ? 'left-5' : 'left-0.5'}`} />
+                    </button>
                   </div>
                   {(style.hatchStyle && style.hatchStyle !== 'solid') && (
                     <>
@@ -205,142 +230,220 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
           <div className="space-y-5">
             <div>
               <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label} block mb-3`}>{st.selectProperty}</label>
-              {codelistProps.length > 0 ? (
-                <select value={style.propertyId || ''} onChange={e => onUpdate({ propertyId: e.target.value })} className={`w-full border rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-indigo-500 transition-all ${cls.select}`}>
+              {categorizableProps.length > 0 ? (
+                <select value={style.propertyId || ''} onChange={e => onUpdate({ propertyId: e.target.value, categorizedValues: [] })} className={`w-full border rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-indigo-500 transition-all ${cls.select}`}>
                   <option value="">-- {st.selectProperty} --</option>
-                  {codelistProps.map(p => <option key={p.id} value={p.id}>{p.title || p.name}</option>)}
+                  {categorizableProps.map(p => <option key={p.id} value={p.id}>{p.title || p.name}</option>)}
                 </select>
               ) : (
                 <div className={`p-5 rounded-2xl border text-center ${cls.noCodelist}`}>
-                  <p className="text-xs font-bold italic">{st.noCodelistProps}</p>
+                  <p className="text-xs font-bold italic">{st.noPropsForCategorized || st.noCodelistProps}</p>
                 </div>
               )}
             </div>
-            {style.propertyId && (
-              <div className={`rounded-2xl p-4 space-y-3 border max-h-[500px] overflow-y-auto custom-scrollbar shadow-inner ${cls.categorizedBg}`}>
-                <label className={`text-[10px] font-black uppercase tracking-widest ${cls.categorizedLabel} block mb-2`}>{st.colorsForValues}</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {(() => { const sp = layer.properties.find(p => p.id === style.propertyId); const vals = sp?.fieldType.kind === 'codelist' && sp.fieldType.mode === 'inline' ? sp.fieldType.values : []; return vals; })().map(v => (
-                    <div key={v.id} className={`p-3.5 rounded-xl border transition-all ${cls.categorizedItem} space-y-4`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold truncate flex-1" title={v.label || v.code}>{v.label || v.code}</span>
-                        <input
-                          type="color"
-                          value={style.categorizedSettings?.[v.code]?.color || style.categorizedColors?.[v.code] || '#6366F1'}
-                          onChange={e => updateCategory(v.code, { color: e.target.value })}
-                          className="w-8 h-8 rounded-lg bg-transparent border-none cursor-pointer hover:scale-110 transition-transform shrink-0"
-                        />
-                      </div>
+            {style.propertyId && (() => {
+              const sp = layer.properties.find(p => p.id === style.propertyId);
+              const codelistVals = sp?.fieldType.kind === 'codelist' && sp.fieldType.mode === 'inline' ? sp.fieldType.values : [];
+              const isFreeForm = codelistVals.length === 0;
+              const freeVals = style.categorizedValues || [];
 
+              const renderCategoryCard = (code: string, label: string, canDelete = false) => (
+                <div key={code} className={`p-3.5 rounded-xl border transition-all ${cls.categorizedItem} space-y-4`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold truncate flex-1" title={label}>{label}</span>
+                    <input
+                      type="color"
+                      value={style.categorizedSettings?.[code]?.color || style.categorizedColors?.[code] || '#6366F1'}
+                      onChange={e => updateCategory(code, { color: e.target.value })}
+                      className="w-8 h-8 rounded-lg bg-transparent border-none cursor-pointer hover:scale-110 transition-transform shrink-0"
+                    />
+                    {canDelete && (
+                      <button
+                        onClick={() => {
+                          const newVals = freeVals.filter(v => v !== code);
+                          const newSettings = { ...(style.categorizedSettings || {}) };
+                          delete newSettings[code];
+                          onUpdate({ categorizedValues: newVals, categorizedSettings: newSettings });
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0 text-xs font-bold"
+                        title="Remove"
+                      >×</button>
+                    )}
+                  </div>
+
+                  {isPolygon && (
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                        <span className="text-slate-400">{st.fillOpacity || 'Opacity'}</span>
+                        <span className="text-indigo-500">{Math.round((style.categorizedSettings?.[code]?.fillOpacity ?? 0.5) * 100)}%</span>
+                      </div>
+                      <input
+                        type="range" min="0" max="1" step="0.01"
+                        value={style.categorizedSettings?.[code]?.fillOpacity ?? 0.5}
+                        onChange={e => updateCategory(code, { fillOpacity: parseFloat(e.target.value) })}
+                        className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
+                      />
+                    </div>
+                  )}
+
+                  {isPoint && (
+                    <>
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                          <span className="text-slate-400">{st.fillOpacity || 'Opacity'}</span>
-                          <span className="text-indigo-500">{Math.round((style.categorizedSettings?.[v.code]?.fillOpacity ?? 0.5) * 100)}%</span>
+                          <span className="text-slate-400">{st.pointSize || 'Size'}</span>
+                          <span className="text-indigo-500">{style.categorizedSettings?.[code]?.pointSize ?? style.pointSize ?? 8}px</span>
                         </div>
                         <input
-                          type="range" min="0" max="1" step="0.01"
-                          value={style.categorizedSettings?.[v.code]?.fillOpacity ?? 0.5}
-                          onChange={e => updateCategory(v.code, { fillOpacity: parseFloat(e.target.value) })}
+                          type="range" min="2" max="48"
+                          value={style.categorizedSettings?.[code]?.pointSize ?? style.pointSize ?? 8}
+                          onChange={e => updateCategory(code, { pointSize: parseInt(e.target.value) })}
                           className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
                         />
                       </div>
-
-                      {isPoint && (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                            <span className="text-slate-400">{st.pointSize || 'Size'}</span>
-                            <span className="text-indigo-500">{style.categorizedSettings?.[v.code]?.pointSize ?? style.pointSize ?? 8}px</span>
-                          </div>
-                          <input
-                            type="range" min="2" max="48"
-                            value={style.categorizedSettings?.[v.code]?.pointSize ?? style.pointSize ?? 8}
-                            onChange={e => updateCategory(v.code, { pointSize: parseInt(e.target.value) })}
-                            className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
-                          />
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                          <span className="text-slate-400">{st.pointOpacity || 'Opacity'}</span>
+                          <span className="text-indigo-500">{Math.round((style.categorizedSettings?.[code]?.pointOpacity ?? 1) * 100)}%</span>
                         </div>
-                      )}
+                        <input
+                          type="range" min="0" max="1" step="0.01"
+                          value={style.categorizedSettings?.[code]?.pointOpacity ?? 1}
+                          onChange={e => updateCategory(code, { pointOpacity: parseFloat(e.target.value) })}
+                          className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
+                        />
+                      </div>
+                    </>
+                  )}
 
-                      {(isLine || isPolygon) && (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                            <span className="text-slate-400">{st.lineWidth || 'Width'}</span>
-                            <span className="text-indigo-500">{style.categorizedSettings?.[v.code]?.lineWidth ?? style.lineWidth ?? 2}px</span>
-                          </div>
-                          <input
-                            type="range" min="1" max="24"
-                            value={style.categorizedSettings?.[v.code]?.lineWidth ?? style.lineWidth ?? 2}
-                            onChange={e => updateCategory(v.code, { lineWidth: parseInt(e.target.value) })}
-                            className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
-                          />
+                  {(isLine || isPolygon) && (
+                    <>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                          <span className="text-slate-400">{st.lineWidth || 'Width'}</span>
+                          <span className="text-indigo-500">{style.categorizedSettings?.[code]?.lineWidth ?? style.lineWidth ?? 2}px</span>
                         </div>
-                      )}
-
-                      {(isLine || isPolygon) && (
-                        <div className="space-y-1.5">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{st.lineDash}</label>
-                          <select
-                            value={style.categorizedSettings?.[v.code]?.lineDash ?? style.lineDash ?? 'solid'}
-                            onChange={e => updateCategory(v.code, { lineDash: e.target.value })}
-                            className={`w-full text-[10px] p-2 rounded-lg border outline-none transition-colors ${cls.input}`}
-                          >
-                            {Object.entries(st.dashes || {}).map(([k, v]) => (
-                              <option key={k} value={k}>{v as string}</option>
-                            ))}
-                          </select>
+                        <input
+                          type="range" min="1" max="24"
+                          value={style.categorizedSettings?.[code]?.lineWidth ?? style.lineWidth ?? 2}
+                          onChange={e => updateCategory(code, { lineWidth: parseInt(e.target.value) })}
+                          className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                          <span className="text-slate-400">{st.lineOpacity || 'Opacity'}</span>
+                          <span className="text-indigo-500">{Math.round((style.categorizedSettings?.[code]?.lineOpacity ?? 1) * 100)}%</span>
                         </div>
-                      )}
+                        <input
+                          type="range" min="0" max="1" step="0.01"
+                          value={style.categorizedSettings?.[code]?.lineOpacity ?? 1}
+                          onChange={e => updateCategory(code, { lineOpacity: parseFloat(e.target.value) })}
+                          className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{st.lineDash}</label>
+                        <select
+                          value={style.categorizedSettings?.[code]?.lineDash ?? style.lineDash ?? 'solid'}
+                          onChange={e => updateCategory(code, { lineDash: e.target.value })}
+                          className={`w-full text-[10px] p-2 rounded-lg border outline-none transition-colors ${cls.input}`}
+                        >
+                          {Object.entries(st.dashes || {}).map(([k, dv]) => (
+                            <option key={k} value={k}>{dv as string}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
 
-                      {isPolygon && (
-                        <>
+                  {isPolygon && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{st.hatchStyle}</label>
+                        <select
+                          value={style.categorizedSettings?.[code]?.hatchStyle ?? style.hatchStyle ?? 'solid'}
+                          onChange={e => updateCategory(code, { hatchStyle: e.target.value })}
+                          className={`w-full text-[10px] p-2 rounded-lg border outline-none transition-colors ${cls.input}`}
+                        >
+                          {Object.entries(st.hatches || {}).map(([k, hv]) => (
+                            <option key={k} value={k}>{hv as string}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {(style.categorizedSettings?.[code]?.hatchStyle ?? style.hatchStyle ?? 'solid') !== 'solid' && (
+                        <div className="grid grid-cols-2 gap-3 pt-1">
                           <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">{st.hatchStyle}</label>
-                            <select
-                              value={style.categorizedSettings?.[v.code]?.hatchStyle ?? style.hatchStyle ?? 'solid'}
-                              onChange={e => updateCategory(v.code, { hatchStyle: e.target.value })}
-                              className={`w-full text-[10px] p-2 rounded-lg border outline-none transition-colors ${cls.input}`}
-                            >
-                              {Object.entries(st.hatches || {}).map(([k, v]) => (
-                                <option key={k} value={k}>{v as string}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {(style.categorizedSettings?.[v.code]?.hatchStyle ?? style.hatchStyle ?? 'solid') !== 'solid' && (
-                            <div className="grid grid-cols-2 gap-3 pt-1">
-                              <div className="space-y-1.5">
-                                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                                  <span className="text-slate-400">{st.hatchSpacing}</span>
-                                  <span className="text-indigo-500">{style.categorizedSettings?.[v.code]?.hatchSpacing ?? style.hatchSpacing ?? 6}px</span>
-                                </div>
-                                <input
-                                  type="range" min="2" max="24"
-                                  value={style.categorizedSettings?.[v.code]?.hatchSpacing ?? style.hatchSpacing ?? 6}
-                                  onChange={e => updateCategory(v.code, { hatchSpacing: parseInt(e.target.value) })}
-                                  className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                                  <span className="text-slate-400">{st.hatchThickness}</span>
-                                  <span className="text-indigo-500">{style.categorizedSettings?.[v.code]?.hatchThickness ?? style.hatchThickness ?? 1}px</span>
-                                </div>
-                                <input
-                                  type="range" min="1" max="5"
-                                  value={style.categorizedSettings?.[v.code]?.hatchThickness ?? style.hatchThickness ?? 1}
-                                  onChange={e => updateCategory(v.code, { hatchThickness: parseInt(e.target.value) })}
-                                  className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
-                                />
-                              </div>
+                            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                              <span className="text-slate-400">{st.hatchSpacing}</span>
+                              <span className="text-indigo-500">{style.categorizedSettings?.[code]?.hatchSpacing ?? style.hatchSpacing ?? 6}px</span>
                             </div>
-                          )}
-                        </>
+                            <input
+                              type="range" min="2" max="24"
+                              value={style.categorizedSettings?.[code]?.hatchSpacing ?? style.hatchSpacing ?? 6}
+                              onChange={e => updateCategory(code, { hatchSpacing: parseInt(e.target.value) })}
+                              className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                              <span className="text-slate-400">{st.hatchThickness}</span>
+                              <span className="text-indigo-500">{style.categorizedSettings?.[code]?.hatchThickness ?? style.hatchThickness ?? 1}px</span>
+                            </div>
+                            <input
+                              type="range" min="1" max="5"
+                              value={style.categorizedSettings?.[code]?.hatchThickness ?? style.hatchThickness ?? 1}
+                              onChange={e => updateCategory(code, { hatchThickness: parseInt(e.target.value) })}
+                              className={`w-full h-1.5 ${cls.slider} rounded-full appearance-none cursor-pointer accent-indigo-500`}
+                            />
+                          </div>
+                        </div>
                       )}
-
-                    </div>
-                  ))}
+                    </>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+
+              return (
+                <div className={`rounded-2xl p-4 space-y-3 border max-h-[500px] overflow-y-auto custom-scrollbar shadow-inner ${cls.categorizedBg}`}>
+                  <label className={`text-[10px] font-black uppercase tracking-widest ${cls.categorizedLabel} block mb-2`}>{st.colorsForValues}</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {isFreeForm
+                      ? freeVals.map(v => renderCategoryCard(v, v, true))
+                      : codelistVals.map(v => renderCategoryCard(v.code, v.label || v.code, false))
+                    }
+                  </div>
+                  {isFreeForm && (
+                    <div className="flex gap-2 pt-2">
+                      <input
+                        type="text"
+                        value={newCatValue}
+                        onChange={e => setNewCatValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && newCatValue.trim() && !freeVals.includes(newCatValue.trim())) {
+                            onUpdate({ categorizedValues: [...freeVals, newCatValue.trim()] });
+                            setNewCatValue('');
+                          }
+                        }}
+                        placeholder={st.valuePlaceholder || 'Type a value…'}
+                        className={`flex-1 border rounded-xl px-3 py-2 text-xs font-bold outline-none transition-all ${cls.input}`}
+                      />
+                      <button
+                        onClick={() => {
+                          if (newCatValue.trim() && !freeVals.includes(newCatValue.trim())) {
+                            onUpdate({ categorizedValues: [...freeVals, newCatValue.trim()] });
+                            setNewCatValue('');
+                          }
+                        }}
+                        className="px-3 py-2 bg-indigo-600 text-white text-xs font-black rounded-xl hover:bg-indigo-700 transition-colors shrink-0"
+                      >
+                        {st.addValue || 'Add'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
           </div>
         )}

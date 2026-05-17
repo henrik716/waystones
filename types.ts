@@ -88,7 +88,9 @@ export interface CategorySettings {
   color?: string;
   fillOpacity?: number;
   pointSize?: number;
+  pointOpacity?: number;
   lineWidth?: number;
+  lineOpacity?: number;
   pointIcon?: 'circle' | 'square' | 'triangle' | 'star';
   lineDash?: 'solid' | 'dashed' | 'dotted' | 'dash-dot' | 'dash-dot-dot' | 'long-dash';
   hatchStyle?: 'solid' | 'horizontal' | 'vertical' | 'cross' | 'b_diagonal' | 'f_diagonal' | 'diagonal_x';
@@ -116,11 +118,15 @@ export interface LayerStyle {
   propertyId?: string;
   categorizedColors?: Record<string, string>;
   categorizedSettings?: Record<string, CategorySettings>;
+  categorizedValues?: string[];
   pointSize?: number;
+  pointOpacity?: number;
   pointIcon?: 'circle' | 'square' | 'triangle' | 'star';
   lineWidth?: number;
+  lineOpacity?: number;
   lineDash?: 'solid' | 'dashed' | 'dotted' | 'dash-dot' | 'dash-dot-dot' | 'long-dash';
   fillOpacity?: number;
+  showOutline?: boolean;
   hatchStyle?: 'solid' | 'horizontal' | 'vertical' | 'cross' | 'b_diagonal' | 'f_diagonal' | 'diagonal_x';
   hatchThickness?: number;
   hatchSpacing?: number;

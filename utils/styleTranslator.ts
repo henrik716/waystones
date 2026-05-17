@@ -26,17 +26,20 @@ export function translateToGLStyle(layer: Layer, sourceId: string): any[] {
     });
 
     // Outline Layer
-    layers.push({
-      id: `${layer.id}-outline`,
-      type: 'line',
-      source: sourceId,
-      'source-layer': layer.name,
-      paint: {
-        'line-color': getGLColorExpression(style, 'simpleColor'),
-        'line-width': getGLNumberExpression(style, 'lineWidth', 1),
-        'line-dasharray': getGLDashExpression(style)
-      }
-    });
+    if (style.showOutline !== false) {
+      layers.push({
+        id: `${layer.id}-outline`,
+        type: 'line',
+        source: sourceId,
+        'source-layer': layer.name,
+        paint: {
+          'line-color': getGLColorExpression(style, 'simpleColor'),
+          'line-width': getGLNumberExpression(style, 'lineWidth', 1),
+          'line-opacity': getGLNumberExpression(style, 'lineOpacity', 1),
+          'line-dasharray': getGLDashExpression(style)
+        }
+      });
+    }
   } else if (isLine) {
     layers.push({
       id: `${layer.id}-line`,
@@ -46,6 +49,7 @@ export function translateToGLStyle(layer: Layer, sourceId: string): any[] {
       paint: {
         'line-color': getGLColorExpression(style, 'simpleColor'),
         'line-width': getGLNumberExpression(style, 'lineWidth', 2),
+        'line-opacity': getGLNumberExpression(style, 'lineOpacity', 1),
         'line-dasharray': getGLDashExpression(style)
       }
     });
@@ -58,6 +62,7 @@ export function translateToGLStyle(layer: Layer, sourceId: string): any[] {
       paint: {
         'circle-color': getGLColorExpression(style, 'simpleColor'),
         'circle-radius': getGLNumberExpression(style, 'pointSize', 5),
+        'circle-opacity': getGLNumberExpression(style, 'pointOpacity', 1),
         'circle-stroke-width': 1,
         'circle-stroke-color': '#ffffff'
       }

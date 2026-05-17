@@ -27,12 +27,15 @@ const StylePreview: React.FC<StylePreviewProps> = ({ layer, t }) => {
   // Base properties
   let color = style.simpleColor || '#6366F1';
   let fillOpacity = style.fillOpacity !== undefined ? style.fillOpacity : 0.5;
+  let pointOpacity = style.pointOpacity !== undefined ? style.pointOpacity : 1;
+  let lineOpacity = style.lineOpacity !== undefined ? style.lineOpacity : 1;
   let lineWidth = style.lineWidth || 2;
   let pointSize = style.pointSize || 8;
   let lineDash = style.lineDash || 'solid';
   let hatchStyle = style.hatchStyle || 'solid';
   let hatchSpacing = style.hatchSpacing || 6;
   let hatchThickness = style.hatchThickness || 1;
+  const showOutline = style.showOutline !== false;
 
   // Categorized overrides
   if (style.type === 'categorized') {
@@ -42,6 +45,8 @@ const StylePreview: React.FC<StylePreviewProps> = ({ layer, t }) => {
       const cat = settings[firstCode];
       color = cat.color || style.categorizedColors?.[firstCode] || color;
       if (cat.fillOpacity !== undefined) fillOpacity = cat.fillOpacity;
+      if (cat.pointOpacity !== undefined) pointOpacity = cat.pointOpacity;
+      if (cat.lineOpacity !== undefined) lineOpacity = cat.lineOpacity;
       if (cat.lineWidth !== undefined) lineWidth = cat.lineWidth;
       if (cat.pointSize !== undefined) pointSize = cat.pointSize;
       if (cat.lineDash) lineDash = cat.lineDash;
@@ -101,15 +106,15 @@ const StylePreview: React.FC<StylePreviewProps> = ({ layer, t }) => {
         {(isPolygon || isCollection) && (
           <g transform={isCollection ? "translate(10,10) scale(0.8)" : ""}>
             <path d="M 20 20 L 80 20 L 90 80 L 10 90 Z" fill={hatchStyle !== 'solid' ? `url(#hatch-${hatchStyle}-${layer.id})` : color} fillOpacity={fillOpacity} />
-            <path d="M 20 20 L 80 20 L 90 80 L 10 90 Z" fill="none" stroke={color} strokeWidth={lineWidth} strokeDasharray={dashArray} strokeLinejoin="round" strokeLinecap="round" />
+            {showOutline && <path d="M 20 20 L 80 20 L 90 80 L 10 90 Z" fill="none" stroke={color} strokeWidth={lineWidth} strokeDasharray={dashArray} strokeLinejoin="round" strokeLinecap="round" />}
           </g>
         )}
 
         {(isLine || isCollection) && (
-          <path d={isCollection ? "M 5 50 Q 50 10 95 50" : "M 10 70 Q 50 10 90 70"} fill="none" stroke={color} strokeWidth={lineWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={isCollection ? "M 5 50 Q 50 10 95 50" : "M 10 70 Q 50 10 90 70"} fill="none" stroke={color} strokeWidth={lineWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" opacity={lineOpacity} />
         )}
         {(isPoint || isCollection) && (
-          <g transform={isCollection ? "translate(35,35) scale(0.3)" : ""}>
+          <g transform={isCollection ? "translate(35,35) scale(0.3)" : ""} opacity={pointOpacity}>
             {style.pointIcon === 'circle' && <circle cx="50" cy="50" r={pointSize} fill={color} fillOpacity={fillOpacity} />}
             {style.pointIcon === 'square' && <rect x={50 - pointSize} y={50 - pointSize} width={pointSize * 2} height={pointSize * 2} fill={color} fillOpacity={fillOpacity} />}
             {style.pointIcon === 'triangle' && <path d={`M 50 ${50 - (pointSize + 2)} L ${50 + (pointSize + 2)} ${50 + (pointSize + 2)} L ${50 - (pointSize + 2)} ${50 + (pointSize + 2)} Z`} fill={color} fillOpacity={fillOpacity} />}
