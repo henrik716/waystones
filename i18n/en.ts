@@ -633,6 +633,9 @@ export const en = {
     noPropsForCategorized: "No properties found in this layer.",
     preview: "Preview",
     unitHint: "All sizes are in pixels (px).",
+    vectorTileWarningPointIcon: "Standard web vector tiles only support circle symbols. Other shapes will render in QGIS WMS but fall back to circles on web maps.",
+    vectorTileWarningHatching: "Hatch patterns are not natively supported by web vector tiles (MapLibre/Mapbox GL). Polygons will render with a solid fill on web maps.",
+    vectorTileWarningFont: "Custom fonts require matching SDF glyph packs on the tile server. Standard fallbacks will be used on web maps.",
     icons: { circle: "Circle", square: "Square", triangle: "Triangle", star: "Star" },
     dashes: {
       solid: "Solid",

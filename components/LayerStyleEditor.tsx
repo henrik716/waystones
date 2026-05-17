@@ -148,6 +148,11 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                         </button>
                       ))}
                     </div>
+                    {style.pointIcon && style.pointIcon !== 'circle' && (
+                      <p className="text-[10px] text-amber-500 font-semibold px-1 mt-1 leading-relaxed">
+                        ⚠️ {(st as any).vectorTileWarningPointIcon}
+                      </p>
+                    )}
                   </div>
                 </>
               )}
@@ -193,6 +198,11 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                     <select value={style.hatchStyle || 'solid'} onChange={e => onUpdate({ hatchStyle: e.target.value as any })} className={`w-full border rounded-xl px-4 py-3 text-xs font-bold outline-none cursor-pointer transition-all ${cls.select}`}>
                       {Object.entries(st.hatches || {}).map(([k, v]) => <option key={k} value={k}>{v as string}</option>)}
                     </select>
+                    {style.hatchStyle && style.hatchStyle !== 'solid' && (
+                      <p className="text-[10px] text-amber-500 font-semibold px-1 mt-1 leading-relaxed">
+                        ⚠️ {(st as any).vectorTileWarningHatching}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center justify-between col-span-full">
                     <label className={`text-[10px] font-black uppercase tracking-widest ${cls.label}`}>{st.showOutline || 'Show border'}</label>
@@ -369,6 +379,11 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                             <option key={k} value={k}>{hv as string}</option>
                           ))}
                         </select>
+                        {(style.categorizedSettings?.[code]?.hatchStyle ?? style.hatchStyle ?? 'solid') !== 'solid' && (
+                          <p className="text-[9px] text-amber-500 font-semibold px-1 mt-1 leading-relaxed">
+                            ⚠️ {(st as any).vectorTileWarningHatching}
+                          </p>
+                        )}
                       </div>
 
                       {(style.categorizedSettings?.[code]?.hatchStyle ?? style.hatchStyle ?? 'solid') !== 'solid' && (
@@ -487,6 +502,9 @@ const LayerStyleEditor: React.FC<LayerStyleEditorProps> = ({
                     <option key={f} value={f}>{f}</option>
                   ))}
                 </select>
+                <p className="text-[10px] text-slate-400 italic px-1 leading-relaxed">
+                  ℹ️ {(st as any).vectorTileWarningFont}
+                </p>
               </div>
 
               <div className="space-y-3">

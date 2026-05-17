@@ -138,6 +138,7 @@ function getGLDashExpression(style: LayerStyle): any {
     case 'dashed': return [4, 4];
     case 'dotted': return [1, 2];
     case 'dash-dot': return [6, 2, 1, 2];
+    case 'dash-dot-dot': return [6, 2, 1, 1.5, 1, 1.5];
     case 'long-dash': return [10, 4];
     default: return undefined;
   }

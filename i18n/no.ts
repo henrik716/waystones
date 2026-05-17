@@ -633,6 +633,9 @@ export const no = {
     noPropsForCategorized: "Ingen egenskaper funnet i dette laget.",
     preview: "Forhåndsvisning",
     unitHint: "Alle størrelser er i piksler (px).",
+    vectorTileWarningPointIcon: "Standard vektortiles på web støtter bare sirkelsymboler. Andre former vil vises i QGIS WMS, men faller tilbake til sirkler på webkart.",
+    vectorTileWarningHatching: "Skravurmønstre støttes ikke av vektortiles på web (MapLibre/Mapbox GL). Flater vil vises med heldekkende farge på webkart.",
+    vectorTileWarningFont: "Egendefinerte skrifttyper krever matchende SDF-glyfepakker på kartserveren. Standardskrifttyper vil bli brukt på webkart.",
     icons: { circle: "Sirkel", square: "Firkant", triangle: "Trekant", star: "Stjerne" },
     dashes: {
       solid: "Heltrukket",
