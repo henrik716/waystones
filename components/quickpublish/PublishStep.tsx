@@ -194,11 +194,34 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip);
   };
 
-  const handleOpenCloud = () => {
+  const [cloudHandoffLoading, setCloudHandoffLoading] = useState(false);
+
+  const handleOpenCloud = async () => {
+    if (cloudHandoffLoading) return;
     const publishModel = buildPublishModel(model, selectedLayers);
     const scrubbed = scrubModelForExport(publishModel);
-    const encoded = btoa(JSON.stringify(scrubbed));
     const base = (import.meta as any).env?.VITE_WAYSTONES_CLOUD_URL ?? 'https://waystones.cloud';
+
+    setCloudHandoffLoading(true);
+    try {
+      const res = await fetch(`${base}/api/model-handoff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scrubbed),
+      });
+      if (res.ok) {
+        const { token } = await res.json();
+        window.open(`${base}/projects/new?token=${token}`, '_blank', 'noopener');
+        return;
+      }
+    } catch {
+      // fall through to URL param fallback
+    } finally {
+      setCloudHandoffLoading(false);
+    }
+
+    // Fallback: base64 URL param for local dev or if endpoint is unavailable
+    const encoded = btoa(JSON.stringify(scrubbed));
     window.open(`${base}/projects/new?model=${encoded}`, '_blank', 'noopener');
   };
 
@@ -328,9 +351,13 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
           <button
             type="button"
             onClick={handleOpenCloud}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-[0.15em] active:scale-95 transition-all shadow-lg shadow-indigo-100 outline-none focus:ring-4 focus:ring-indigo-500/20"
+            disabled={cloudHandoffLoading}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-[0.15em] active:scale-95 transition-all shadow-lg shadow-indigo-100 outline-none focus:ring-4 focus:ring-indigo-500/20"
           >
-            <ExternalLink size={14} /> {d.cloudHandoffBtn}
+            {cloudHandoffLoading
+              ? <RefreshCw size={14} className="animate-spin" />
+              : <ExternalLink size={14} />}
+            {cloudHandoffLoading ? 'Opening…' : d.cloudHandoffBtn}
           </button>
         </div>
       )}
