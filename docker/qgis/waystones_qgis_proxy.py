@@ -49,12 +49,12 @@ def _inject_credentials(headers) -> None:
     os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
     
     raw_config = headers.get("X-Waystones-Config")
-    machine_env = {}
-    
+    container_env = {}
+
     if raw_config:
         try:
             cfg = json.loads(raw_config)
-            machine_env = cfg.get("container_env") or cfg.get("machine_env") or {}
+            container_env = cfg.get("container_env") or cfg.get("machine_env") or {}
         except Exception as e:
             print(f"[waystones_qgis_proxy] Warning: could not parse X-Waystones-Config: {e}", flush=True)
     else:
@@ -63,28 +63,28 @@ def _inject_credentials(headers) -> None:
         prefixes = ("AWS_", "S3_", "CPL_", "GDAL_")
         for k, v in os.environ.items():
             if k.startswith(prefixes):
-                machine_env[k] = v
-        
-        # Ensure AWS_S3_ENDPOINT is derived if only URL is present
-        if "AWS_ENDPOINT_URL" in machine_env and "AWS_S3_ENDPOINT" not in machine_env:
-            machine_env["AWS_S3_ENDPOINT"] = machine_env["AWS_ENDPOINT_URL"].replace("https://", "").replace("http://", "")
+                container_env[k] = v
 
-    if not machine_env:
+        # Ensure AWS_S3_ENDPOINT is derived if only URL is present
+        if "AWS_ENDPOINT_URL" in container_env and "AWS_S3_ENDPOINT" not in container_env:
+            container_env["AWS_S3_ENDPOINT"] = container_env["AWS_ENDPOINT_URL"].replace("https://", "").replace("http://", "")
+
+    if not container_env:
         return
 
-    for k, v in machine_env.items():
+    for k, v in container_env.items():
         os.environ[k] = str(v)
 
     # Write env file sourced by qgis-wrapper.sh
     with open("/tmp/qgis-env.sh", "w") as f:
-        for k, v in machine_env.items():
+        for k, v in container_env.items():
             f.write(f'export {k}="{v}"\n')
         f.write('export AWS_EC2_METADATA_DISABLED="true"\n')
 
     # Inject into nginx fastcgi_params so QGIS receives them per-request
-    aws_id     = machine_env.get("AWS_ACCESS_KEY_ID", "")
-    aws_secret = machine_env.get("AWS_SECRET_ACCESS_KEY", "")
-    raw_ep     = machine_env.get("AWS_S3_ENDPOINT") or machine_env.get("AWS_ENDPOINT_URL", "")
+    aws_id     = container_env.get("AWS_ACCESS_KEY_ID", "")
+    aws_secret = container_env.get("AWS_SECRET_ACCESS_KEY", "")
+    raw_ep     = container_env.get("AWS_S3_ENDPOINT") or container_env.get("AWS_ENDPOINT_URL", "")
     clean_ep   = raw_ep.replace("https://", "").replace("http://", "")
 
     nginx_params = "\n".join([
@@ -101,7 +101,7 @@ def _inject_credentials(headers) -> None:
             with open(nginx_file, "a") as f:
                 f.write("\n" + nginx_params + "\n")
 
-    print(f"[waystones_qgis_proxy] Injected {len(machine_env)} credentials into env, wrapper, and nginx", flush=True)
+    print(f"[waystones_qgis_proxy] Injected {len(container_env)} credentials into env, wrapper, and nginx", flush=True)
 
 
 def _start_qgis_stack() -> bool:
