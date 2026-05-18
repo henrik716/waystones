@@ -205,7 +205,7 @@ def build_gdal_select(layer_schema, geom_col, model_crs, partition_cols, source_
     ]
 
     geom_select = safe_transform_expr(geom_col, model_crs, source_srid)
-    select_expr = ", ".join(attr_cols + [f"{geom_select} AS geom"])
+    select_expr = ", ".join([f'"{c}"' for c in attr_cols] + [f"{geom_select} AS geom"])
     return attr_cols, select_expr
 
 
@@ -763,15 +763,15 @@ def main():
         else:
             for c in partition_cols_requested:
                 if c in all_layer_cols:
-                    select_parts.append(c)
+                    select_parts.append(f'"{c}"')
                 else:
-                    select_parts.append(f"CAST(NULL AS VARCHAR) AS {c}")
+                    select_parts.append(f'CAST(NULL AS VARCHAR) AS "{c}"')
                     missing_cols.append(c)
 
-        # FIX: If this layer is missing requested columns, inject them into the base query 
+        # FIX: If this layer is missing requested columns, inject them into the base query
         # so the WHERE clause in the export step doesn't crash.
         if missing_cols:
-            injected_cols = ", ".join([f"CAST(NULL AS VARCHAR) AS {c}" for c in missing_cols])
+            injected_cols = ", ".join([f'CAST(NULL AS VARCHAR) AS "{c}"' for c in missing_cols])
             query_with_key = f"SELECT *, {injected_cols} FROM ({query_with_key}) AS _wrapped"
 
         part_by_str = ", ".join(select_parts)
