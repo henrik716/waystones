@@ -827,12 +827,13 @@ def main():
             pi = partition_key(partition_cols, p)
 
             try:
+                _bbox_geom = safe_transform_expr(layer_geom_col, 'OGC:CRS84', source_srid)
                 bbox_row = con.execute(f"""
                     SELECT
-                        MIN(ST_XMin(ST_Transform({layer_geom_col}, 'OGC:CRS84'))),
-                        MIN(ST_YMin(ST_Transform({layer_geom_col}, 'OGC:CRS84'))),
-                        MAX(ST_XMax(ST_Transform({layer_geom_col}, 'OGC:CRS84'))),
-                        MAX(ST_YMax(ST_Transform({layer_geom_col}, 'OGC:CRS84')))
+                        MIN(ST_XMin({_bbox_geom})),
+                        MIN(ST_YMin({_bbox_geom})),
+                        MAX(ST_XMax({_bbox_geom})),
+                        MAX(ST_YMax({_bbox_geom}))
                     FROM ({query_with_key}) AS _bbox
                     {f"WHERE {pi.where_clauses}" if pi.where_clauses else ""}
                 """).fetchone()
