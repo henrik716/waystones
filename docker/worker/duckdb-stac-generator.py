@@ -842,11 +842,8 @@ def main():
                 bbox_row = None
 
             if not bbox_row or any(v is None for v in bbox_row):
-                if model_bbox:
-                    minx, miny, maxx, maxy = model_bbox
-                    logging.info(f"Using model bbox as fallback for partition {p}")
-                else:
-                    continue
+                logging.warning(f"Skipping partition {p}: bbox query returned null (empty geometry?)")
+                continue
             else:
                 minx, miny, maxx, maxy = map(float, bbox_row)
 
