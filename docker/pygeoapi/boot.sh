@@ -120,5 +120,6 @@ exec gunicorn \
     --bind "${CONTAINER_HOST:-0.0.0.0}:${CONTAINER_PORT}" \
     --access-logfile - \
     --timeout 6000 \
+    --limit-request-field-size 0 \
     --pythonpath / \
     waystones_wsgi:application
