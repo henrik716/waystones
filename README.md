@@ -101,10 +101,10 @@ An open dataset showing high performance on-demand tile and catalog services:
 | Service | Demo Link / Integration URL | Description |
 | :--- | :--- | :--- |
 | 🌍 **OGC API Features (OAPIF)** | <a href="https://demo.waystones.cloud" target="_blank" rel="noopener noreferrer">demo.waystones.cloud</a> | Interactive landing page & REST API features |
-| 🗺️ **Map Viewer (Tiles)** | <a href="https://waystones.cloud/tiles/7f957987-97b1-4b81-a667-1409f2dbed90" target="_blank" rel="noopener noreferrer">waystones.cloud/tiles/7f957987...</a> | Interactive map viewer in the browser |
-| 🎨 **QGIS Vector Tiles** | <a href="https://waystones.cloud/api/projects/7f957987-97b1-4b81-a667-1409f2dbed90/tiles/demo.styles.json" target="_blank" rel="noopener noreferrer">QGIS Style JSON</a> | Direct Vector Tile Style URL for QGIS connection |
-| 🪟 **STAC Browser** | <a href="https://waystones.cloud/stac/7f957987-97b1-4b81-a667-1409f2dbed90" target="_blank" rel="noopener noreferrer">waystones.cloud/stac/7f957987...</a> | Visual SpatioTemporal Asset Catalog |
-| 📂 **STAC API Catalog** | <a href="https://waystones.cloud/api/projects/7f957987-97b1-4b81-a667-1409f2dbed90/stac" target="_blank" rel="noopener noreferrer">waystones.cloud/api/projects/7f957987.../stac</a> | Queryable STAC API catalog endpoint |
+| 🗺️ **Map Viewer (Tiles)** | <a href="https://waystones.cloud/tiles/d05a2b8a-e3fc-4af5-b7e4-18ba985be987" target="_blank" rel="noopener noreferrer">waystones.cloud/tiles/d05a2b8a...</a> | Interactive map viewer in the browser |
+| 🎨 **QGIS Vector Tiles** | <a href="https://waystones.cloud/api/projects/d05a2b8a-e3fc-4af5-b7e4-18ba985be987/tiles/demo.styles.json" target="_blank" rel="noopener noreferrer">QGIS Style JSON</a> | Direct Vector Tile Style URL for QGIS connection |
+| 🪟 **STAC Browser** | <a href="https://waystones.cloud/stac/d05a2b8a-e3fc-4af5-b7e4-18ba985be987" target="_blank" rel="noopener noreferrer">waystones.cloud/stac/d05a2b8a...</a> | Visual SpatioTemporal Asset Catalog |
+| 📂 **STAC API Catalog** | <a href="https://waystones.cloud/api/projects/d05a2b8a-e3fc-4af5-b7e4-18ba985be987/stac" target="_blank" rel="noopener noreferrer">waystones.cloud/api/projects/d05a2b8a.../stac</a> | Queryable STAC API catalog endpoint |
 
 ---
 
@@ -114,15 +114,15 @@ A protected dataset requiring authentication via API Key:
 > [!IMPORTANT]
 > **Authentication Required**  
 > Access to these endpoints requires passing the API key in the request headers:  
-> `X-API-Key: 01cc01eacda8874514c66bf68d12f1dd4c3a9fc3494629891149f608e0bdf46a`
+> `X-API-Key: e2432b445abba9f34e86f80fafbe8cc39fe48952ec4df2fa6768176c261731e2`
 
 | Service | Demo Link / Integration URL | Description |
 | :--- | :--- | :--- |
 | 🌍 **OGC API Features (OAPIF)** | <a href="https://demo-private.waystones.cloud" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud</a> | Secured landing page & REST API features |
-| 🗺️ **Map Viewer (Tiles)** | <a href="https://waystones.cloud/tiles/95af5cb9-593e-494b-8f43-935767a553a7" target="_blank" rel="noopener noreferrer">waystones.cloud/tiles/95af5cb9...</a> | Secured interactive map viewer in the browser |
-| 🎨 **QGIS Vector Tiles** | <a href="https://waystones.cloud/api/projects/95af5cb9-593e-494b-8f43-935767a553a7/tiles/demo-private.styles.json" target="_blank" rel="noopener noreferrer">QGIS Style JSON</a> | Secured Vector Tile Style URL for QGIS connection |
-| 🪟 **STAC Browser** | <a href="https://waystones.cloud/stac/95af5cb9-593e-494b-8f43-935767a553a7" target="_blank" rel="noopener noreferrer">waystones.cloud/stac/95af5cb9...</a> | Secured SpatioTemporal Asset Catalog browser |
-| 📂 **STAC API Catalog** | <a href="https://waystones.cloud/api/projects/95af5cb9-593e-494b-8f43-935767a553a7/stac" target="_blank" rel="noopener noreferrer">waystones.cloud/api/projects/95af5cb9.../stac</a> | Secured STAC API catalog endpoint |
+| 🗺️ **Map Viewer (Tiles)** | <a href="https://waystones.cloud/tiles/4c83a72d-9b7b-47a0-a7af-6b8b818b7c79" target="_blank" rel="noopener noreferrer">waystones.cloud/tiles/4c83a72d...</a> | Secured interactive map viewer in the browser |
+| 🎨 **QGIS Vector Tiles** | <a href="https://waystones.cloud/api/projects/4c83a72d-9b7b-47a0-a7af-6b8b818b7c79/tiles/demo-private.styles.json" target="_blank" rel="noopener noreferrer">QGIS Style JSON</a> | Secured Vector Tile Style URL for QGIS connection |
+| 🪟 **STAC Browser** | <a href="https://waystones.cloud/stac/4c83a72d-9b7b-47a0-a7af-6b8b818b7c79" target="_blank" rel="noopener noreferrer">waystones.cloud/stac/4c83a72d...</a> | Secured SpatioTemporal Asset Catalog browser |
+| 📂 **STAC API Catalog** | <a href="https://waystones.cloud/api/projects/4c83a72d-9b7b-47a0-a7af-6b8b818b7c79/stac" target="_blank" rel="noopener noreferrer">waystones.cloud/api/projects/4c83a72d.../stac</a> | Secured STAC API catalog endpoint |
 
 ---
 
