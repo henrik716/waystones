@@ -46,7 +46,7 @@ const App: React.FC = () => {
   const t = i18n.en;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [showGuide, setShowGuide] = useState(() => !localStorage.getItem('guide_seen'));
+  const [showGuide, setShowGuide] = useState(false);
   const [showGithubImport, setShowGithubImport] = useState(false);
   const [showUrlImport, setShowUrlImport] = useState(false);
   const [showDatabaseImport, setShowDatabaseImport] = useState(false);

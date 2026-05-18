@@ -25,8 +25,8 @@ export const sanitizeTechnicalName = (name: string): string => {
     // Normalize other accented characters (e.g., é -> e, ü -> u)
     sanitized = sanitized.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // Replace any non-alphanumeric character with an underscore
-    sanitized = sanitized.replace(/[^a-z0-9]/g, '_');
+    // Replace any non-alphanumeric character with an underscore (colon allowed for OSM-style column names)
+    sanitized = sanitized.replace(/[^a-z0-9:]/g, '_');
 
     // Squeeze multiple underscores
     sanitized = sanitized.replace(/_+/g, '_');
