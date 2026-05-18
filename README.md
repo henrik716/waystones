@@ -8,7 +8,7 @@
 [![Vite](https://img.shields.io/badge/Vite-6-646cff?logo=vite)](https://vitejs.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-3ecf8e?logo=supabase&logoColor=white)](https://supabase.com)
 
-[**⚡ Try Live Demo**](https://demo.waystones.cloud) • [**📂 Open STAC Browser**](https://waystones.cloud/stac/4971ef34-13ef-425a-b6b5-3cbc392c7da0) • [**📖 Integration Examples**](#-live-demos)
+[**⚡ Live Demos (Public & Private Endpoints)**](#-live-demos)
 </div>
 
 ---
@@ -101,13 +101,13 @@ An open dataset showing high performance on-demand tile and catalog services:
 | Service | Demo Link / Integration URL | Description |
 | :--- | :--- | :--- |
 | 🌍 **OGC API Features (OAPIF)** | [demo.waystones.cloud](https://demo.waystones.cloud) | Interactive landing page & REST API features |
-| 🗺️ **Tiles (Map Viewer)** | [waystones.cloud/tiles/4971ef34...](https://waystones.cloud/tiles/4971ef34-13ef-425a-b6b5-3cbc392c7da0) | High-performance interactive map tiles |
+| 🗺️ **Map Viewer (Tiles)** | [waystones.cloud/tiles/4971ef34...](https://waystones.cloud/tiles/4971ef34-13ef-425a-b6b5-3cbc392c7da0) | Interactive map viewer in the browser |
+| 🎨 **QGIS Vector Tiles** | [QGIS Style JSON](https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/tiles/demo-performance-on-demand.styles.json) | Direct Vector Tile Style URL for QGIS connection |
 | 🪟 **STAC Browser** | [waystones.cloud/stac/4971ef34...](https://waystones.cloud/stac/4971ef34-13ef-425a-b6b5-3cbc392c7da0) | Visual SpatioTemporal Asset Catalog |
 | 📂 **STAC API Catalog** | [waystones.cloud/api/projects/4971ef34.../stac](https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/stac) | Queryable STAC API catalog endpoint |
 
 > [!TIP]
-> **To add these vector tiles to QGIS**: Create a new Vector Tile connection using the following style URL:
-> `https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/tiles/demo-performance-on-demand.styles.json`
+> **To add these vector tiles to QGIS**: Create a new Vector Tile connection using the QGIS Style JSON URL from the table above.
 
 ---
 
@@ -122,13 +122,13 @@ A protected dataset requiring authentication via API Key:
 | Service | Demo Link / Integration URL | Description |
 | :--- | :--- | :--- |
 | 🌍 **OGC API Features (OAPIF)** | [demo-private.waystones.cloud](https://demo-private.waystones.cloud) | Secured landing page & REST API features |
-| 🗺️ **Tiles (Map Viewer)** | [waystones.cloud/tiles/e5f4bc16...](https://waystones.cloud/tiles/e5f4bc16-6b14-4353-92a0-519ba9707535) | Protected interactive map tiles |
+| 🗺️ **Map Viewer (Tiles)** | [waystones.cloud/tiles/e5f4bc16...](https://waystones.cloud/tiles/e5f4bc16-6b14-4353-92a0-519ba9707535) | Secured interactive map viewer in the browser |
+| 🎨 **QGIS Vector Tiles** | [QGIS Style JSON](https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/tiles/demo-private.styles.json) | Secured Vector Tile Style URL for QGIS connection |
 | 🪟 **STAC Browser** | [waystones.cloud/stac/e5f4bc16...](https://waystones.cloud/stac/e5f4bc16-6b14-4353-92a0-519ba9707535) | Secured SpatioTemporal Asset Catalog browser |
 | 📂 **STAC API Catalog** | [waystones.cloud/api/projects/e5f4bc16.../stac](https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/stac) | Secured STAC API catalog endpoint |
 
 > [!TIP]
-> **To add these secured vector tiles to QGIS**: Create a new Vector Tile connection using the following style URL:
-> `https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/tiles/demo-private.styles.json`
+> **To add these secured vector tiles to QGIS**: Create a new Vector Tile connection using the QGIS Style JSON URL from the table above.
 
 ---
 
