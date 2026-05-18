@@ -101,10 +101,10 @@ An open dataset showing high performance on-demand tile and catalog services:
 | Service | Demo Link / Integration URL | Description |
 | :--- | :--- | :--- |
 | 🌍 **OGC API Features (OAPIF)** | <a href="https://demo.waystones.cloud" target="_blank" rel="noopener noreferrer">demo.waystones.cloud</a> | Interactive landing page & REST API features |
-| 🗺️ **Map Viewer (Tiles)** | <a href="https://waystones.cloud/tiles/4971ef34-13ef-425a-b6b5-3cbc392c7da0" target="_blank" rel="noopener noreferrer">waystones.cloud/tiles/4971ef34...</a> | Interactive map viewer in the browser |
-| 🎨 **QGIS Vector Tiles** | <a href="https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/tiles/demo-performance-on-demand.styles.json" target="_blank" rel="noopener noreferrer">QGIS Style JSON</a> | Direct Vector Tile Style URL for QGIS connection |
-| 🪟 **STAC Browser** | <a href="https://waystones.cloud/stac/4971ef34-13ef-425a-b6b5-3cbc392c7da0" target="_blank" rel="noopener noreferrer">waystones.cloud/stac/4971ef34...</a> | Visual SpatioTemporal Asset Catalog |
-| 📂 **STAC API Catalog** | <a href="https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/stac" target="_blank" rel="noopener noreferrer">waystones.cloud/api/projects/4971ef34.../stac</a> | Queryable STAC API catalog endpoint |
+| 🗺️ **Map Viewer (Tiles)** | <a href="https://waystones.cloud/tiles/9962376c-e54e-4734-9961-82eda20b1fa8" target="_blank" rel="noopener noreferrer">waystones.cloud/tiles/9962376c...</a> | Interactive map viewer in the browser |
+| 🎨 **QGIS Vector Tiles** | <a href="https://waystones.cloud/api/projects/9962376c-e54e-4734-9961-82eda20b1fa8/tiles/demo.styles.json" target="_blank" rel="noopener noreferrer">QGIS Style JSON</a> | Direct Vector Tile Style URL for QGIS connection |
+| 🪟 **STAC Browser** | <a href="https://waystones.cloud/stac/9962376c-e54e-4734-9961-82eda20b1fa8" target="_blank" rel="noopener noreferrer">waystones.cloud/stac/9962376c...</a> | Visual SpatioTemporal Asset Catalog |
+| 📂 **STAC API Catalog** | <a href="https://waystones.cloud/api/projects/9962376c-e54e-4734-9961-82eda20b1fa8/stac" target="_blank" rel="noopener noreferrer">waystones.cloud/api/projects/9962376c.../stac</a> | Queryable STAC API catalog endpoint |
 
 ---
 
