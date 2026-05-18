@@ -13,6 +13,48 @@
 
 Waystones converts geospatial data models into production-ready OGC API and WMS services. The tool generates deployment kits that use a snapshot architecture: source data (GeoPackage, PostGIS) is converted once to static GeoParquet and FlatGeobuf files, which are then served by pygeoapi and QGIS Server respectively.
 
+---
+
+## 🌐 Live Demos
+
+Experience live deployments of Waystones services showcasing both public open-access data and secured, private API integrations.
+
+### 🔓 Open / Public Demo
+An open dataset showing high performance on-demand tile and catalog services:
+
+| Service | Demo Link / Integration URL | Description |
+| :--- | :--- | :--- |
+| 🌍 **OGC API Features (OAPIF)** | [demo.waystones.cloud](https://demo.waystones.cloud) | Interactive landing page & REST API features |
+| 🗺️ **Tiles (Map Viewer)** | [waystones.cloud/tiles/4971ef34...](https://waystones.cloud/tiles/4971ef34-13ef-425a-b6b5-3cbc392c7da0) | High-performance interactive map tiles |
+| 🪟 **STAC Browser** | [waystones.cloud/stac/4971ef34...](https://waystones.cloud/stac/4971ef34-13ef-425a-b6b5-3cbc392c7da0) | Visual SpatioTemporal Asset Catalog |
+| 📂 **STAC API Catalog** | [waystones.cloud/api/projects/4971ef34.../stac](https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/stac) | Queryable STAC API catalog endpoint |
+
+> [!TIP]
+> **To add these vector tiles to QGIS**: Create a new Vector Tile connection using the following style URL:
+> `https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/tiles/demo-performance-on-demand.styles.json`
+
+---
+
+### 🔒 Secured / Private Demo
+A protected dataset requiring authentication via API Key:
+
+> [!IMPORTANT]
+> **Authentication Required**  
+> Access to these endpoints requires passing the API key in the request headers:  
+> `X-API-Key: 86f8ada509f69937143941734c5339862564007bae1e51c1f4d1579989a6fe48`
+
+| Service | Demo Link / Integration URL | Description |
+| :--- | :--- | :--- |
+| 🌍 **OGC API Features (OAPIF)** | [demo-private.waystones.cloud](https://demo-private.waystones.cloud) | Secured landing page & REST API features |
+| 🗺️ **Tiles (Map Viewer)** | [waystones.cloud/tiles/e5f4bc16...](https://waystones.cloud/tiles/e5f4bc16-6b14-4353-92a0-519ba9707535) | Protected interactive map tiles |
+| 🪟 **STAC Browser** | [waystones.cloud/stac/e5f4bc16...](https://waystones.cloud/stac/e5f4bc16-6b14-4353-92a0-519ba9707535) | Secured SpatioTemporal Asset Catalog browser |
+| 📂 **STAC API Catalog** | [waystones.cloud/api/projects/e5f4bc16.../stac](https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/stac) | Secured STAC API catalog endpoint |
+
+> [!TIP]
+> **To add these secured vector tiles to QGIS**: Create a new Vector Tile connection using the following style URL:
+> `https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/tiles/demo-private.styles.json`
+
+---
 
 ## ✨ Key Features
 
