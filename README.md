@@ -106,9 +106,6 @@ An open dataset showing high performance on-demand tile and catalog services:
 | 🪟 **STAC Browser** | [waystones.cloud/stac/4971ef34...](https://waystones.cloud/stac/4971ef34-13ef-425a-b6b5-3cbc392c7da0) | Visual SpatioTemporal Asset Catalog |
 | 📂 **STAC API Catalog** | [waystones.cloud/api/projects/4971ef34.../stac](https://waystones.cloud/api/projects/4971ef34-13ef-425a-b6b5-3cbc392c7da0/stac) | Queryable STAC API catalog endpoint |
 
-> [!TIP]
-> **To add these vector tiles to QGIS**: Create a new Vector Tile connection using the QGIS Style JSON URL from the table above.
-
 ---
 
 ### 🔒 Secured / Private Demo
@@ -126,9 +123,6 @@ A protected dataset requiring authentication via API Key:
 | 🎨 **QGIS Vector Tiles** | [QGIS Style JSON](https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/tiles/demo-private.styles.json) | Secured Vector Tile Style URL for QGIS connection |
 | 🪟 **STAC Browser** | [waystones.cloud/stac/e5f4bc16...](https://waystones.cloud/stac/e5f4bc16-6b14-4353-92a0-519ba9707535) | Secured SpatioTemporal Asset Catalog browser |
 | 📂 **STAC API Catalog** | [waystones.cloud/api/projects/e5f4bc16.../stac](https://waystones.cloud/api/projects/e5f4bc16-6b14-4353-92a0-519ba9707535/stac) | Secured STAC API catalog endpoint |
-
-> [!TIP]
-> **To add these secured vector tiles to QGIS**: Create a new Vector Tile connection using the QGIS Style JSON URL from the table above.
 
 ---
 
