@@ -115,10 +115,10 @@ const StylePreview: React.FC<StylePreviewProps> = ({ layer, t }) => {
         )}
         {(isPoint || isCollection) && (
           <g transform={isCollection ? "translate(35,35) scale(0.3)" : ""} opacity={pointOpacity}>
-            {style.pointIcon === 'circle' && <circle cx="50" cy="50" r={pointSize} fill={color} fillOpacity={fillOpacity} />}
-            {style.pointIcon === 'square' && <rect x={50 - pointSize} y={50 - pointSize} width={pointSize * 2} height={pointSize * 2} fill={color} fillOpacity={fillOpacity} />}
-            {style.pointIcon === 'triangle' && <path d={`M 50 ${50 - (pointSize + 2)} L ${50 + (pointSize + 2)} ${50 + (pointSize + 2)} L ${50 - (pointSize + 2)} ${50 + (pointSize + 2)} Z`} fill={color} fillOpacity={fillOpacity} />}
-            {style.pointIcon === 'star' && <path d="M 50 35 L 53.09 43.1 L 62.36 43.1 L 54.81 48.2 L 57.9 56.3 L 50 51.2 L 42.1 56.3 L 45.19 48.2 L 37.64 43.1 L 46.91 43.1 Z" fill={color} fillOpacity={fillOpacity} transform={`translate(50, 50) scale(${pointSize / 8}) translate(-50, -50)`} />}
+            {style.pointIcon === 'circle' && <circle cx="50" cy="50" r={pointSize} fill={color} />}
+            {style.pointIcon === 'square' && <rect x={50 - pointSize} y={50 - pointSize} width={pointSize * 2} height={pointSize * 2} fill={color} />}
+            {style.pointIcon === 'triangle' && <path d={`M 50 ${50 - (pointSize + 2)} L ${50 + (pointSize + 2)} ${50 + (pointSize + 2)} L ${50 - (pointSize + 2)} ${50 + (pointSize + 2)} Z`} fill={color} />}
+            {style.pointIcon === 'star' && <path d="M 50 35 L 53.09 43.1 L 62.36 43.1 L 54.81 48.2 L 57.9 56.3 L 50 51.2 L 42.1 56.3 L 45.19 48.2 L 37.64 43.1 L 46.91 43.1 Z" fill={color} transform={`translate(50, 50) scale(${pointSize / 8}) translate(-50, -50)`} />}
           </g>
         )}
         {style.labelSettings?.enabled && (
