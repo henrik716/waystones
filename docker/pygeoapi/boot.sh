@@ -111,7 +111,11 @@ fi
 # warmup.py pulls them into the OS page cache after Gunicorn is bound.
 # Pre-loading here would block port 5001 and fail Fly health checks.
 echo "[startup] Starting Gunicorn on port ${CONTAINER_PORT}..."
+# --limit-request-field-size is not a recognized CLI flag in all Gunicorn versions;
+# set it via a config file instead (works across all versions).
+printf 'limit_request_field_size = 0\n' > /tmp/gunicorn.conf.py
 exec gunicorn \
+    --config /tmp/gunicorn.conf.py \
     --workers "${CONTAINER_WORKERS:-2}" \
     --worker-class=gthread \
     --threads 2 \
@@ -120,6 +124,5 @@ exec gunicorn \
     --bind "${CONTAINER_HOST:-0.0.0.0}:${CONTAINER_PORT}" \
     --access-logfile - \
     --timeout 6000 \
-    --limit-request-field-size 0 \
     --pythonpath / \
     waystones_wsgi:application
