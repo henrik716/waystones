@@ -240,6 +240,13 @@ def main():
             tile_cmd.extend(["-z", str(args.max_zoom)])
         if args.simplification is not None:
             tile_cmd.extend(["--simplification", str(args.simplification)])
+        exclude_raw = os.environ.get("EXCLUDE_ATTRIBUTES", "").strip()
+        exclude_fields = [f.strip() for f in exclude_raw.split(",") if f.strip()] if exclude_raw else []
+        if exclude_fields == ["*"]:
+            tile_cmd.append("--exclude-all")
+        else:
+            for field in exclude_fields:
+                tile_cmd.extend(["--exclude", field])
         for orig_name, safe_name, geojsonseq_path in extracted:
             tile_cmd.extend(["-L", f"{safe_name}:{geojsonseq_path}"])
 

@@ -130,6 +130,9 @@ async def handle_internal_task(request: Request, background_tasks: BackgroundTas
         "MODEL_B64": payload.get("dataModelB64"),
         "FORMAT": payload.get("format", "all"),
         "TABLES": payload.get("tables"),
+        "EXCLUDE_ATTRIBUTES": ",".join(payload.get("excludeAttributes") or [])
+            if isinstance(payload.get("excludeAttributes"), list)
+            else (payload.get("excludeAttributes") or ""),
     }
 
     # Inject S3 credentials if passed (proxy worker often passes these)
