@@ -192,6 +192,11 @@ def main():
         for l in all_layers:
             tables_to_process.append((l, to_safe_name(l)))
 
+    exclude_layers_raw = os.environ.get("EXCLUDE_LAYERS", "").strip()
+    if exclude_layers_raw:
+        excluded = {l.strip() for l in exclude_layers_raw.split(",") if l.strip()}
+        tables_to_process = [(orig, safe) for orig, safe in tables_to_process if orig not in excluded]
+
     if not tables_to_process:
         print(f"[tiles] ERROR: No layers found to process in {src_conn}", file=sys.stderr)
         sys.exit(1)

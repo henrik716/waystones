@@ -133,6 +133,9 @@ async def handle_internal_task(request: Request, background_tasks: BackgroundTas
         "EXCLUDE_ATTRIBUTES": ",".join(payload.get("excludeAttributes") or [])
             if isinstance(payload.get("excludeAttributes"), list)
             else (payload.get("excludeAttributes") or ""),
+        "EXCLUDE_LAYERS": ",".join(payload.get("excludeLayerNames") or [])
+            if isinstance(payload.get("excludeLayerNames"), list)
+            else (payload.get("excludeLayerNames") or ""),
     }
 
     # Inject S3 credentials if passed (proxy worker often passes these)
