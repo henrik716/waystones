@@ -49,17 +49,17 @@
       top: 0;
       z-index: 1030;
     }
-    .navbar-brand { 
-      font-weight: 800; 
-      font-size: 1.25rem; 
-      letter-spacing: -0.02em; 
-      color: var(--brand) !important;
+    .navbar-brand {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      color: var(--header-text, var(--brand)) !important;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
     .nav-link {
-      color: var(--brand) !important;
+      color: var(--header-text, var(--brand)) !important;
       font-weight: 600;
       padding: 0.5rem 1rem !important;
       border-radius: 9999px;
@@ -184,7 +184,7 @@
     /* Footer */
     footer.gf-footer {
       border-top: 1px solid #e2e8f0;
-      color: #64748b;
+      color: var(--footer-text, #64748b);
       font-size: 0.875rem;
       padding: 2rem 0;
       margin-top: 4rem;
@@ -210,8 +210,14 @@
         {% if config.branding.get('header_color') %}
         --header-bg: {{ config.branding.header_color }};
         {% endif %}
+        {% if config.branding.get('header_text_color') %}
+        --header-text: {{ config.branding.header_text_color }};
+        {% endif %}
         {% if config.branding.get('footer_color') %}
         --footer-bg: {{ config.branding.footer_color }};
+        {% endif %}
+        {% if config.branding.get('footer_text_color') %}
+        --footer-text: {{ config.branding.footer_text_color }};
         {% endif %}
       }
   </style>
@@ -354,7 +360,7 @@
     <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
       <span>Powered by <a href="https://pygeoapi.io" class="fw-bold">pygeoapi</a> {{ version }}</span>
       {% if config.get('branding') and config.branding.get('footer_tagline') %}
-      <span style="color: var(--brand); font-weight: 500;">{{ config.branding.footer_tagline }}</span>
+      <span style="color: var(--footer-text, var(--brand)); font-weight: 500;">{{ config.branding.footer_tagline }}</span>
       {% endif %}
       <a href="https://waystones.app" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;font-weight:500;transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
         <span style="display:inline-flex;width:24px;height:24px;">
