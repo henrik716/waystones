@@ -252,6 +252,135 @@ def snapshot_table(pg_conn: str, full_name: str, geom_col: str, safe_name: str, 
     return out_path
 
 # ---------------------------------------------------------------------------
+# Sidecar computation
+# ---------------------------------------------------------------------------
+
+def compute_sidecar(parquet_path: str, hint_geom_col: str = "geom", hint_id_col: str = "fid") -> dict | None:
+    """Compute MetaSidecar data from a local parquet file. Returns None on failure."""
+    import duckdb
+    import datetime
+    try:
+        ext_dir = os.environ.get("DUCKDB_EXTENSION_DIRECTORY", "/duckdb-extensions")
+        conn = duckdb.connect(":memory:")
+        conn.execute(f"SET extension_directory='{ext_dir}'")
+        conn.execute("LOAD spatial")
+
+        schema = conn.execute(
+            f"DESCRIBE SELECT * FROM read_parquet('{parquet_path}') LIMIT 0"
+        ).fetchall()
+        schema_names_lower = {r[0].lower() for r in schema}
+
+        # Resolve geometry column: prefer hint, then first GEOMETRY column, then first BLOB
+        geom_type_map = {r[0].upper(): r[1].upper() for r in schema}
+        geom_col = hint_geom_col
+        if hint_geom_col.upper() not in geom_type_map:
+            for r in schema:
+                if r[1].upper().startswith("GEOMETRY"):
+                    geom_col = r[0]
+                    break
+            else:
+                for r in schema:
+                    if r[1].upper() == "BLOB":
+                        geom_col = r[0]
+                        break
+
+        # Resolve id column: prefer hint, then heuristic candidates, then first INT
+        id_col = hint_id_col
+        if hint_id_col.lower() not in schema_names_lower:
+            for candidate in ("fid", "id", "gid", "objectid", "feature_id"):
+                if candidate in schema_names_lower:
+                    id_col = candidate
+                    break
+            else:
+                for r in schema:
+                    if "INT" in r[1].upper():
+                        id_col = r[0]
+                        break
+
+        # Detect geom_is_native: spatial extension auto-converts WKB → GEOMETRY
+        geom_type = geom_type_map.get(geom_col.upper(), "BLOB")
+        geom_is_native = geom_type.startswith("GEOMETRY")
+
+        # Detect bbox column style
+        flat_cols = {"bbox_xmin", "bbox_ymin", "bbox_xmax", "bbox_ymax"}
+        if flat_cols.issubset(schema_names_lower):
+            bbox_cols_style = "flat"
+        elif "bbox" in schema_names_lower:
+            bbox_cols_style = "struct"
+        else:
+            bbox_cols_style = ""
+
+        # Feature count
+        feature_count = conn.execute(
+            f"SELECT COUNT(*) FROM read_parquet('{parquet_path}')"
+        ).fetchone()[0]
+
+        # Extent via spatial functions
+        extent_row = conn.execute(f"""
+            SELECT
+                MIN(ST_XMin({geom_col})), MIN(ST_YMin({geom_col})),
+                MAX(ST_XMax({geom_col})), MAX(ST_YMax({geom_col}))
+            FROM read_parquet('{parquet_path}')
+        """).fetchone()
+
+        # Queryable fields (excluding geometry, id, bbox internals)
+        skip_types = {"GEOMETRY", "BLOB", "POINT", "MULTIPOINT", "LINESTRING",
+                      "MULTILINESTRING", "POLYGON", "MULTIPOLYGON", "GEOMETRYCOLLECTION"}
+        bbox_excl = {"bbox", "bbox_xmin", "bbox_ymin", "bbox_xmax", "bbox_ymax"}
+
+        def duck_to_sidecar_type(t: str) -> str | None:
+            t = t.upper().strip()
+            if any(t.startswith(s) for s in skip_types):
+                return None
+            if t in ("INTEGER", "INT", "INT4", "SIGNED", "BIGINT", "INT8", "LONG",
+                     "HUGEINT", "UBIGINT", "SMALLINT", "INT2", "SHORT",
+                     "TINYINT", "INT1", "UINTEGER", "USMALLINT", "UTINYINT"):
+                return "integer"
+            if (any(t.startswith(x) for x in ("DOUBLE", "FLOAT", "DECIMAL", "NUMERIC"))
+                    or t == "REAL"):
+                return "number"
+            if t in ("BOOLEAN", "BOOL", "LOGICAL"):
+                return "boolean"
+            if t.startswith("TIMESTAMP") or t.startswith("DATE"):
+                return "datetime"
+            return "string"
+
+        queryables = []
+        datetime_col = None
+        for col_name, col_type, *_ in schema:
+            lower = col_name.lower()
+            if lower in (geom_col.lower(), id_col.lower()) or lower in bbox_excl:
+                continue
+            stype = duck_to_sidecar_type(col_type)
+            if stype is None:
+                continue
+            queryables.append({"name": col_name, "type": stype})
+            if stype == "datetime" and datetime_col is None:
+                datetime_col = col_name
+
+        return {
+            "version": 1,
+            "generated_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "extent": {
+                "minx": extent_row[0] if extent_row[0] is not None else -180.0,
+                "miny": extent_row[1] if extent_row[1] is not None else -90.0,
+                "maxx": extent_row[2] if extent_row[2] is not None else 180.0,
+                "maxy": extent_row[3] if extent_row[3] is not None else 90.0,
+            },
+            "feature_count": feature_count,
+            "geom_column": geom_col,
+            "id_column": id_col,
+            "geom_is_native": geom_is_native,
+            "bbox_cols_style": bbox_cols_style,
+            "datetime_column": datetime_col,
+            "queryables": queryables,
+        }
+    except Exception as e:
+        print(f"[snapshot] Warning: sidecar computation failed for {parquet_path}: {e}", flush=True)
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Parquet conversion (reads from reprojected FGB — no S3 logic here)
 # ---------------------------------------------------------------------------
 
@@ -411,6 +540,16 @@ def main() -> None:
 
             print(f"[snapshot] Converting '{safe_name}' → parquet ...", flush=True)
             convert_to_parquet(fgb_path, safe_name, fgb_dir)
+
+            parquet_path = os.path.join(fgb_dir, f"{safe_name}.parquet")
+            if os.path.exists(parquet_path):
+                print(f"[snapshot] Computing sidecar for {safe_name} ...", flush=True)
+                sidecar = compute_sidecar(parquet_path)
+                if sidecar:
+                    sidecar_path = parquet_path + ".meta.json"
+                    with open(sidecar_path, "w") as sf:
+                        json.dump(sidecar, sf)
+                    print(f"[snapshot] Sidecar written: {safe_name}.parquet.meta.json", flush=True)
 
             manifest_layers.append({"name": full_name, "safe_name": safe_name})
             print(f"[snapshot] Table '{full_name}' done.", flush=True)
