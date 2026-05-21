@@ -103,7 +103,7 @@ An open dataset showing high performance on-demand tile and catalog services:
 | 🌍 **OGC API Features (OAPIF)** | <a href="https://demo.waystones.cloud" target="_blank" rel="noopener noreferrer">demo.waystones.cloud</a> | Interactive landing page & REST API features |
 | 🗺️ **Viewer Tiles** | <a href="https://demo.waystones.cloud/tiles" target="_blank" rel="noopener noreferrer">demo.waystones.cloud/tiles</a> | Interactive map viewer in the browser |
 | 🎨 **QGIS Vector Tiles** | <a href="https://demo.waystones.cloud/tiles/demo.styles.json" target="_blank" rel="noopener noreferrer">demo.waystones.cloud/tiles/demo.styles.json</a> | Direct Vector Tile Style URL for QGIS connection |
-| 🪟 **STAC Browser** | <a href="https://demo.waystones.cloud/stac/" target="_blank" rel="noopener noreferrer">demo.waystones.cloud/stac/</a> | Visual SpatioTemporal Asset Catalog |
+| 🪟 **STAC Browser** | <a href="https://demo.waystones.cloud/stac" target="_blank" rel="noopener noreferrer">demo.waystones.cloud/stac</a> | Visual SpatioTemporal Asset Catalog |
 | 📂 **STAC API Catalog** | <a href="https://demo.waystones.cloud/stac/catalog.json" target="_blank" rel="noopener noreferrer">demo.waystones.cloud/stac/catalog.json</a> | Queryable STAC API catalog endpoint |
 
 ---
@@ -121,7 +121,7 @@ A protected dataset requiring authentication via API Key:
 | 🌍 **OGC API Features (OAPIF)** | <a href="https://demo-private.waystones.cloud" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud</a> | Secured landing page & REST API features |
 | 🗺️ **Viewer Tiles** | <a href="https://demo-private.waystones.cloud/tiles" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud/tiles</a> | Secured interactive map viewer in the browser |
 | 🎨 **QGIS Vector Tiles** | <a href="https://demo-private.waystones.cloud/tiles/demo-private.styles.json" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud/tiles/demo-private.styles.json</a> | Secured Vector Tile Style URL for QGIS connection |
-| 🪟 **STAC Browser** | <a href="https://demo-private.waystones.cloud/stac/" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud/stac/</a> | Secured SpatioTemporal Asset Catalog browser |
+| 🪟 **STAC Browser** | <a href="https://demo-private.waystones.cloud/stac" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud/stac</a> | Secured SpatioTemporal Asset Catalog browser |
 | 📂 **STAC API Catalog** | <a href="https://demo-private.waystones.cloud/stac/catalog.json" target="_blank" rel="noopener noreferrer">demo-private.waystones.cloud/stac/catalog.json</a> | Secured STAC API catalog endpoint |
 
 ---
