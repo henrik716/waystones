@@ -1,25 +1,24 @@
 services:
-  pygeoapi:
-    image: ghcr.io/waystones-nexus/waystones-keystone:pygeoapi-latest
+  oapif:
+    image: ghcr.io/waystones-nexus/oapif-go:latest
     ports:
       - "5000:5000"
     environment:
-      # Point to your pygeoapi config file mounted below.
-      PYGEOAPI_CONFIG: /pygeoapi/local.config.yml
-      WAYSTONES_MODE: open-source
-      # Optional: base64-encode your config and pass it here instead of mounting.
-      # PYGEOAPI_CONFIG_B64: <base64-encoded pygeoapi-config.yml>
+      SERVER_URL: http://localhost:5000
+      IS_PRIVATE: "0"
     volumes:
-      - ./pygeoapi-config.yml:/pygeoapi/local.config.yml:ro
-      # For GeoPackage sources: mount your data directory
-      # - ./data:/data:ro
+      - ./config.json:/config.json:ro
+    # S3 credentials — required. Set via .env or environment:
+    # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_ENDPOINT
+    env_file:
+      - path: .env
+        required: false
 
   qgis:
     image: ghcr.io/waystones-nexus/waystones-keystone:qgis-latest
     ports:
       - "8080:80"
     environment:
-      QGIS_PROJECT_B64: ""  # base64-encoded .qgs project file
       WAYSTONES_MODE: open-source
     profiles:
       - wms  # only started with: docker compose --profile wms up

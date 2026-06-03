@@ -20,9 +20,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - context: docker/pygeoapi
-            tag: minimal
-            target: minimal
           - context: docker/qgis
             tag: qgis
           - context: docker/worker
@@ -57,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          tags: ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:xyz
+          tags: ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:2026-06-04x
           target: ${{ matrix.target }}
           load: true
           push: false
@@ -70,4 +67,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
-          command: containers push ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:xyz
+          command: containers push ${{ steps.repo_info.outputs.image_repo }}-${{ matrix.tag }}:2026-06-04x

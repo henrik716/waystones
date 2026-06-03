@@ -13,7 +13,7 @@ import {
   S3StorageConfig
 } from '../types';
 import { toTableName } from '../utils/nameSanitizer';
-import { generatePygeoapiConfig } from '../utils/deployUtils';
+import { generateOapifGoConfig } from '../utils/deployUtils';
 import { InferredDataSummary } from '../utils/importUtils';
 import { useDragAndDropReorder } from '../hooks/useDragAndDropReorder';
 import { useRenderingOrder } from '../hooks/useRenderingOrder';
@@ -230,7 +230,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
     const generatePreview = async () => {
       if (source) {
         try {
-          const yaml = await generatePygeoapiConfig(model, source, lang);
+          const yaml = generateOapifGoConfig(model, source);
           setPreviewYaml(yaml);
         } catch {
           setPreviewYaml('');

@@ -1,21 +1,12 @@
 import {
   DataModel, SourceConnection, DeployTarget
 } from '../../types';
-import { generatePygeoapiConfig } from './pygeoapi';
+import { generateOapifGoConfig } from './oapifgo';
 import { generateQgisProject, generateRailwayQgisJson } from './qgis';
 import { generateEnvFile, generateDockerCompose, generateRailwayJson } from './infra';
 import { generateReadmeForTarget, generateWorkflowForTarget } from './readme';
 import { scrubModelForExport } from '../modelUtils';
 import * as railwayTemplates from './railway-templates';
-import {
-  generatePygeoapiTheme,
-  generateIndexHtml,
-  generateCollectionsHtml,
-  generateCollectionHtml,
-  generateItemsHtml,
-  generateItemHtml,
-  generateQueryablesHtml,
-} from './pygeoapi-theme';
 import { hasS3Config, getGpkgFilename } from './_helpers';
 
 
@@ -32,13 +23,13 @@ export const generateDeployFiles = async (
   const hasWms = model.layers.some(l => l.geometryType !== 'None');
 
   const scrubbedModel = scrubModelForExport(model);
-  const pygeoapiYaml = await generatePygeoapiConfig(model, source, lang);
+  const oapifGoConfig = generateOapifGoConfig(model, source);
 
   const files: Record<string, string> = {
     'model.json': JSON.stringify(scrubbedModel, null, 2),
-    'pygeoapi-config.yml': pygeoapiYaml,
+    'oapif-go-config.json': oapifGoConfig,
     '.env.template': generateEnvFile(source),
-    '.gitignore': '.env\n__pycache__/\n',
+    '.gitignore': '.env\n',
     '.dockerignore': 'node_modules\ndist\n.git\n.venv\nvenv\ntmp\n*.local\n.env\n.env.*\n!.env.example\n',
     'README.md': generateReadmeForTarget(model, source, target, lang),
     '.github/workflows/deploy.yml': generateWorkflowForTarget(model, source, target),
@@ -58,27 +49,15 @@ export const generateDeployFiles = async (
       files['railway.qgis.json'] = generateRailwayQgisJson(model, source);
     }
 
-    // Branded HTML templates baked into the deploy kit
-    files['docker/pygeoapi/html-templates/_base.html'] = generatePygeoapiTheme(model);
-    files['docker/pygeoapi/html-templates/landing_page.html'] = generateIndexHtml(model);
-    files['docker/pygeoapi/html-templates/collections/index.html'] = generateCollectionsHtml(model);
-    files['docker/pygeoapi/html-templates/collections/collection.html'] = generateCollectionHtml(model);
-    files['docker/pygeoapi/html-templates/collections/items/index.html'] = generateItemsHtml(model);
-    files['docker/pygeoapi/html-templates/collections/items/item.html'] = generateItemHtml(model);
-    files['docker/pygeoapi/html-templates/collections/queryables.html'] = generateQueryablesHtml(model);
-
-    // Include Docker/Railway infra for a self-contained kit
     const isLocalGpkg = source.type === 'geopackage' && !hasS3Config(source);
     const gpkgFilename = isLocalGpkg ? getGpkgFilename(model, source) : undefined;
     files['docker/railway/Dockerfile'] = railwayTemplates.generateDockerfile(isLocalGpkg, gpkgFilename);
-    files['docker/railway/railway-boot.sh'] = railwayTemplates.railwayBoot;
 
     if (hasWms) {
       files['docker/railway/Dockerfile.qgis'] = railwayTemplates.dockerfileQgis;
       files['docker/railway/qgis-boot.sh'] = railwayTemplates.qgisBoot;
     }
 
-    // Include worker scripts needed by the Dockerfiles
     files['docker/worker/main.py'] = railwayTemplates.workerMain;
     files['docker/worker/gpkg-converter.py'] = railwayTemplates.workerGpkgConverter;
     files['docker/worker/postgis-snapshot.py'] = railwayTemplates.workerPostgisSnapshot;

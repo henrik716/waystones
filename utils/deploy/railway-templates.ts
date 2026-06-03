@@ -5,65 +5,19 @@
  * These are included in the deployment export when the Railway target is selected.
  */
 
-export function generateDockerfile(isGpkg: boolean, gpkgFilename?: string): string {
-  const gpkgSync = (isGpkg && gpkgFilename) ? ` && \\
-    # 3. Copy GeoPackage if present
-    mkdir -p /input && \\
-    if [ -f /tmp/build-context/data/${gpkgFilename} ]; then \\
-        cp /tmp/build-context/data/${gpkgFilename} /input/data.gpkg; \\
-    fi` : '';
+// isGpkg / gpkgFilename are unused for oapif-go (data stays in S3),
+// kept in the signature for backwards compatibility.
+export function generateDockerfile(_isGpkg: boolean, _gpkgFilename?: string): string {
+  return `FROM ghcr.io/waystones-nexus/oapif-go:latest
 
-  return `FROM ghcr.io/waystones-nexus/waystones-keystone:pygeoapi-latest
+# Configuration — oapif-go reads this at startup via CONFIG_PATH.
+COPY oapif-go-config.json /config.json
 
-USER root
-
-# 1. Prevent apt-get from hanging on interactive prompts (like tzdata)
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install dependencies (cached)
-RUN apt-get update && apt-get install -y --no-install-recommends \\
-    gdal-bin \\
-    libgdal-dev \\
-    libpq5 \\
-    curl \\
-    unzip \\
-    && rm -rf /var/lib/apt/lists/*
-
-# 2. Install AWS CLI (added -q to unzip to prevent log-choking)
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip \\
-    && unzip -q /tmp/awscliv2.zip -d /tmp \\
-    && /tmp/aws/install \\
-    && rm -rf /tmp/awscliv2.zip /tmp/aws
-
-WORKDIR /app
-
-# Direct COPY is faster and more reliable than the 'COPY .' sync logic.
-# These folders are part of the well-defined Deployment Kit structure.
-COPY docker/worker/*.py /app/worker/
-COPY docker/railway/railway-boot.sh /railway-boot.sh
-RUN chmod +x /railway-boot.sh
-
-# Templates aligned with the export process (entry-point.ts)
-COPY docker/pygeoapi/html-templates/ /pygeoapi/local-templates/
-
-# Configuration
-COPY model.json /app/model.json
-COPY pygeoapi-config.yml /pygeoapi/local.config.yml
-
-# We only use the build context sync for the optional data folder to keep it fast.
-COPY . /tmp/build-context
-RUN mkdir -p /data /app/data-sync && \\
-    # 1. Sync Data
-    if [ -d /tmp/build-context/data ] && [ "$(ls -A /tmp/build-context/data 2>/dev/null)" ]; then \\
-        cp -r /tmp/build-context/data/* /app/data-sync/ || true; \\
-    fi${gpkgSync} && \\
-    rm -rf /tmp/build-context
-
-# Default env vars
+# Default env vars (Railway overrides PORT automatically)
 ENV PORT=80
-ENV PYGEOAPI_SERVER_URL=http://localhost:5000
+ENV CONFIG_PATH=/config.json
 
-ENTRYPOINT ["/railway-boot.sh"]
+# oapif-go binary is the entrypoint — no boot script needed.
 `;
 }
 

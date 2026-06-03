@@ -1,7 +1,6 @@
 // Re-export all public functions from sub-modules
 
-export * from './pygeoapi';
-export * from './pygeoapi-theme';
+export * from './oapifgo';
 export * from './qgis';
 export * from './delta';
 export * from './infra';

@@ -37,41 +37,42 @@ const renderHeader = (ctx: RenderContext): string => {
 // Section: Architecture (Text Diagram)
 // ============================================================
 const renderArchitecture = (ctx: RenderContext): string => {
-  const { model, source, s, isGpkg, hasWms } = ctx;
-  
+  const { model, source, s, isGpkg, hasWms, target } = ctx;
+
   const layerNames = model.layers
     .filter(l => l.geometryType !== 'None')
     .map(l => l.name.toLowerCase().replace(/\s+/g, '_'));
-  
-  const sourceName = isGpkg ? getGpkgFilename(model, source) : (source.type === 'supabase' ? 'Supabase' : 'PostGIS');
-  
+
   let md = `## 🏗 ${s.snapshotArchTitle}\n\n`;
   md += `${s.snapshotArchDesc}\n\n`;
-  
+
   md += '```text\n';
   md += `[ 1. CONVERSION ]\n`;
-  md += `Snapshot Worker ──┬──> [ Snapshot ] ──> GeoParquet & FlatGeobuf (Storage)\n`;
+  md += `Snapshot Worker ──┬──> [ Snapshot ] ──> GeoParquet & FlatGeobuf\n`;
   md += `(DuckDB/GDAL)     ├──> [ Tiles    ] ──> PMTiles (Vector Tiles)\n`;
   md += `                  └──> [ STAC     ] ──> STAC Catalog (Metadata)\n\n`;
-  
-  md += `[ 2. STARTUP (boot.sh) ]\n`;
-  md += `Container Start ──┬──> [ Fast Path ] ─> Download pre-baked OpenAPI cache\n`;
-  md += `                  ├──> [ Slow Path ] ─> Serve placeholder + Background generation\n`;
-  md += `                  ├──> [ Gunicorn  ] ─> EXECs pygeoapi (Internal Port 5001)\n`;
-  md += `                  └──> [ Warmup    ] ─> Background DuckDB/Parquet pre-warming (5s delay)\n\n`;
-  
-  md += `[ 3. SERVING ]\n`;
+
+  if (target === 'docker-compose') {
+    md += `[ 2. STORAGE ]\n`;
+    md += `GeoParquet ──────────> MinIO (local S3) ──> oapif-go reads Parquet\n`;
+    if (hasWms) {
+      md += `FlatGeobuf ──────────> local volume    ──> QGIS Server reads .fgb\n`;
+    }
+    md += `\n`;
+  }
+
+  md += `[ ${target === 'docker-compose' ? '3' : '2'}. SERVING ]\n`;
   if (layerNames.length > 0) {
     const firstLayer = layerNames[0];
-    md += `pygeoapi (DuckDB) ───> [ GeoParquet ] ───> OGC API Features (${firstLayer})\n`;
+    md += `oapif-go (DuckDB) ───> [ GeoParquet ] ───> OGC API Features (${firstLayer})\n`;
     if (hasWms) {
-      md += `QGIS Server       ───> [ FlatGeobuf ] ───> WMS (${firstLayer})\n`;
+      md += `QGIS Server       ───> [ FlatGeobuf ] ───> WMS at /ows/ (${firstLayer})\n`;
     }
     md += `Static Tiles      ───> [ .pmtiles   ] ───> Vector Tiles (${firstLayer})\n`;
   } else {
-    md += `pygeoapi (DuckDB) ───> [ GeoParquet ] ───> OGC API Features\n`;
+    md += `oapif-go (DuckDB) ───> [ GeoParquet ] ───> OGC API Features\n`;
     if (hasWms) {
-      md += `QGIS Server       ───> [ FlatGeobuf ] ───> WMS\n`;
+      md += `QGIS Server       ───> [ FlatGeobuf ] ───> WMS at /ows/\n`;
     }
     md += `Static Tiles      ───> [ .pmtiles   ] ───> Vector Tiles\n`;
   }
@@ -81,7 +82,10 @@ const renderArchitecture = (ctx: RenderContext): string => {
   md += `| Component | Role | Description |\n`;
   md += `|---|---|---|\n`;
   md += `| **${s.workerService}** | \`worker\` | ${s.workerDesc} |\n`;
-  md += `| **${s.apiService}** | \`pygeoapi\` | ${s.apiDesc} |\n`;
+  if (target === 'docker-compose') {
+    md += `| **Object storage** | \`minio\` | Local S3-compatible storage for Parquet files (replace with R2/S3 in production) |\n`;
+  }
+  md += `| **${s.apiService}** | \`oapif\` | ${s.apiDesc} |\n`;
   if (hasWms) {
     md += `| **${s.wmsService}** | \`qgis-server\` | ${s.wmsDesc} |\n`;
   }
@@ -89,7 +93,7 @@ const renderArchitecture = (ctx: RenderContext): string => {
     md += `| **${s.deltaService}** | \`delta-worker\` | ${s.deltaWorkerDesc} |\n`;
   }
   md += '\n---\n\n';
-  
+
   return md;
 };
 
@@ -183,7 +187,7 @@ const renderEnvironmentVariables = (ctx: RenderContext): string => {
   md += `### 🌐 Server Configuration\n\n`;
   md += `| Variable | Description | Example |\n`;
   md += `|---|---|---|\n`;
-  md += `| \`PYGEOAPI_SERVER_URL\` | ${s.envDesc_PYGEOAPI_SERVER_URL} | \`https://api.example.com\` |\n`;
+  md += `| \`SERVER_URL\` | ${s.envDesc_PYGEOAPI_SERVER_URL} | \`https://api.example.com\` |\n`;
   md += `| \`QGIS_SERVER_PUBLIC_URL\` | ${s.envDesc_QGIS_SERVER_PUBLIC_URL} | \`https://api.example.com/ows/\` |\n`;
   md += `| \`PORT\` | ${s.envDesc_PORT} | \`5000\` |\n\n`;
 
@@ -274,7 +278,7 @@ const renderFiles = (ctx: RenderContext): string => {
     md += `| \`railway.json\` | ${s.railwayJsonFile} |\n`;
     if (hasWms) md += `| \`railway.qgis.json\` | ${s.railwayQgisJsonFile} |\n`;
   }
-  md += `| \`pygeoapi-config.yml\` | ${isPg ? s.pygeoapiPgFile : s.pygeoapiGpkgFile} |\n`;
+  md += `| \`oapif-go-config.json\` | oapif-go collection config (auto-generated) |\n`;
   if (hasWms) md += `| \`project.qgs\` | ${s.qgisProjectFile} |\n`;
   if (!isGpkg) md += `| \`delta_export.py\` | ${s.deltaScriptFile} |\n`;
   md += `| \`.env.template\` | ${s.envTemplateFile} |\n`;
@@ -331,10 +335,10 @@ export const generateGithubActionsWorkflow = (
   const slug = model.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   let workflow = 'name: Deploy ' + model.name + '\n\n';
-  workflow += 'on:\n  push:\n    branches: [main]\n    paths:\n      - \'docker-compose.yml\'\n      - \'pygeoapi-config.yml\'\n      - \'project.qgs\'\n      - \'model.json\'\n      - \'.github/workflows/deploy.yml\'\n\n';
+  workflow += 'on:\n  push:\n    branches: [main]\n    paths:\n      - \'docker-compose.yml\'\n      - \'oapif-go-config.json\'\n      - \'project.qgs\'\n      - \'model.json\'\n      - \'.github/workflows/deploy.yml\'\n\n';
   workflow += 'env:\n  SERVICE_NAME: ' + slug + '\n\n';
   workflow += 'jobs:\n  validate:\n    name: Validate configuration\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n';
-  workflow += '      - name: Validate pygeoapi config\n        run: |\n          python3 -c "\n          import yaml, sys\n          with open(\'pygeoapi-config.yml\') as f:\n              config = yaml.safe_load(f)\n          if not config.get(\'resources\'):\n              sys.exit(1)\n          "\n';
+  workflow += '      - name: Validate oapif-go config\n        run: |\n          python3 -c "\n          import json, sys\n          with open(\'oapif-go-config.json\') as f:\n              config = json.load(f)\n          if not config.get(\'collections\'):\n              sys.exit(1)\n          "\n';
   workflow += '  deploy:\n    name: Deploy services\n    needs: validate\n    runs-on: ubuntu-latest\n    environment: production\n    steps:\n      - uses: actions/checkout@v4\n      - name: Deploy via SSH\n        uses: appleboy/ssh-action@v1\n        with:\n          host: ${{ secrets.DEPLOY_HOST }}\n          username: ${{ secrets.DEPLOY_USER }}\n          key: ${{ secrets.DEPLOY_SSH_KEY }}\n          script: |\n            cd /opt/services/' + slug + '\n            git pull origin main\n            docker compose pull\n            docker compose up -d --remove-orphans\n';
 
   return workflow;
@@ -349,7 +353,7 @@ export const generateWorkflowForTarget = (
     const hasWms = model.layers.some(l => l.geometryType !== 'None');
     let workflow = 'name: Validate ' + model.name + '\non:\n  push:\n    branches: [main]\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n';
     workflow += '      - name: Validate railway.json\n        run: |\n          python3 -c "\n          import json\n          with open(\'railway.json\') as f:\n              config = json.load(f)\n          assert config.get(\'build\', {}).get(\'builder\'), \'railway.json missing build.builder\'\n          "\n';
-    workflow += '      - name: Validate pygeoapi config\n        run: |\n          python3 -c "\n          import yaml, sys\n          with open(\'pygeoapi-config.yml\') as f:\n              config = yaml.safe_load(f)\n          if not config.get(\'resources\'):\n              print(\'ERROR: pygeoapi-config.yml must have resources key\')\n              sys.exit(1)\n          "\n';
+    workflow += '      - name: Validate oapif-go config\n        run: |\n          python3 -c "\n          import json, sys\n          with open(\'oapif-go-config.json\') as f:\n              config = json.load(f)\n          if not config.get(\'collections\'):\n              print(\'ERROR: oapif-go-config.json must have a collections key\')\n              sys.exit(1)\n          "\n';
     if (hasWms) {
       workflow += '      - name: Validate QGIS project exists\n        run: test -f project.qgs || (echo "ERROR: project.qgs not found for WMS layers" && exit 1)\n';
     }
