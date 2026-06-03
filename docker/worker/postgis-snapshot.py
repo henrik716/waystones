@@ -358,6 +358,22 @@ def compute_sidecar(parquet_path: str, hint_geom_col: str = "geom", hint_id_col:
             if stype == "datetime" and datetime_col is None:
                 datetime_col = col_name
 
+        # Detect simplified geometry type by sampling one row
+        geometry_type = "polygon"
+        try:
+            gt_row = conn.execute(f"""
+                SELECT GeometryType({geom_col}) FROM read_parquet('{parquet_path}')
+                WHERE {geom_col} IS NOT NULL LIMIT 1
+            """).fetchone()
+            if gt_row and gt_row[0]:
+                t = gt_row[0].upper()
+                if "POINT" in t:
+                    geometry_type = "point"
+                elif "LINE" in t or "STRING" in t:
+                    geometry_type = "line"
+        except Exception:
+            pass
+
         return {
             "version": 1,
             "generated_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -372,6 +388,7 @@ def compute_sidecar(parquet_path: str, hint_geom_col: str = "geom", hint_id_col:
             "id_column": id_col,
             "geom_is_native": geom_is_native,
             "bbox_cols_style": bbox_cols_style,
+            "geometry_type": geometry_type,
             "datetime_column": datetime_col,
             "queryables": queryables,
         }
