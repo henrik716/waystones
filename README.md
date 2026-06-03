@@ -13,7 +13,7 @@
 
 ---
 
-Waystones converts geospatial data models into production-ready OGC API and WMS services. The tool generates deployment kits that use a snapshot architecture: source data (GeoPackage, PostGIS) is converted once to static GeoParquet and FlatGeobuf files, which are then served by pygeoapi and QGIS Server respectively.
+Waystones converts geospatial data models into production-ready OGC API and WMS services. The tool generates deployment kits that use a snapshot architecture: source data (GeoPackage, PostGIS) is converted once to static GeoParquet and FlatGeobuf files, which are then served by oapif-go and QGIS Server respectively.
 
 ## ✨ Key Features
 
@@ -26,7 +26,7 @@ Waystones converts geospatial data models into production-ready OGC API and WMS 
 
 ### 🍱 Deployment Kit Generation
 **Generate production-ready OGC API, WMS, and Vector Tile services.**
-- **Automated Configuration**: Generates `pygeoapi` (REST) and **QGIS Server** (WMS) configurations.
+- **Automated Configuration**: Generates `oapif-go` (REST) and **QGIS Server** (WMS) configurations.
 - **Cloud-Optimized Streaming**: Kits serve static GeoParquet/FlatGeobuf from local disk or stream directly from S3/R2 via HTTP Range Requests. No heavy database connections.
 - **STAC Generation**: Automated **STAC** (SpatioTemporal Asset Catalog) generation for searchable metadata catalogs.
 - **High-Performance Tiles**: Built-in **tippecanoe** integration for generating optimized **PMTiles** (vector tiles).
@@ -54,7 +54,7 @@ Connect Claude or Gemini to auto-generate metadata, field descriptions, and infe
 | **Mapping** | MapLibre GL, Leaflet |
 | **Icons** | Lucide React |
 | **Sources** | PostGIS (pg), Supabase, GeoPackage |
-| **Engines** | pygeoapi, QGIS Server |
+| **Engines** | oapif-go, QGIS Server |
 | **Deployment** | Docker, Railway, GitHub Actions |
 
 ## 🚀 Getting Started
@@ -136,44 +136,32 @@ Snapshot Worker ──┬──> [ Snapshot ] ──> GeoParquet & FlatGeobuf (R
 (DuckDB/GDAL)     ├──> [ Tiles    ] ──> PMTiles (Vector Tiles)
                   └──> [ STAC     ] ──> STAC Catalog (Metadata)
 
-[ 2. STARTUP (boot.sh) ]
-Container Start ──┬──> [ Fast Path ] ─> Download pre-baked OpenAPI cache
-                  ├──> [ Slow Path ] ─> Serve placeholder + Background generation
-                  ├──> [ Gunicorn  ] ─> EXECs pygeoapi (Internal Port 5001)
-                  └──> [ Warmup    ] ─> Background DuckDB/Parquet pre-warming (5s delay)
-
-[ 3. SERVING ]
-pygeoapi (DuckDB) ───> [ GeoParquet ] ───> OGC API Features (N-workers)
+[ 2. SERVING ]
+oapif-go (DuckDB) ───> [ GeoParquet ] ───> OGC API Features
 QGIS Server       ───> [ FlatGeobuf ] ───> WMS (Fast CGI)
 Static Tiles      ───> [ .pmtiles   ] ───> Vector Tiles (MapLibre GL)
 ```
 
-The conversion worker typically runs once on first boot or during a CI/CD build, persisting data to immutable storage. pygeoapi and QGIS Server then read those static files at serve time.
+The conversion worker runs once on first boot or during a CI/CD build, writing Parquet and FlatGeobuf to object storage. oapif-go and QGIS Server read those static files at serve time — no live database connection required.
 
 ### 🚀 Key Components
 
-- **Hybrid Boot Strategy**: 
-  - **Fast Path**: In SaaS environments, containers download a pre-baked OpenAPI document for instant service availability.
-  - **Slow Path**: In local development, a placeholder is served while the document is generated in the background.
-- **Background Warm-up**: The `warmup.py` process runs as a low-priority background task to pre-fill DuckDB caches and fetch Parquet footers from S3/R2, ensuring sub-second response times even on cold boots.
-- **Snapshot Worker**: Automated conversion pipeline (GDAL/DuckDB) that transforms live databases or GeoPackages into optimized static formats, enabling the snapshot architecture.
-- Dual Engines:
-
-pygeoapi: High-performance RESTful access via DuckDB, reading GeoParquet via zero-copy streaming (over network or local storage).
-
-QGIS Server: High-fidelity map rendering serving FlatGeobuf natively from cloud storage or local disk.
+- **oapif-go**: High-performance Go OGC API Features server backed by DuckDB. Sub-300ms cold starts, reads GeoParquet directly from S3/R2 via HTTP Range Requests. Includes a Caddy sidecar for TLS, optional API key authentication, and WMS proxy routing.
+- **Snapshot Worker**: Automated conversion pipeline (GDAL/DuckDB) that transforms live databases or GeoPackages into optimized GeoParquet and FlatGeobuf, enabling the snapshot architecture.
+- **QGIS Server**: High-fidelity map rendering serving FlatGeobuf natively from cloud storage or local disk.
 - **CI/CD Driven**: Built-in GitHub Actions workflows automate data conversion and kit packaging.
 
 ### 🐳 Docker Configuration
-The Waystones Docker images support advanced configuration via environment variables:
+The oapif-go gateway image supports configuration via environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `5000` | The public port for the service. |
-| `DEPLOY_PYGEOAPI` | `1` | Set to `0` to run in Gateway-only mode (Caddy only). |
-| `DEPLOY_SIDE_GATEWAY` | `0` | Set to `1` to enable the Caddy sidecar (proxies to pygeoapi on 5001). |
-| `CONTAINER_WORKERS` | `2` | Number of Gunicorn worker processes. |
-| `WARMUP_DELAY` | `5` | Seconds to wait before background GeoParquet warming. |
+| `SERVER_URL` | `http://localhost:5000` | Public HTTPS URL used in OGC API self-links. |
+| `S3_BUCKET` | — | Bucket containing the GeoParquet files. |
+| `S3_ENDPOINT` | — | Custom S3 endpoint (required for R2/MinIO). |
+| `IS_PRIVATE` | `0` | Set to `1` to require an `X-API-Key` header. |
+| `DEPLOY_QGIS` | `0` | Set to `1` to enable `/ows/` proxy routing to QGIS Server. |
 
 ## 🌍 Deployment
 
@@ -196,7 +184,7 @@ waystones/
 ├── components/        # React UI components (dialogs, editor, deploy panels, etc.)
 ├── hooks/             # Custom React hooks (useLayerActions, useHistory, etc.)
 ├── utils/             # Services and utilities
-│   ├── deploy/        # Deployment generators (pygeoapi, QGIS, Docker, GitHub Actions)
+│   ├── deploy/        # Deployment generators (oapif-go, QGIS, Docker, GitHub Actions)
 │   ├── gdalService    # GeoPackage and raster processing
 │   ├── aiService      # AI assistant integration (Claude & Gemini)
 │   ├── githubService  # GitHub API integration
