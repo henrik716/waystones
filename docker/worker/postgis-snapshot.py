@@ -358,11 +358,14 @@ def compute_sidecar(parquet_path: str, hint_geom_col: str = "geom", hint_id_col:
             if stype == "datetime" and datetime_col is None:
                 datetime_col = col_name
 
-        # Detect simplified geometry type by sampling one row
+        # Detect simplified geometry type by sampling one row.
+        # When the geometry column is WKB (BLOB), wrap with ST_GeomFromWKB() so that
+        # GeometryType() can inspect the type — otherwise it silently returns NULL.
         geometry_type = "polygon"
         try:
+            geom_expr = f"ST_GeomFromWKB({geom_col})" if not geom_is_native else geom_col
             gt_row = conn.execute(f"""
-                SELECT GeometryType({geom_col}) FROM read_parquet('{parquet_path}')
+                SELECT GeometryType({geom_expr}) FROM read_parquet('{parquet_path}')
                 WHERE {geom_col} IS NOT NULL LIMIT 1
             """).fetchone()
             if gt_row and gt_row[0]:
