@@ -23,6 +23,15 @@ import threading
 active_tasks_lock = threading.Lock()
 active_tasks_count = 0
 
+class _PostRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if code in (307, 308):
+            return urllib.request.Request(newurl, data=req.data, headers=dict(req.headers), method=req.get_method())
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+_opener = urllib.request.build_opener(_PostRedirectHandler)
+
+
 def send_log_lines(lines: list, app_url: str, proj_id: str, secret: str) -> None:
     if not lines or not app_url or not proj_id:
         return
@@ -34,7 +43,7 @@ def send_log_lines(lines: list, app_url: str, proj_id: str, secret: str) -> None
         if secret:
             headers["Authorization"] = f"Bearer {secret}"
         rq = urllib.request.Request(url, data=body, headers=headers, method="POST")
-        with urllib.request.urlopen(rq, timeout=10):
+        with _opener.open(rq, timeout=10):
             pass
     except Exception as e:
         logger.warning(f"Failed to send log lines to cloud: {e}")
