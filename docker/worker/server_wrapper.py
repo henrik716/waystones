@@ -4,6 +4,8 @@ import os
 import sys
 import json
 import logging
+import time
+import urllib.request
 
 # Configure logging to stdout so it shows up in platform logs
 logging.basicConfig(
@@ -20,6 +22,23 @@ import threading
 # Thread-safe counter for active tasks
 active_tasks_lock = threading.Lock()
 active_tasks_count = 0
+
+def send_log_lines(lines: list, app_url: str, proj_id: str, secret: str) -> None:
+    if not lines or not app_url or not proj_id:
+        return
+    try:
+        import json as _json
+        body = _json.dumps({"lines": lines}).encode()
+        url = f"{app_url.rstrip('/')}/api/projects/{proj_id}/worker/append-log"
+        headers = {"Content-Type": "application/json", "User-Agent": "Waystones-Peon/1.0"}
+        if secret:
+            headers["Authorization"] = f"Bearer {secret}"
+        rq = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        with urllib.request.urlopen(rq, timeout=10):
+            pass
+    except Exception as e:
+        logger.warning(f"Failed to send log lines to cloud: {e}")
+
 
 def run_task_subprocess(env_vars: dict):
     """
@@ -54,12 +73,33 @@ def run_task_subprocess(env_vars: dict):
             universal_newlines=True
         )
         
-        # Stream logs to the wrapper's stdout
+        # Stream logs to stdout and batch-POST to cloud
+        app_url = task_env.get("APP_URL", "").strip()
+        proj_id = task_env.get("PROJECT_ID", "").strip()
+        secret = task_env.get("PEON_CALLBACK_SECRET", "").strip()
+        FLUSH_INTERVAL = 3.0
+        FLUSH_SIZE = 20
+        buffer = []
+        last_flush = time.time()
+
+        def flush_buffer():
+            nonlocal buffer, last_flush
+            if buffer:
+                send_log_lines(buffer[:], app_url, proj_id, secret)
+                buffer = []
+            last_flush = time.time()
+
         if process.stdout:
             for line in process.stdout:
-                print(f"[worker] {line.strip()}", flush=True)
-        
+                stripped = line.strip()
+                print(f"[worker] {stripped}", flush=True)
+                ts = time.strftime("%H:%M:%S") + " "
+                buffer.append(ts + stripped)
+                if len(buffer) >= FLUSH_SIZE or time.time() - last_flush >= FLUSH_INTERVAL:
+                    flush_buffer()
+
         process.wait()
+        flush_buffer()
         
         if process.returncode == 0:
             logger.info(f"--- Task completed successfully (code 0) ---")
