@@ -40,6 +40,58 @@ def parse_pg_uri(uri: str) -> dict:
     }
 
 
+def send_log_lines(lines: list) -> None:
+    """Batch-POST log lines to the cloud append-log endpoint."""
+    app_url = os.environ.get("APP_URL", "").strip()
+    proj_id = os.environ.get("PROJECT_ID", "").strip()
+    if not app_url or not proj_id or not lines:
+        return
+    try:
+        import urllib.request, json as _json
+        secret = os.environ.get("PEON_CALLBACK_SECRET", "").strip()
+        body = _json.dumps({"lines": lines}).encode()
+        url = f"{app_url.rstrip('/')}/api/projects/{proj_id}/worker/append-log"
+        headers = {"Content-Type": "application/json", "User-Agent": "Waystones-Peon/1.0"}
+        if secret:
+            headers["Authorization"] = f"Bearer {secret}"
+        rq = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        with urllib.request.urlopen(rq, timeout=10) as _resp:
+            pass
+    except Exception as e:
+        print(f"[main] Warning: Failed to send log lines to cloud: {e}", flush=True)
+
+
+def run_subprocess_with_log_stream(cmd: list, env: dict) -> int:
+    """Run a subprocess, stream output to stdout, and batch-POST lines to the cloud."""
+    import subprocess, threading
+
+    proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+    buffer = []
+    last_flush = time.time()
+    FLUSH_INTERVAL = 3.0
+    FLUSH_SIZE = 20
+
+    def flush():
+        nonlocal buffer, last_flush
+        if buffer:
+            send_log_lines(buffer[:])
+            buffer = []
+        last_flush = time.time()
+
+    for raw_line in proc.stdout:
+        line = raw_line.rstrip("\n")
+        print(line, flush=True)
+        ts = time.strftime("%H:%M:%S") + " "
+        buffer.append(ts + line)
+        if len(buffer) >= FLUSH_SIZE or time.time() - last_flush >= FLUSH_INTERVAL:
+            flush()
+
+    proc.wait()
+    flush()
+    return proc.returncode
+
+
 def report_done(status, error_msg=None):
     app_url = os.environ.get("APP_URL", "").strip()
     proj_id = os.environ.get("PROJECT_ID", "").strip()
@@ -272,14 +324,13 @@ def main() -> None:
 
     print(f"[main] Executing: {' '.join(cmd)}", flush=True)
 
-    # Stream the sub-script's output directly — no capture so logs flow to container stdout.
-    result = subprocess.run(cmd, env=env)
+    returncode = run_subprocess_with_log_stream(cmd, env)
 
-    if result.returncode != 0:
-        msg = f"Worker script exited with code {result.returncode}."
+    if returncode != 0:
+        msg = f"Worker script exited with code {returncode}."
         print(f"[main] ERROR: {msg}", file=sys.stderr, flush=True)
         report_error(msg)
-        sys.exit(result.returncode)
+        sys.exit(returncode)
 
     print("[main] Worker completed successfully.", flush=True)
     app_url = os.environ.get("APP_URL", "").strip()
