@@ -6,6 +6,23 @@ import json
 import logging
 import time
 import urllib.request
+import re
+
+# Tippecanoe emits one progress line per tile: "49.0%\t10/585/220"
+_TIPPECANOE_PROGRESS = re.compile(r'^\d+\.\d+%\s+\d+/\d+/\d+')
+# PostgreSQL connection strings with embedded passwords
+_PG_DSN = re.compile(r'(postgresql|postgres)://([^:]+):([^@]+)@')
+# S3 / generic secret key patterns
+_SECRET_KEY = re.compile(r'(secret[_\-]?(?:access[_\-]?)?key\s*[=:]\s*)\S+', re.IGNORECASE)
+
+
+def sanitize(line: str) -> str | None:
+    """Return None to drop the line, or a redacted version to keep it."""
+    if _TIPPECANOE_PROGRESS.match(line):
+        return None
+    line = _PG_DSN.sub(r'\1://***:***@', line)
+    line = _SECRET_KEY.sub(r'\1***', line)
+    return line
 
 # Configure logging to stdout so it shows up in platform logs
 logging.basicConfig(
@@ -102,10 +119,12 @@ def run_task_subprocess(env_vars: dict):
             for line in process.stdout:
                 stripped = line.strip()
                 print(f"[worker] {stripped}", flush=True)
-                ts = time.strftime("%H:%M:%S") + " "
-                buffer.append(ts + stripped)
-                if len(buffer) >= FLUSH_SIZE or time.time() - last_flush >= FLUSH_INTERVAL:
-                    flush_buffer()
+                clean = sanitize(stripped)
+                if clean is not None:
+                    ts = time.strftime("%H:%M:%S") + " "
+                    buffer.append(ts + clean)
+                    if len(buffer) >= FLUSH_SIZE or time.time() - last_flush >= FLUSH_INTERVAL:
+                        flush_buffer()
 
         process.wait()
         flush_buffer()
