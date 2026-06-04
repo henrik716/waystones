@@ -63,9 +63,19 @@ def send_log_lines(lines: list) -> None:
 
 def run_subprocess_with_log_stream(cmd: list, env: dict) -> int:
     """Run a subprocess, stream output to stdout, and batch-POST lines to the cloud."""
-    import subprocess, threading
+    import subprocess
 
-    proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    # Force unbuffered output from Python sub-scripts so lines flush immediately.
+    # Without this, piped Python processes buffer stdout until ~8KB fills up.
+    unbuffered_env = env.copy()
+    unbuffered_env["PYTHONUNBUFFERED"] = "1"
+
+    # Insert -u flag when calling a Python script so even old interpreters unbuffer.
+    unbuffered_cmd = cmd[:]
+    if len(unbuffered_cmd) >= 2 and unbuffered_cmd[0] == sys.executable and not unbuffered_cmd[1].startswith("-"):
+        unbuffered_cmd.insert(1, "-u")
+
+    proc = subprocess.Popen(unbuffered_cmd, env=unbuffered_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
 
     buffer = []
     last_flush = time.time()

@@ -35,6 +35,7 @@ def run_task_subprocess(env_vars: dict):
     # Prepare environment
     task_env = os.environ.copy()
     task_env.update({k: str(v) for k, v in env_vars.items() if v is not None})
+    task_env["PYTHONUNBUFFERED"] = "1"
     
     # Log the task type and project ID
     task_type = task_env.get("TASK_TYPE", "unknown")
