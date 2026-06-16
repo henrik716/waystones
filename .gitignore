@@ -2,6 +2,7 @@
 logs
 *.log
 *.txt
+!docker/worker/requirements-test.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
