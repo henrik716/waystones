@@ -527,7 +527,6 @@ export const en = {
       'CC-BY-4.0': "CC BY 4.0 (Attribution)",
       'CC0-1.0': "CC0 1.0 (No rights reserved)",
       'CC-BY-SA-4.0': "CC BY-SA 4.0 (Share alike)",
-      'NLOD-2.0': "NLOD 2.0 (Norwegian License for Open Data)",
       'other': "Other",
     },
     accessRights: "Access rights",

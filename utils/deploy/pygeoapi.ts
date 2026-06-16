@@ -40,7 +40,6 @@ export const generatePygeoapiConfig = async (
     'CC-BY-4.0': 'https://creativecommons.org/licenses/by/4.0/',
     'CC0-1.0': 'https://creativecommons.org/publicdomain/zero/1.0/',
     'CC-BY-SA-4.0': 'https://creativecommons.org/licenses/by-sa/4.0/',
-    'NLOD-2.0': 'https://data.norge.no/nlod/no/2.0',
   };
 
   yaml += `metadata:\n`;

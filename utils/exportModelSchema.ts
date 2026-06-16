@@ -273,7 +273,7 @@ export const generateModelSchema = (): Record<string, any> => {
           contactOrganization: { type: 'string' },
           keywords: { type: 'array', items: { type: 'string' } },
           theme: { type: 'array', items: { type: 'string' }, description: 'INSPIRE themes (2-letter codes)' },
-          license: { enum: ['CC-BY-4.0', 'CC0', 'CC-BY-SA-4.0', 'NLOD-2.0'] },
+          license: { enum: ['CC-BY-4.0', 'CC0', 'CC-BY-SA-4.0'] },
           accessRights: { enum: ['public', 'restricted', 'private'] },
           purpose: { type: 'string' },
           accrualPeriodicity: { type: 'string', description: 'Frequency of updates (ISO 8601 duration or named interval)' },
