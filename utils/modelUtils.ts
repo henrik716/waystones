@@ -32,13 +32,17 @@ export function getEffectiveProperties(layer: Layer, allLayers: Layer[]): Field[
 export function topoSortLayers(layers: Layer[]): Layer[] {
   const sorted: Layer[] = [];
   const visited = new Set<string>();
+  const inProgress = new Set<string>();
 
   function visit(layer: Layer) {
     if (visited.has(layer.id)) return;
+    if (inProgress.has(layer.id)) return; // cycle — stop recursion
+    inProgress.add(layer.id);
     if (layer.extends) {
       const parent = layers.find(l => l.id === layer.extends);
       if (parent) visit(parent);
     }
+    inProgress.delete(layer.id);
     visited.add(layer.id);
     sorted.push(layer);
   }

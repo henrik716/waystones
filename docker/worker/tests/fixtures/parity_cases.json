@@ -1,0 +1,13 @@
+[
+  {"input": "roads",        "expected": "roads",       "note": "clean name unchanged"},
+  {"input": "Roads",        "expected": "roads",       "note": "lowercased"},
+  {"input": "my layer",     "expected": "my_layer",    "note": "space → underscore, squeezed"},
+  {"input": "My Layer!",    "expected": "my_layer",    "note": "trailing ! stripped"},
+  {"input": "roads_2024",   "expected": "roads_2024",  "note": "underscore preserved"},
+  {"input": "__hidden__",   "expected": "hidden",      "note": "leading/trailing underscores stripped"},
+  {"input": "a  b",         "expected": "a_b",         "note": "double space → squeezed underscore"},
+  {"input": "layer/name",   "expected": "layer_name",  "note": "slash → underscore"},
+  {"input": "public.roads", "expected": "public_roads","note": "dot → underscore"},
+  {"input": "123start",     "expected": "123start",    "note": "leading digit preserved"},
+  {"input": "  spaces  ",   "expected": "spaces",      "note": "surrounding spaces stripped"}
+]

@@ -57,5 +57,6 @@ export const sanitizeTechnicalName = (name: string): string => {
  */
 export const toTableName = (name: string): string => {
   if (!name) return 'untitled';
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const safe = name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+  return safe || 'untitled';
 };

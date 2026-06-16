@@ -120,7 +120,7 @@ export const generateQgisProject = (
       const pkCol = mapping?.primaryKeyColumn || 'fid';
 
       // Snapshot Architecture: Ensure QGIS reads the processed FlatGeobuf dataset
-      const safeLayerName = layer.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const safeLayerName = toTableName(layer.name);
       const datasource = `/data/${safeLayerName}.fgb|layername=${safeLayerName}`;
       const providerKey = 'ogr';
 
