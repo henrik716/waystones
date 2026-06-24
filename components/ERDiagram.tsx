@@ -96,8 +96,22 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                 values: prop.fieldType.values,
                 sourceY,
                 h: clH,
-                targetY: currentY + clH/2 
+                targetY: currentY + clH/2
             });
+        } else if (prop.fieldType.kind === 'codelist' && prop.fieldType.mode === 'shared') {
+            const sharedEnum = model.sharedEnums?.find(e => e.id === prop.fieldType.enumRef);
+            if (sharedEnum && sharedEnum.values.length > 0) {
+                const clH = 40 + sharedEnum.values.length * 26 + 10;
+                visuals.codelists.push({
+                    prop,
+                    values: sharedEnum.values,
+                    label: sharedEnum.name,
+                    isShared: true,
+                    sourceY,
+                    h: clH,
+                    targetY: currentY + clH/2
+                });
+            }
         }
 
         if (prop.fieldType.kind === 'feature-ref' && prop.fieldType.layerId) {
@@ -238,6 +252,11 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
             <marker id="inheritanceArrow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
               <path d="M 0 0 L 12 6 L 0 12 Z" fill="white" stroke="#7c3aed" strokeWidth="1.5"/>
             </marker>
+            {layerVisuals.map(vis => (
+              <clipPath key={`clip-${vis.layer.id}`} id={`field-name-clip-${vis.layer.id}`}>
+                <rect x={startX} y={vis.y} width={mainBoxW - 74} height={vis.h} />
+              </clipPath>
+            ))}
           </defs>
 
           <g>
@@ -274,7 +293,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                   <g>
                     <rect x={startX + 2} y={vis.y + mainBoxHeaderH} width={mainBoxW - 4} height={rowH} fill="#f5f7ff" />
                     <circle cx={startX + 20} cy={vis.y + mainBoxHeaderH + rowH/2} r="3" fill={getFieldConfig({ kind: 'geometry' }).color} />
-                    <text x={startX + 34} y={vis.y + mainBoxHeaderH + rowH/2 + 4} fill={COLORS.primaryDark} fontSize="12" fontWeight="900" className="mono">{vis.layer.geometryColumnName}*</text>
+                    <text x={startX + 34} y={vis.y + mainBoxHeaderH + rowH/2 + 4} fill={COLORS.primaryDark} fontSize="12" fontWeight="900" className="mono" clipPath={`url(#field-name-clip-${vis.layer.id})`}>{vis.layer.geometryColumnName}*</text>
                     <text x={startX + mainBoxW - 16} y={vis.y + mainBoxHeaderH + rowH/2 + 4} textAnchor="end" fill={getFieldConfig({ kind: 'geometry' }).color} fontSize="9" fontWeight="900" opacity="0.6">{(t.geometryTypes?.[vis.layer.geometryType] || vis.layer.geometryType).toUpperCase()}</text>
                   </g>
                 )}
@@ -306,7 +325,7 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                       )}
                       
                       <circle cx={indentX + 20} cy={y + rowH/2} r="3" fill={isFromSharedType ? "#d946ef" : config.color} />
-                      <text x={indentX + 34} y={y + rowH/2 + 4} fill={isFromSharedType ? "#701a75" : "#334155"} fontSize="12" fontWeight={isRequired(prop) ? "800" : "600"} className="mono">
+                      <text x={indentX + 34} y={y + rowH/2 + 4} fill={isFromSharedType ? "#701a75" : "#334155"} fontSize="12" fontWeight={isRequired(prop) ? "800" : "600"} className="mono" clipPath={`url(#field-name-clip-${vis.layer.id})`}>
                         {prop.name}{isRequired(prop) && "*"}
                       </text>
                       <text x={startX + mainBoxW - 16} y={y + rowH/2 + 4} textAnchor="end" fill={isFromSharedType ? "#d946ef" : config.color} fontSize="9" fontWeight="900" opacity="0.6">
@@ -319,9 +338,9 @@ const ERDiagram: React.FC<ERDiagramProps> = ({ model, t }) => {
                 {vis.codelists.map((cl: any, clIdx: number) => (
                    <g key={`${cl.prop.id}-${clIdx}`}>
                      <path d={`M${startX + mainBoxW},${cl.sourceY} C${startX + mainBoxW + gapX/2},${cl.sourceY} ${startX + mainBoxW + gapX/2},${cl.targetY} ${startX + mainBoxW + gapX},${cl.targetY}`} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="5 3" markerEnd="url(#arrow)" />
-                     <rect x={startX + mainBoxW + gapX} y={cl.targetY - cl.h/2} width={codelistBoxW} height={cl.h} rx="12" fill="white" stroke="#e2e8f0" strokeWidth="1.5" />
-                     <rect x={startX + mainBoxW + gapX} y={cl.targetY - cl.h/2} width={codelistBoxW} height={32} rx="12" fill="#f8fafc" />
-                     <text x={startX + mainBoxW + gapX + 12} y={cl.targetY - cl.h/2 + 20} fill="#64748b" fontSize="10" fontWeight="900" className="uppercase">{cl.prop.name}</text>
+                     <rect x={startX + mainBoxW + gapX} y={cl.targetY - cl.h/2} width={codelistBoxW} height={cl.h} rx="12" fill="white" stroke={cl.isShared ? "#f59e0b" : "#e2e8f0"} strokeWidth="1.5" />
+                     <rect x={startX + mainBoxW + gapX} y={cl.targetY - cl.h/2} width={codelistBoxW} height={32} rx="12" fill={cl.isShared ? "#fffbeb" : "#f8fafc"} />
+                     <text x={startX + mainBoxW + gapX + 12} y={cl.targetY - cl.h/2 + 20} fill={cl.isShared ? "#b45309" : "#64748b"} fontSize="10" fontWeight="900" className="uppercase">{cl.isShared ? `≡ ${cl.label}` : cl.prop.name}</text>
                      {cl.values.map((cv: any, ci: number) => (
                         <text key={cv.id} x={startX + mainBoxW + gapX + 12} y={cl.targetY - cl.h/2 + 50 + ci * 24} fill={COLORS.blue} fontSize="10" fontWeight="700" className="mono">{cv.code} <tspan fill="#64748b" fontWeight="400">{cv.label}</tspan></text>
                      ))}

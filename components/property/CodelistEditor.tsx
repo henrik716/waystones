@@ -180,7 +180,7 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
                       <input placeholder="ID" value={v.code} onChange={e => handleUpdateCodeValue({ ...v, code: e.target.value })} className="w-full bg-slate-50 border-transparent rounded-lg px-2.5 py-2.5 text-xs font-mono outline-none focus:bg-white focus:border-indigo-100 border h-10" />
                     </PropDiffField>
                     <PropDiffField label="" currentValue={v.label} baselineValue={baselineVal?.label} reviewMode={!!reviewMode}>
-                      <input placeholder="Navn" value={v.label} onChange={e => handleUpdateCodeValue({ ...v, label: e.target.value })} className="w-full bg-slate-50 border-transparent rounded-lg px-2.5 py-2.5 text-xs font-bold outline-none focus:bg-white focus:border-indigo-100 border h-10" />
+                      <input placeholder={t.codeLabel} value={v.label} onChange={e => handleUpdateCodeValue({ ...v, label: e.target.value })} className="w-full bg-slate-50 border-transparent rounded-lg px-2.5 py-2.5 text-xs font-bold outline-none focus:bg-white focus:border-indigo-100 border h-10" />
                     </PropDiffField>
                     <div className="flex items-center justify-end gap-1.5">
                       <button onClick={() => toggleDesc(v.id)} className={`p-2.5 rounded-lg transition-colors ${v.description ? 'text-blue-500 bg-blue-50' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50'}`} title={t.codeDescription}>
@@ -201,7 +201,7 @@ const CodelistEditor: React.FC<CodelistEditorProps> = ({ prop, baselineProp, onU
             })}
             {values.length === 0 && (
               <div className="py-12 text-center text-slate-300 italic text-[10px] uppercase tracking-widest font-black border-2 border-dashed border-slate-100 rounded-2xl">
-                Ingen verdier lagt til ennå.
+                {t.noEnumValues}
               </div>
             )}
           </div>
