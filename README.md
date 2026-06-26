@@ -114,7 +114,7 @@ A protected dataset requiring authentication via API Key:
 > [!IMPORTANT]
 > **Authentication Required**  
 > Access to these endpoints requires passing the API key in the request headers:  
-> `X-API-Key: c810b717c8c59f0d22524ca8453ca28c7b9572db5ba88afa3ad17950a9fe80dd`
+> `Authorization: ApiKey c810b717c8c59f0d22524ca8453ca28c7b9572db5ba88afa3ad17950a9fe80dd`
 
 | Service | Demo Link / Integration URL | Description |
 | :--- | :--- | :--- |
