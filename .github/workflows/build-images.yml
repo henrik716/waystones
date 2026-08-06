@@ -61,6 +61,19 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.tag }}
           cache-to: type=gha,mode=max,scope=${{ matrix.tag }}
 
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          target: ${{ matrix.target }}
+          push: true
+          tags: |
+            ghcr.io/waystones-nexus/${{ steps.repo_info.outputs.image_repo }}:${{ matrix.tag }}-${{ github.ref_name }}
+            ghcr.io/waystones-nexus/${{ steps.repo_info.outputs.image_repo }}:${{ matrix.tag }}-latest
+            ghcr.io/waystones-nexus/${{ steps.repo_info.outputs.image_repo }}:${{ matrix.tag }}-${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.tag }}
+
       - name: Push to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:

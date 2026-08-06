@@ -8,7 +8,7 @@
 // isGpkg / gpkgFilename are unused for oapif-go (data stays in S3),
 // kept in the signature for backwards compatibility.
 export function generateDockerfile(_isGpkg: boolean, _gpkgFilename?: string): string {
-  return `FROM ghcr.io/waystones-nexus/oapif-go:latest
+  return `FROM ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71
 
 # Configuration — oapif-go reads this at startup via CONFIG_PATH.
 COPY oapif-go-config.json /config.json

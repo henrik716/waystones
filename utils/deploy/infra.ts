@@ -208,7 +208,7 @@ export const generateDockerCompose = (
     compose += `  # WMS (QGIS):       http://localhost:5000/ows/?SERVICE=WMS&REQUEST=GetCapabilities\n`;
   }
   compose += `  oapif:
-    image: ghcr.io/waystones-nexus/oapif-go:latest
+    image: ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71
     ports:
       - "5000:5000"
     volumes:

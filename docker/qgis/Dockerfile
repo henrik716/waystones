@@ -1,4 +1,4 @@
-FROM qgis/qgis-server:ltr
+FROM qgis/qgis-server:3.44.12
 
 # Ensure spawn-fcgi is available (some image variants omit it)
 RUN apt-get update && \
