@@ -72,7 +72,7 @@ describe('devcontainerJson', () => {
 
   it('forwards the OGC API, viewer, and MinIO console ports', () => {
     const parsed = JSON.parse(devcontainerJson);
-    expect(parsed.forwardPorts).toEqual([5000, 8081, 9001]);
+    expect(parsed.forwardPorts).toEqual([5000, 8081, 19001]);
   });
 
   it('includes the Jupyter extension so demo.ipynb runs out of the box', () => {
