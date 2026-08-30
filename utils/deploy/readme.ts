@@ -20,7 +20,7 @@ interface RenderContext {
 // ============================================================
 const renderHeader = (ctx: RenderContext): string => {
   const { model, target, s } = ctx;
-  const targetLabel = target === 'railway' ? 'Railway' : 'Docker Compose';
+  const targetLabel = target === 'railway' ? 'Railway' : target === 'codespaces' ? 'GitHub Codespaces' : 'Docker Compose';
   
   let md = `<div align="center">\n`;
   md += `<h1>${model.name}</h1>\n\n`;
@@ -52,7 +52,9 @@ const renderArchitecture = (ctx: RenderContext): string => {
   md += `(DuckDB/GDAL)     ├──> [ Tiles    ] ──> PMTiles (Vector Tiles)\n`;
   md += `                  └──> [ STAC     ] ──> STAC Catalog (Metadata)\n\n`;
 
-  if (target === 'docker-compose') {
+  const usesMinio = target === 'docker-compose' || target === 'codespaces';
+
+  if (usesMinio) {
     md += `[ 2. STORAGE ]\n`;
     md += `GeoParquet ──────────> MinIO (local S3) ──> oapif-go reads Parquet\n`;
     if (hasWms) {
@@ -61,7 +63,7 @@ const renderArchitecture = (ctx: RenderContext): string => {
     md += `\n`;
   }
 
-  md += `[ ${target === 'docker-compose' ? '3' : '2'}. SERVING ]\n`;
+  md += `[ ${usesMinio ? '3' : '2'}. SERVING ]\n`;
   if (layerNames.length > 0) {
     const firstLayer = layerNames[0];
     md += `oapif-go (DuckDB) ───> [ GeoParquet ] ───> OGC API Features (${firstLayer})\n`;
@@ -82,12 +84,16 @@ const renderArchitecture = (ctx: RenderContext): string => {
   md += `| Component | Role | Description |\n`;
   md += `|---|---|---|\n`;
   md += `| **${s.workerService}** | \`worker\` | ${s.workerDesc} |\n`;
-  if (target === 'docker-compose') {
+  if (usesMinio) {
     md += `| **Object storage** | \`minio\` | Local S3-compatible storage for Parquet files (replace with R2/S3 in production) |\n`;
   }
   md += `| **${s.apiService}** | \`oapif\` | ${s.apiDesc} |\n`;
   if (hasWms) {
     md += `| **${s.wmsService}** | \`qgis-server\` | ${s.wmsDesc} |\n`;
+  }
+  if (target === 'codespaces') {
+    md += `| **PMTiles Viewer** | \`viewer\` | Renders the generated vector tiles on a live MapLibre map — Codespaces demo only |\n`;
+    md += `| **STAC Catalog** | \`worker-stac\` | Generates a browsable STAC catalog — optional, run (or skip) it and choose partitioning at run time in \`demo.ipynb\` |\n`;
   }
   if (!isGpkg) {
     md += `| **${s.deltaService}** | \`delta-worker\` | ${s.deltaWorkerDesc} |\n`;
@@ -102,7 +108,7 @@ const renderArchitecture = (ctx: RenderContext): string => {
 // ============================================================
 const renderServices = (ctx: RenderContext): string => {
   const { s, target, hasWms } = ctx;
-  
+
   let md = `## ${s.services}\n\n`;
   md += `Once deployed, the following services will be available:\n\n`;
   md += `| ${s.service} | ${s.description} |\n`;
@@ -111,9 +117,43 @@ const renderServices = (ctx: RenderContext): string => {
   if (hasWms) {
     md += `| **WMS Service** | Styled map layers |\n`;
   }
-  md += `| **${s.vectorTileService}** | ${s.vectorTileDesc} |\n`;
-  md += `| **${s.stacService}** | ${s.stacDesc} |\n`;
+  // Vector tiles and STAC are only listed here for the Codespaces target, which is the
+  // only one that actually wires the pipeline and a viewer to browse the result — for
+  // other targets they're a manual, opt-in step (see "Optional: PMTiles & STAC Catalog"
+  // below), not something `docker compose up -d` produces by itself.
+  if (target === 'codespaces') {
+    md += `| **${s.vectorTileService}** | ${s.vectorTileDesc} |\n`;
+    md += `| **Live Map Viewer** | Browse the vector tiles on a map at http://localhost:8081 |\n`;
+    md += `| **${s.stacService}** | ${s.stacDesc} (optional — run it from \`demo.ipynb\`) |\n`;
+  }
   md += '\n';
+  return md;
+};
+
+// ============================================================
+// Section: Manual PMTiles / STAC (docker-compose only — these
+// pipelines aren't wired into `docker compose up -d` there)
+// ============================================================
+const renderManualExtras = (ctx: RenderContext): string => {
+  const { s, target } = ctx;
+  if (target !== 'docker-compose') return '';
+
+  let md = `## 🧩 ${s.manualExtrasTitle}\n\n`;
+  md += `${s.manualExtrasDesc}\n\n`;
+  md += '```bash\n';
+  md += `# ${s.manualExtrasTilesComment}\n`;
+  md += `docker compose run --rm -e TASK_TYPE=tiles -e OUTPUT_URI=s3://waystones-data/tiles/ worker\n\n`;
+  md += `# ${s.manualExtrasStacComment}\n`;
+  md += `docker compose run --rm -e TASK_TYPE=stac -e OUTPUT_URI=s3://waystones-data/stac/ worker\n\n`;
+  md += `# ${s.manualExtrasPartitionComment}\n`;
+  md += `docker compose run --rm -e TASK_TYPE=stac -e OUTPUT_URI=s3://waystones-data/stac/ \\\n`;
+  md += `  -e STRATEGY=custom_column -e COLUMN=your_column_name worker\n\n`;
+  md += `# ${s.manualExtrasModelComment}\n`;
+  md += `docker compose run --rm -e TASK_TYPE=stac -e OUTPUT_URI=s3://waystones-data/stac/ \\\n`;
+  md += `  -e MODEL_B64="$(base64 -w0 model.json)" worker\n`;
+  md += '```\n\n';
+  md += `${s.manualExtrasBrowseHint}\n\n`;
+
   return md;
 };
 
@@ -222,7 +262,7 @@ const renderEnvironmentVariables = (ctx: RenderContext): string => {
 // Section: Getting Started
 // ============================================================
 const renderGettingStarted = (ctx: RenderContext): string => {
-  const { model, source, s, target, isGpkg, useS3 } = ctx;
+  const { model, source, s, target, isGpkg, useS3, isPg } = ctx;
   
   if (target === 'railway') {
     let md = `## ${s.gettingStartedRailway}\n\n`;
@@ -233,6 +273,30 @@ const renderGettingStarted = (ctx: RenderContext): string => {
       md += `4. **${s.railwayStep4}**\n`;
     }
     md += `\n${s.railwayNote}\n\n`;
+    return md;
+  }
+
+  if (target === 'codespaces') {
+    let md = `## ${s.gettingStartedCodespaces}\n\n`;
+    md += `1. **${s.codespacesStep1}**\n`;
+    if (isGpkg && !useS3) {
+      const gpkgName = getGpkgFilename(model, source);
+      md += `2. **${s.codespacesStep2}** ${s.addDataHint.replace('{filename}', gpkgName)}\n`;
+    } else if (isPg) {
+      // .env is gitignored, so it never lands in the pushed repo/Codespace — the user
+      // must create it and fill in real DB credentials before the pipeline can connect.
+      md += `2. **${s.codespacesStep2Pg}**\n`;
+    } else {
+      // Remote GeoPackage (S3/R2) — same .env problem as PostGIS: real credentials are
+      // required before the worker's data-fetcher step can download the source file.
+      md += `2. **${s.codespacesStep2S3}**\n`;
+    }
+    md += `3. **${s.codespacesStep3}**\n`;
+    md += `\n${s.codespacesNote}\n`;
+    if (isPg) {
+      md += `\n${s.codespacesNotePg}\n`;
+    }
+    md += '\n';
     return md;
   }
 
@@ -272,11 +336,16 @@ const renderFiles = (ctx: RenderContext): string => {
   let md = `## ${s.files}\n\n`;
   md += `| ${s.file} | ${s.description} |\n`;
   md += `|---|---|\n`;
-  if (target === 'docker-compose') {
+  if (target === 'docker-compose' || target === 'codespaces') {
     md += `| \`docker-compose.yml\` | ${s.dockerComposeFile} |\n`;
   } else {
     md += `| \`railway.json\` | ${s.railwayJsonFile} |\n`;
     if (hasWms) md += `| \`railway.qgis.json\` | ${s.railwayQgisJsonFile} |\n`;
+  }
+  if (target === 'codespaces') {
+    md += `| \`.devcontainer/devcontainer.json\` | Codespace setup (Docker-in-Docker, forwarded ports) |\n`;
+    md += `| \`demo.ipynb\` | Click-through notebook that runs the whole pipeline |\n`;
+    md += `| \`viewer/index.html\` | Live PMTiles map viewer served on port 8081 |\n`;
   }
   md += `| \`oapif-go-config.json\` | oapif-go collection config (auto-generated) |\n`;
   if (hasWms) md += `| \`project.qgs\` | ${s.qgisProjectFile} |\n`;
@@ -306,7 +375,7 @@ export const generateReadmeForTarget = (
     isPg: source.type === 'postgis' || source.type === 'supabase',
     isGpkg: source.type === 'geopackage',
     hasWms: model.layers.some(l => l.geometryType !== 'None'),
-    useS3: hasS3Config(source)
+    useS3: hasS3Config(source),
   };
 
   let md = '';
@@ -317,6 +386,7 @@ export const generateReadmeForTarget = (
   md += renderRailwayPersistence(ctx);
   md += renderEnvironmentVariables(ctx);
   md += renderGettingStarted(ctx);
+  md += renderManualExtras(ctx);
   md += renderFiles(ctx);
 
   return md;
@@ -349,6 +419,14 @@ export const generateWorkflowForTarget = (
   source: SourceConnection,
   target: DeployTarget
 ): string => {
+  if (target === 'codespaces') {
+    // A Codespaces kit is an ephemeral eval/demo environment, not something with a
+    // production host to SSH-deploy to — just validate the generated config on push.
+    let workflow = 'name: Validate ' + model.name + '\non:\n  push:\n    branches: [main]\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n';
+    workflow += '      - name: Validate oapif-go config\n        run: |\n          python3 -c "\n          import json, sys\n          with open(\'oapif-go-config.json\') as f:\n              config = json.load(f)\n          if not config.get(\'collections\'):\n              print(\'ERROR: oapif-go-config.json must have a collections key\')\n              sys.exit(1)\n          "\n';
+    workflow += '      - name: Validate devcontainer.json exists\n        run: test -f .devcontainer/devcontainer.json || (echo "ERROR: .devcontainer/devcontainer.json not found" && exit 1)\n';
+    return workflow;
+  }
   if (target === 'railway') {
     const hasWms = model.layers.some(l => l.geometryType !== 'None');
     let workflow = 'name: Validate ' + model.name + '\non:\n  push:\n    branches: [main]\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n';

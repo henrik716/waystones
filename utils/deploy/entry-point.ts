@@ -7,6 +7,7 @@ import { generateEnvFile, generateDockerCompose, generateRailwayJson } from './i
 import { generateReadmeForTarget, generateWorkflowForTarget } from './readme';
 import { scrubModelForExport } from '../modelUtils';
 import * as railwayTemplates from './railway-templates';
+import * as codespacesTemplates from './codespaces-templates';
 import { hasS3Config, getGpkgFilename } from './_helpers';
 
 
@@ -39,8 +40,14 @@ export const generateDeployFiles = async (
     files['project.qgs'] = generateQgisProject(model, source);
   }
 
-  if (target === 'docker-compose') {
-    files['docker-compose.yml'] = generateDockerCompose(model, source);
+  if (target === 'docker-compose' || target === 'codespaces') {
+    files['docker-compose.yml'] = generateDockerCompose(model, source, { includeTiles: target === 'codespaces' });
+  }
+
+  if (target === 'codespaces') {
+    files['.devcontainer/devcontainer.json'] = codespacesTemplates.devcontainerJson;
+    files['viewer/index.html'] = codespacesTemplates.viewerIndexHtml;
+    files['demo.ipynb'] = codespacesTemplates.generateNotebook(model, source);
   }
 
   if (target === 'railway') {
