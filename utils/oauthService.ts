@@ -42,10 +42,14 @@ export interface GitHubRepo {
 }
 
 // Default OAuth configuration
+// `workflow` is required in addition to `repo` — every generated deploy kit includes
+// .github/workflows/deploy.yml, and GitHub's API refuses to create/update files under
+// .github/workflows/ without it (fails at tree-creation time with no scope-specific
+// error message, just "Failed to create tree").
 const DEFAULT_CONFIG: OAuthConfig = {
   clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
   redirectUri: import.meta.env.VITE_GITHUB_REDIRECT_URI || `${window.location.origin}/oauth-callback.html`,
-  scope: 'repo user:email'
+  scope: 'repo user:email workflow'
 };
 
 // PKCE (Proof Key for Code Exchange) implementation

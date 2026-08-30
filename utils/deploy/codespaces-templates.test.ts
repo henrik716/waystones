@@ -89,6 +89,11 @@ describe('devcontainerJson', () => {
     const parsed = JSON.parse(devcontainerJson);
     expect(parsed.postCreateCommand).toContain('pip3 install --user ipykernel');
   });
+
+  it('materializes .env from .env.template on create — docker compose only auto-loads .env, never .env.template', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.postCreateCommand).toContain('cp -n .env.template .env');
+  });
 });
 
 // ---------------------------------------------------------------------------
