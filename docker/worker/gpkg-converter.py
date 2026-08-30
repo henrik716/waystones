@@ -62,6 +62,15 @@ def force_ipv4_for_endpoint(endpoint_url: str):
 # S3 helpers
 # ---------------------------------------------------------------------------
 
+def s3_join_key(prefix_key: str, name: str) -> str:
+    """Join an (already slash-stripped) S3 key prefix with a filename.
+
+    A bucket-root prefix ("") must produce a bare key with no leading slash —
+    oapif-go's config generator (oapifgo.ts) assumes parquet objects live at
+    exactly "{id}.parquet", not "/{id}.parquet".
+    """
+    return f"{prefix_key}/{name}" if prefix_key else name
+
 def get_endpoint_url() -> str:
     return (
         os.environ.get("AWS_ENDPOINT_URL") or
@@ -497,20 +506,19 @@ def main() -> None:
         # ── 4. Deliver output ────────────────────────────────────────────────
         manifest = {"layers": manifest_layers}
         if is_s3_output:
-            prefix_key = output_prefix.replace(f"s3://{bucket}/", "", 1)
+            prefix_key = output_prefix.replace(f"s3://{bucket}/", "", 1).strip("/")
             for entry in manifest_layers:
-                entry["fgb_key"] = f"{prefix_key}/{entry['safe_name']}.fgb"
+                entry["fgb_key"] = s3_join_key(prefix_key, f"{entry['safe_name']}.fgb")
 
             print(f"[converter] Uploading all layers to {output_prefix} ...", flush=True)
             client = _boto3_client()
             p = urlparse(output_prefix)
-            pfx = p.path.lstrip("/")
             for fname in os.listdir(fgb_dir):
                 fpath = os.path.join(fgb_dir, fname)
                 if os.path.isfile(fpath):
-                    client.upload_file(fpath, p.netloc, f"{pfx}/{fname}")
+                    client.upload_file(fpath, p.netloc, s3_join_key(prefix_key, fname))
 
-            manifest_key = f"{prefix_key}/.manifest.json"
+            manifest_key = s3_join_key(prefix_key, ".manifest.json")
             print(f"[converter] Writing manifest to s3://{bucket}/{manifest_key} ...", flush=True)
             s3_put_json(bucket, manifest_key, manifest)
         else:
