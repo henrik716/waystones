@@ -30,7 +30,7 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "openPreview" },
     "9001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "pip3 install --user ipykernel && echo 'Open demo.ipynb and run the cells in order — see README.md for details.'"
+  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open demo.ipynb and run the cells in order — see README.md for details.'"
 }
 `;
 
