@@ -303,6 +303,21 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
         'serve it over OGC API Features, and view the vector tiles on a live map — entirely inside this Codespace. ' +
         'Run the cells below in order (▶ on each cell, or **Run All** above).',
     ),
+    code(
+      'import subprocess',
+      '',
+      '# --progress plain avoids the fancy Compose TUI, which renders as repeated garbled',
+      '# spinner frames in a notebook cell instead of updating in place like a real terminal.',
+      '# Streams output live (no capture_output) and stops the notebook immediately —',
+      '# instead of silently continuing to the next cell — if the step actually failed.',
+      'def run_compose(*args):',
+      '    label = "docker compose " + " ".join(args)',
+      '    print(f"\\u2192 {label}")',
+      '    proc = subprocess.run(["docker", "compose", "--progress", "plain", *args])',
+      '    if proc.returncode != 0:',
+      '        raise SystemExit(f"\\u2717 {label} failed (exit {proc.returncode}) \\u2014 see output above.")',
+      '    print(f"\\u2713 {label}")',
+    ),
   ];
 
   if (isLocalGpkg) {
@@ -322,9 +337,26 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
 
   cells.push(
     md('## 1. Create the snapshot (GeoParquet + FlatGeobuf)'),
-    code('!docker compose up worker'),
-    md('## 2. Create the vector tiles (PMTiles)'),
-    code('!docker compose up worker-tiles'),
+    code('run_compose("up", "worker")'),
+    md(
+      '## 2. Create the vector tiles (PMTiles)',
+      '',
+      'Run as-is for tippecanoe defaults (zoom 0–14, no geometry simplification, every ' +
+        'layer and attribute kept). To tune that instead, edit the values in the commented ' +
+        'line below and run it — try a few settings, no need to regenerate this kit.',
+    ),
+    code(
+      'run_compose("up", "worker-tiles")',
+      '',
+      '# To customize zoom range, simplification, or drop layers/attributes instead,' +
+        ' edit and run this (comment out the line above):',
+      '# !docker compose run --rm --progress plain \\',
+      '#   -e MIN_ZOOM=0 -e MAX_ZOOM=12 -e SIMPLIFICATION=4 \\',
+      '#   -e EXCLUDE_LAYERS=internal_notes -e EXCLUDE_ATTRIBUTES=created_by,internal_id \\',
+      '#   worker-tiles',
+      '# For tippecanoe to pick max zoom automatically from feature density instead of' +
+        ' MAX_ZOOM, add -e AUTO_ZOOM=true and drop -e MAX_ZOOM.',
+    ),
     md(
       '## 2b. Generate a STAC catalog (optional)',
       '',
@@ -333,12 +365,12 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
         'by a column from your data and re-run — try a few different columns, no need to regenerate this kit.',
     ),
     code(
-      '!docker compose up worker-stac stac-sync',
+      'run_compose("up", "worker-stac", "stac-sync")',
       '',
       '# To partition by a column instead, edit COLUMN and run these two lines' +
         ' (comment out the line above):',
-      '# !docker compose run --rm -e STRATEGY=custom_column -e COLUMN=your_column_name worker-stac',
-      '# !docker compose up stac-sync',
+      '# !docker compose run --rm --progress plain -e STRATEGY=custom_column -e COLUMN=your_column_name worker-stac',
+      '# !docker compose --progress plain up stac-sync',
     ),
   );
 
@@ -356,19 +388,23 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       'if codespace and domain:',
       '    os.environ["SERVER_URL"] = f"https://{codespace}-5000.{domain}"',
     ),
-    code('!docker compose up -d oapif'),
+    code('run_compose("up", "-d", "oapif")'),
     code(
       'import json, time, urllib.request',
       '',
+      'print("Waiting for oapif-go to become ready", end="", flush=True)',
       'for _ in range(30):',
       '    try:',
       '        with urllib.request.urlopen("http://localhost:5000/collections") as r:',
+      '            print(" ready.")',
       '            print(json.dumps(json.load(r), indent=2))',
       '            break',
       '    except Exception:',
+      '        print(".", end="", flush=True)',
       '        time.sleep(1)',
       'else:',
-      '    print("oapif-go did not become ready in time — check `docker compose logs oapif`.")',
+      '    print()',
+      '    print("\\u2717 oapif-go did not become ready in time — check `docker compose logs oapif`.")',
     ),
     md(
       '### See it in the browser',
@@ -388,7 +424,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       '    display(Markdown("Open forwarded port **5000** in the Ports tab to view the API."))',
     ),
     md('## 4. View the PMTiles (and STAC catalog, if you generated one)'),
-    code('!docker compose up -d viewer'),
+    code('run_compose("up", "-d", "viewer")'),
     code(
       'import os',
       'from IPython.display import IFrame, Markdown, display',

@@ -159,10 +159,10 @@ describe('generateNotebook', () => {
       .filter((c: any) => c.cell_type === 'code')
       .map((c: any) => c.source.join(''))
       .join('\n---\n');
-    const iWorker = code.indexOf('docker compose up worker');
-    const iTiles = code.indexOf('docker compose up worker-tiles');
-    const iOapif = code.indexOf('docker compose up -d oapif');
-    const iViewer = code.indexOf('docker compose up -d viewer');
+    const iWorker = code.indexOf('run_compose("up", "worker")');
+    const iTiles = code.indexOf('run_compose("up", "worker-tiles")');
+    const iOapif = code.indexOf('run_compose("up", "-d", "oapif")');
+    const iViewer = code.indexOf('run_compose("up", "-d", "viewer")');
     expect(iWorker).toBeGreaterThan(-1);
     expect(iTiles).toBeGreaterThan(iWorker);
     expect(iOapif).toBeGreaterThan(iTiles);
@@ -210,9 +210,9 @@ describe('generateNotebook', () => {
       .filter((c: any) => c.cell_type === 'code')
       .map((c: any) => c.source.join(''))
       .join('\n---\n');
-    const iTiles = code.indexOf('docker compose up worker-tiles');
-    const iStac = code.indexOf('docker compose up worker-stac');
-    const iOapif = code.indexOf('docker compose up -d oapif');
+    const iTiles = code.indexOf('run_compose("up", "worker-tiles")');
+    const iStac = code.indexOf('run_compose("up", "worker-stac", "stac-sync")');
+    const iOapif = code.indexOf('run_compose("up", "-d", "oapif")');
     expect(iStac).toBeGreaterThan(iTiles);
     expect(iOapif).toBeGreaterThan(iStac);
   });
@@ -220,19 +220,63 @@ describe('generateNotebook', () => {
   it('syncs the STAC catalog in the same cell so it actually lands in the viewer', () => {
     const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
     const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
-    expect(code.some((c: string) => c.includes('docker compose up worker-stac stac-sync'))).toBe(true);
+    expect(code.some((c: string) => c.includes('run_compose("up", "worker-stac", "stac-sync")'))).toBe(true);
   });
 
   it('offers an editable runtime override for partitioning instead of baking a column in, syncing after', () => {
     const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
     const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
     expect(code.some((c: string) => c.includes('STRATEGY=custom_column') && c.includes('COLUMN='))).toBe(true);
-    expect(code.some((c: string) => c.includes('docker compose up stac-sync'))).toBe(true);
+    expect(code.some((c: string) => c.includes('docker compose --progress plain up stac-sync'))).toBe(true);
   });
 
   it('mentions the STAC catalog in the final link cell', () => {
     const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
     const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
     expect(code.some((c: string) => c.toLowerCase().includes('stac catalog'))).toBe(true);
+  });
+
+  it('offers an editable runtime override for zoom/simplification/excludes on the tiles step, same pattern as STAC partitioning', () => {
+    // main.py already reads MIN_ZOOM/MAX_ZOOM/AUTO_ZOOM/SIMPLIFICATION and
+    // vector-tile-generator.py reads EXCLUDE_LAYERS/EXCLUDE_ATTRIBUTES — this just
+    // has to surface them, not add new plumbing.
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const tilesCell = code.find((c: string) => c.includes('run_compose("up", "worker-tiles")'))!;
+    expect(tilesCell).toContain('MIN_ZOOM=');
+    expect(tilesCell).toContain('MAX_ZOOM=');
+    expect(tilesCell).toContain('SIMPLIFICATION=');
+    expect(tilesCell).toContain('AUTO_ZOOM=true');
+    expect(tilesCell).toContain('EXCLUDE_LAYERS=');
+    expect(tilesCell).toContain('EXCLUDE_ATTRIBUTES=');
+  });
+
+  it('defines a run_compose helper that avoids the garbled TUI and stops the notebook on a failed step', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const helperCell = code.find((c: string) => c.includes('def run_compose('))!;
+    expect(helperCell).toBeDefined();
+    expect(helperCell).toContain('--progress');
+    expect(helperCell).toContain('plain');
+    expect(helperCell).toContain('subprocess.run');
+    expect(helperCell).toContain('returncode');
+    expect(helperCell).toMatch(/raise SystemExit/);
+  });
+
+  it('uses run_compose for every pipeline step instead of a bare "!docker compose" shell-out', () => {
+    // A bare `!docker compose ...` cell silently continues to the next cell on failure —
+    // run_compose stops the notebook immediately with a clear error instead.
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const directInvocations = code.filter((c: string) => /^!docker compose (up|run)\b/m.test(c));
+    expect(directInvocations).toEqual([]);
+  });
+
+  it('shows interim progress while polling for oapif-go readiness instead of a silent wait', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const pollCell = code.find((c: string) => c.includes('for _ in range(30):'))!;
+    expect(pollCell).toContain('Waiting for oapif-go');
+    expect(pollCell).toContain('flush=True');
   });
 });
