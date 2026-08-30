@@ -69,7 +69,7 @@ export const viewerIndexHtml = `<!doctype html>
 </div>
 <div id="map"></div>
 <script>
-const COLORS = ["#4f46e5", "#059669", "#d97706", "#dc2626", "#0891b2", "#7c3aed"];
+const FALLBACK_COLORS = ["#4f46e5", "#059669", "#d97706", "#dc2626", "#0891b2", "#7c3aed"];
 const tileStatusEl = document.getElementById("tile-status");
 const stacLinkEl = document.getElementById("stac-link");
 
@@ -77,6 +77,140 @@ const stacLinkEl = document.getElementById("stac-link");
 fetch("stac/catalog.json", { method: "HEAD", cache: "no-store" }).then((res) => {
   if (res.ok) stacLinkEl.innerHTML = '<a href="stac/catalog.json" target="_blank">STAC catalog →</a>';
 }).catch(() => {});
+
+// Mirrors lib/provisioner/style-generator.ts's local toSafeName() (and the Python
+// worker's to_safe_name()) — must match exactly, since it's how each model layer's
+// PMTiles source-layer name is derived, and that's the only key available to join
+// a tileset layer back to its model.json entry.
+function toSafeName(name) {
+  let safe = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+  safe = safe.replace(/_+/g, "_");
+  return safe.replace(/^_+|_+$/g, "") || "layer";
+}
+
+// Below mirrors lib/provisioner/style-generator.ts's translateToGLStyle() (Waystones
+// Cloud's tile viewer) so a layer renders the same way here as it does there, instead
+// of a generic rotating color with no relation to how it was styled in the editor.
+function glColorExpr(style, prop) {
+  if (style.type === "categorized" && style.propertyId) {
+    const expr = ["match", ["get", style.propertyId]];
+    const settings = style.categorizedSettings || {};
+    for (const [code, cat] of Object.entries(settings)) expr.push(code, (cat && cat.color) || "#ccc");
+    expr.push(style.simpleColor || "#ccc");
+    return expr;
+  }
+  return style[prop] || "#ccc";
+}
+
+function glNumberExpr(style, prop, fallback) {
+  if (style.type === "categorized" && style.propertyId) {
+    const expr = ["match", ["get", style.propertyId]];
+    const settings = style.categorizedSettings || {};
+    for (const [code, cat] of Object.entries(settings)) {
+      expr.push(code, (cat && cat[prop] != null ? cat[prop] : style[prop]) ?? fallback);
+    }
+    expr.push(style[prop] ?? fallback);
+    return expr;
+  }
+  return style[prop] ?? fallback;
+}
+
+function glDashExpr(style) {
+  switch (style.lineDash || "solid") {
+    case "dashed": return [4, 4];
+    case "dotted": return [1, 2];
+    case "dash-dot": return [6, 2, 1, 2];
+    case "dash-dot-dot": return [6, 2, 1, 1.5, 1, 1.5];
+    case "long-dash": return [10, 4];
+    default: return undefined;
+  }
+}
+
+function modelLayerToGLLayers(layer, sourceLayer) {
+  const style = layer.style;
+  if (!style) return null;
+  const geom = layer.geometryType || "";
+  const isPoint = geom.includes("Point");
+  const isLine = geom.includes("LineString");
+  const isPolygon = geom.includes("Polygon");
+  const out = [];
+
+  if (isPolygon) {
+    out.push({
+      id: sourceLayer + "-fill", type: "fill", source: "tiles", "source-layer": sourceLayer,
+      paint: { "fill-color": glColorExpr(style, "simpleColor"), "fill-opacity": glNumberExpr(style, "fillOpacity", 0.5) },
+    });
+    if (style.showOutline !== false) {
+      out.push({
+        id: sourceLayer + "-outline", type: "line", source: "tiles", "source-layer": sourceLayer,
+        paint: {
+          "line-color": glColorExpr(style, "simpleColor"),
+          "line-width": glNumberExpr(style, "lineWidth", 1),
+          "line-opacity": glNumberExpr(style, "lineOpacity", 1),
+          "line-dasharray": glDashExpr(style),
+        },
+      });
+    }
+  } else if (isLine) {
+    out.push({
+      id: sourceLayer + "-line", type: "line", source: "tiles", "source-layer": sourceLayer,
+      paint: {
+        "line-color": glColorExpr(style, "simpleColor"),
+        "line-width": glNumberExpr(style, "lineWidth", 2),
+        "line-opacity": glNumberExpr(style, "lineOpacity", 1),
+        "line-dasharray": glDashExpr(style),
+      },
+    });
+  } else if (isPoint) {
+    out.push({
+      id: sourceLayer + "-point", type: "circle", source: "tiles", "source-layer": sourceLayer,
+      paint: {
+        "circle-color": glColorExpr(style, "simpleColor"),
+        "circle-radius": glNumberExpr(style, "pointSize", 5),
+        "circle-opacity": glNumberExpr(style, "pointOpacity", 1),
+        "circle-stroke-width": style.outlineWidth ?? 1,
+        "circle-stroke-color": style.outlineColor || "#ffffff",
+      },
+    });
+  } else {
+    return null;
+  }
+
+  if (style.labelSettings && style.labelSettings.enabled && style.labelSettings.propertyId) {
+    const ls = style.labelSettings;
+    out.push({
+      id: sourceLayer + "-label", type: "symbol", source: "tiles", "source-layer": sourceLayer,
+      layout: {
+        "text-field": ["get", ls.propertyId],
+        "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+        "text-size": ls.fontSize || 12,
+        "text-anchor": ls.placement === "over" ? "center" : "top",
+        "symbol-placement": isLine ? "line" : "point",
+      },
+      paint: {
+        "text-color": ls.color || "#000000",
+        "text-halo-color": ls.haloEnabled ? (ls.haloColor || "#ffffff") : "transparent",
+        "text-halo-width": ls.haloEnabled ? (ls.haloSize || 1) : 0,
+      },
+    });
+  }
+
+  return out;
+}
+
+// A flat, geometry-filtered rendering used only when a tileset layer has no matching
+// model.json entry (or model.json couldn't be fetched at all) — same behavior this
+// viewer had before it read per-layer styling.
+function fallbackGLLayers(sourceLayer, color) {
+  return [
+    { id: sourceLayer + "-fill", type: "fill", source: "tiles", "source-layer": sourceLayer,
+      filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": color, "fill-opacity": 0.35 } },
+    { id: sourceLayer + "-line", type: "line", source: "tiles", "source-layer": sourceLayer,
+      filter: ["in", ["geometry-type"], ["literal", ["LineString", "Polygon"]]], paint: { "line-color": color, "line-width": 1.5 } },
+    { id: sourceLayer + "-point", type: "circle", source: "tiles", "source-layer": sourceLayer,
+      filter: ["==", ["geometry-type"], "Point"], paint: { "circle-color": color, "circle-radius": 4, "circle-stroke-width": 1, "circle-stroke-color": "#fff" } },
+  ];
+}
 
 async function main() {
   let manifest;
@@ -89,6 +223,15 @@ async function main() {
     return;
   }
 
+  // model.json sits next to this kit's docker-compose.yml — same file the worker
+  // itself reads for layer name mapping. Styling degrades to flat fallback colors
+  // (not a hard failure) if it's missing or unreadable.
+  let model = null;
+  try {
+    const modelRes = await fetch("model.json", { cache: "no-store" });
+    if (modelRes.ok) model = await modelRes.json();
+  } catch (e) { /* fall back below */ }
+
   const pmtilesUrl = "tiles/" + manifest.pmtiles;
   const protocol = new pmtiles.Protocol();
   maplibregl.addProtocol("pmtiles", protocol.tile);
@@ -99,53 +242,34 @@ async function main() {
   const [header, meta] = await Promise.all([p.getHeader(), p.getMetadata()]);
   const vectorLayers = (meta && meta.vector_layers) || [];
 
-  const layers = [];
+  const modelLayersBySafeName = {};
+  if (model && Array.isArray(model.layers)) {
+    for (const l of model.layers) {
+      if (l.isAbstract) continue;
+      modelLayersBySafeName[toSafeName(l.name)] = l;
+    }
+  }
+
+  const glLayers = [];
   vectorLayers.forEach((layer, i) => {
-    const color = COLORS[i % COLORS.length];
     const sourceLayer = layer.id;
-    layers.push({
-      id: sourceLayer + "-fill",
-      type: "fill",
-      source: "tiles",
-      "source-layer": sourceLayer,
-      filter: ["==", ["geometry-type"], "Polygon"],
-      paint: { "fill-color": color, "fill-opacity": 0.35 },
-    });
-    layers.push({
-      id: sourceLayer + "-line",
-      type: "line",
-      source: "tiles",
-      "source-layer": sourceLayer,
-      filter: ["in", ["geometry-type"], ["literal", ["LineString", "Polygon"]]],
-      paint: { "line-color": color, "line-width": 1.5 },
-    });
-    layers.push({
-      id: sourceLayer + "-point",
-      type: "circle",
-      source: "tiles",
-      "source-layer": sourceLayer,
-      filter: ["==", ["geometry-type"], "Point"],
-      paint: { "circle-color": color, "circle-radius": 4, "circle-stroke-width": 1, "circle-stroke-color": "#fff" },
-    });
+    const modelLayer = modelLayersBySafeName[sourceLayer];
+    const styled = modelLayer && modelLayerToGLLayers(modelLayer, sourceLayer);
+    glLayers.push(...(styled && styled.length ? styled : fallbackGLLayers(sourceLayer, FALLBACK_COLORS[i % FALLBACK_COLORS.length])));
   });
 
+  // A real basemap (same one Waystones Cloud's own viewer uses) instead of a flat
+  // fill color — the vector tile layers are then added as an overlay on top of it.
   const map = new maplibregl.Map({
     container: "map",
-    style: {
-      version: 8,
-      sources: {
-        tiles: { type: "vector", url: "pmtiles://" + pmtilesUrl },
-      },
-      layers: [
-        { id: "background", type: "background", paint: { "background-color": "#f4f4f5" } },
-        ...layers,
-      ],
-    },
+    style: "https://tiles.openfreemap.org/styles/positron",
     center: [header.centerLon, header.centerLat],
     zoom: header.centerZoom,
   });
 
   map.on("load", () => {
+    map.addSource("tiles", { type: "vector", url: "pmtiles://" + pmtilesUrl });
+    glLayers.forEach((l) => map.addLayer(l));
     map.fitBounds(
       [[header.minLon, header.minLat], [header.maxLon, header.maxLat]],
       { padding: 40, duration: 0 }

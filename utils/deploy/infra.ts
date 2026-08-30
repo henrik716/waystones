@@ -446,6 +446,9 @@ export const generateDockerCompose = (
       - "8081:80"
     volumes:
       - ./viewer/index.html:/usr/share/nginx/html/index.html:ro
+      # The viewer reads this to style tiles the same way Waystones Cloud does
+      # (fill/line/point color, opacity, categorized rules) instead of flat fallback colors.
+      - ./model.json:/usr/share/nginx/html/model.json:ro
       - viewer_www:/usr/share/nginx/html:ro
     depends_on:
       tiles-sync:
