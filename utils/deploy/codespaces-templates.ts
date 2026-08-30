@@ -24,11 +24,11 @@ export const devcontainerJson = `{
       "extensions": ["ms-toolsai.jupyter"]
     }
   },
-  "forwardPorts": [5000, 8081, 9001],
+  "forwardPorts": [5000, 8081, 19001],
   "portsAttributes": {
     "5000": { "label": "OGC API Features", "onAutoForward": "notify" },
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "openPreview" },
-    "9001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
+    "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
   "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open demo.ipynb and run the cells in order — see README.md for details.'"
 }

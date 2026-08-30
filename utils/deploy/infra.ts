@@ -139,8 +139,12 @@ export const generateDockerCompose = (
     image: minio/minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      # Host-side ports only — every other service reaches MinIO over the Docker
+      # network as minio:9000/9001 regardless of what's published here. Published
+      # as 19000/19001 (not the container-internal 9000/9001) because 9000 is a
+      # common local-dev/devcontainer port that's often already taken on the host.
+      - "19000:9000"
+      - "19001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin

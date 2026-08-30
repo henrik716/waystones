@@ -174,6 +174,16 @@ describe('generateDockerCompose', () => {
     expect(workerSection).not.toContain('./data.gpkg:/input/data.gpkg:ro');
   });
 
+  it('publishes MinIO to host ports 19000/19001, not 9000/9001 — 9000 is commonly already bound on dev machines/devcontainers, and every other service reaches it over the Docker network as minio:9000 regardless of the host mapping', () => {
+    const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3());
+    const minioSection = compose.slice(compose.indexOf('  minio:'), compose.indexOf('  minio-init:'));
+    expect(minioSection).toContain('"19000:9000"');
+    expect(minioSection).toContain('"19001:9001"');
+    expect(minioSection).not.toContain('"9000:9000"');
+    expect(minioSection).not.toContain('"9001:9001"');
+    expect(compose).toContain('http://minio:9000');
+  });
+
   describe('useMinimalOapifImage', () => {
     const modelNoWms = makeModel({ layers: [makeLayer('Roads', { geometryType: 'None' })] });
     const modelWithWms = makeModel({ layers: [makeLayer('Roads', { geometryType: 'Polygon' })] });
