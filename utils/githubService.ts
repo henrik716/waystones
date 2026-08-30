@@ -120,16 +120,25 @@ export const pushDeployKit = async (
   const api = `https://api.github.com/repos/${repo}`;
 
   try {
-    // 1. Get the SHA of the latest commit on the base branch
+    // 1. Get the SHA of the latest commit on the base branch.
+    // A brand-new repo has no commits/branches at all yet — GitHub only creates the
+    // actual `refs/heads/<branch>` ref once something is committed, even though the
+    // repo's settings already name "main" as the intended default branch. Treat a
+    // 404 here as "this is the first commit ever", not a real error.
     const refRes = await fetch(`${api}/git/ref/heads/${branch}`, { headers });
-    if (!refRes.ok) throw new Error(`Could not find branch '${branch}'`);
-    const refData = await refRes.json();
-    const baseCommitSha = refData.object.sha;
+    const isEmptyRepo = !refRes.ok;
+    let baseCommitSha: string | undefined;
+    let baseTreeSha: string | undefined;
 
-    // 2. Get the tree SHA of that commit
-    const commitRes = await fetch(`${api}/git/commits/${baseCommitSha}`, { headers });
-    const commitData = await commitRes.json();
-    const baseTreeSha = commitData.tree.sha;
+    if (!isEmptyRepo) {
+      const refData = await refRes.json();
+      baseCommitSha = refData.object.sha;
+
+      // 2. Get the tree SHA of that commit
+      const commitRes = await fetch(`${api}/git/commits/${baseCommitSha}`, { headers });
+      const commitData = await commitRes.json();
+      baseTreeSha = commitData.tree.sha;
+    }
 
     // 3. Create blobs for each file
     const treeItems: any[] = [];
@@ -192,20 +201,22 @@ export const pushDeployKit = async (
     if (!treeRes.ok) throw new Error('Failed to create tree');
     const treeData = await treeRes.json();
 
-    // 5. Create the commit
+    // 5. Create the commit (root commit — no parents — if this is the first commit ever)
     const newCommitRes = await fetch(`${api}/git/commits`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         message: commitMessage,
         tree: treeData.sha,
-        parents: [baseCommitSha],
+        parents: baseCommitSha ? [baseCommitSha] : [],
       }),
     });
     if (!newCommitRes.ok) throw new Error('Failed to create commit');
     const newCommitData = await newCommitRes.json();
 
-    if (createPR) {
+    // A PR needs an existing base branch to diff against, which an empty repo doesn't
+    // have — push the initial commit directly instead, regardless of createPR.
+    if (createPR && !isEmptyRepo) {
       // 6a. Create a new branch and open a PR
       const prBranch = `deploy/${Date.now()}`;
       const branchRes = await fetch(`${api}/git/refs`, {
@@ -230,12 +241,19 @@ export const pushDeployKit = async (
 
       return { success: true, commitSha: newCommitData.sha, prUrl: prData.html_url, prNumber: prData.number };
     } else {
-      // 6b. Update branch ref directly
-      const updateRes = await fetch(`${api}/git/refs/heads/${branch}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ sha: newCommitData.sha }),
-      });
+      // 6b. Point the branch at the new commit — PATCH an existing ref, or POST to
+      // create the ref for the first time if the branch doesn't exist yet (empty repo).
+      const updateRes = isEmptyRepo
+        ? await fetch(`${api}/git/refs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: newCommitData.sha }),
+          })
+        : await fetch(`${api}/git/refs/heads/${branch}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ sha: newCommitData.sha }),
+          });
       if (!updateRes.ok) throw new Error('Failed to update branch');
 
       return { success: true, commitSha: newCommitData.sha };
