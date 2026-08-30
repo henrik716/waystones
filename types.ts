@@ -221,7 +221,7 @@ export interface SharedEnum {
 export type ViewTab = 'landing' | 'models' | 'editor' | 'preview' | 'mapper' | 'github' | 'deploy' | 'quick-publish';
 
 export type SourceType = 'postgis' | 'supabase' | 'databricks' | 'geopackage';
-export type DeployTarget = 'docker-compose' | 'railway' | 'waystones-cloud';
+export type DeployTarget = 'docker-compose' | 'railway' | 'codespaces' | 'waystones-cloud';
 export type S3Provider = 'r2' | 'tigris' | 'aws' | 'custom';
 
 export interface GeopackageConfig {

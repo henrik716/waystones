@@ -2,6 +2,7 @@ import {
   DataModel, SourceConnection,
 } from '../../types';
 import { getPgConnectionEnv, hasS3Config } from './_helpers';
+import { toTableName } from '../nameSanitizer';
 
 // ============================================================
 // Generate .env file
@@ -72,14 +73,24 @@ export const generateEnvFile = (source: SourceConnection): string => {
 // For production / Railway deployments replace the minio service with real
 // S3/R2 credentials in .env and remove the minio / minio-init services.
 // ============================================================
+// UTF-8-safe base64 encode — plain btoa() throws on non-Latin1 characters
+// (this app ships i18n content that can contain æ/ø/å etc.).
+const toBase64Utf8 = (value: string): string => btoa(unescape(encodeURIComponent(value)));
+
 export const generateDockerCompose = (
   model: DataModel,
-  source: SourceConnection
+  source: SourceConnection,
+  opts?: { includeTiles?: boolean; stac?: { enabled: boolean } }
 ): string => {
   const isPg = source.type === 'postgis' || source.type === 'supabase';
   const isS3Gpkg = source.type === 'geopackage' && hasS3Config(source);
   const isLocalGpkg = source.type === 'geopackage' && !hasS3Config(source);
   const hasGeomLayers = model.layers.some(l => l.geometryType !== 'None');
+  const includeTiles = opts?.includeTiles ?? false;
+  // STAC only makes sense alongside the tiles/viewer pipeline — it shares the
+  // same viewer_www volume and viewer container to browse the generated catalog.
+  const includeStac = (opts?.stac?.enabled ?? false) && includeTiles;
+  const projectNameSlug = toTableName(model.name);
 
   let compose = `# Docker Compose for ${model.name}
 # Source: ${source.type}
@@ -165,6 +176,10 @@ export const generateDockerCompose = (
   compose += `  # --- Worker (converts input → Parquet + FlatGeobuf, uploads to MinIO) ---\n`;
   compose += `  worker:\n`;
   compose += `    image: ghcr.io/waystones-nexus/waystones-keystone:worker-latest\n`;
+  // The image's default ENTRYPOINT starts an idle FastAPI wrapper that waits for an
+  // HTTP task request — override it so the container runs the conversion directly
+  // from its own environment variables and exits when done.
+  compose += `    entrypoint: ["python3", "/app/main.py"]\n`;
   if (isLocalGpkg || isS3Gpkg) {
     compose += `    volumes:\n`;
     if (isS3Gpkg) {
@@ -186,7 +201,8 @@ export const generateDockerCompose = (
   compose += `      AWS_ENDPOINT_URL: http://minio:9000\n`;
   compose += `      AWS_ACCESS_KEY_ID: minioadmin\n`;
   compose += `      AWS_SECRET_ACCESS_KEY: minioadmin\n`;
-  compose += `      AWS_DEFAULT_REGION: us-east-1\n`;
+  compose += `      AWS_DEFAULT_REGION: eu-north-1\n`;
+  compose += `      S3_BUCKET_NAME: waystones-data\n`;
   if (isPg) {
     compose += `    env_file: .env\n`;
   }
@@ -219,7 +235,7 @@ export const generateDockerCompose = (
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_REGION: eu-north-1
       IS_PRIVATE: "0"
 `;
   if (hasGeomLayers) {
@@ -245,7 +261,7 @@ export const generateDockerCompose = (
       AWS_ENDPOINT_URL: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_REGION: eu-north-1
     command: s3 sync s3://waystones-data/ /data/ --exclude "*.parquet" --exclude "*.json"
     depends_on:
       worker:
@@ -269,6 +285,156 @@ export const generateDockerCompose = (
 `;
   }
 
+  // --- PMTiles pipeline + viewer (opt-in — used by the Codespaces target) ---
+  if (includeTiles) {
+    compose += `
+  # --- Worker (tiles) — converts input → PMTiles, uploads to MinIO ---
+  worker-tiles:\n`;
+    compose += `    image: ghcr.io/waystones-nexus/waystones-keystone:worker-latest\n`;
+    compose += `    entrypoint: ["python3", "/app/main.py"]\n`;
+    if (isLocalGpkg || isS3Gpkg) {
+      compose += `    volumes:\n`;
+      if (isS3Gpkg) {
+        compose += `      - input-data:/input:ro\n`;
+      } else if (isLocalGpkg) {
+        compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
+      }
+    }
+    compose += `    environment:\n`;
+    if (isPg) {
+      compose += `      INPUT_TYPE: postgis\n`;
+      compose += `      INPUT_URI: postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@\${POSTGRES_HOST}:\${POSTGRES_PORT}/\${POSTGRES_DB}\n`;
+    } else {
+      compose += `      INPUT_TYPE: gpkg\n`;
+      compose += `      INPUT_URI: /input/data.gpkg\n`;
+    }
+    compose += `      TASK_TYPE: tiles\n`;
+    compose += `      OUTPUT_TYPE: s3\n`;
+    compose += `      OUTPUT_URI: s3://waystones-data/tiles/\n`;
+    compose += `      PROJECT_NAME: ${projectNameSlug}\n`;
+    compose += `      AWS_ENDPOINT_URL: http://minio:9000\n`;
+    compose += `      AWS_ACCESS_KEY_ID: minioadmin\n`;
+    compose += `      AWS_SECRET_ACCESS_KEY: minioadmin\n`;
+    compose += `      AWS_DEFAULT_REGION: eu-north-1\n`;
+    if (isPg) {
+      compose += `    env_file: .env\n`;
+    }
+    compose += `    depends_on:\n`;
+    compose += `      minio-init:\n`;
+    compose += `        condition: service_completed_successfully\n`;
+    if (isS3Gpkg) {
+      compose += `      data-fetcher:\n`;
+      compose += `        condition: service_completed_successfully\n`;
+    }
+    compose += `    restart: "no"\n`;
+
+    compose += `
+  # --- PMTiles sync (downloads the .pmtiles archive from MinIO to the viewer) ---
+  tiles-sync:
+    image: amazon/aws-cli
+    volumes:
+      - viewer_www:/www
+    environment:
+      AWS_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: eu-north-1
+    command: s3 sync s3://waystones-data/tiles/ /www/tiles/
+    depends_on:
+      worker-tiles:
+        condition: service_completed_successfully
+    restart: "no"
+`;
+
+    // --- STAC catalog pipeline (opt-in — shares the viewer container with PMTiles) ---
+    if (includeStac) {
+      compose += `
+  # --- Worker (STAC) — generates a STAC catalog, uploads to MinIO ---
+  worker-stac:\n`;
+      compose += `    image: ghcr.io/waystones-nexus/waystones-keystone:worker-latest\n`;
+      compose += `    entrypoint: ["python3", "/app/main.py"]\n`;
+      if (isLocalGpkg || isS3Gpkg) {
+        compose += `    volumes:\n`;
+        if (isS3Gpkg) {
+          compose += `      - input-data:/input:ro\n`;
+        } else if (isLocalGpkg) {
+          compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
+        }
+      }
+      compose += `    environment:\n`;
+      if (isPg) {
+        compose += `      INPUT_TYPE: postgis\n`;
+        compose += `      INPUT_URI: postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@\${POSTGRES_HOST}:\${POSTGRES_PORT}/\${POSTGRES_DB}\n`;
+      } else {
+        compose += `      INPUT_TYPE: gpkg\n`;
+        compose += `      INPUT_URI: /input/data.gpkg\n`;
+      }
+      compose += `      TASK_TYPE: stac\n`;
+      compose += `      OUTPUT_TYPE: s3\n`;
+      compose += `      OUTPUT_URI: s3://waystones-data/stac/\n`;
+      // Partitioning is a runtime choice, not a build-time one — this default (no
+      // partitioning) applies to a plain `docker compose up worker-stac`. To try
+      // partitioning, override it per-run, e.g.:
+      //   docker compose run --rm -e STRATEGY=custom_column -e COLUMN=<column> worker-stac
+      compose += `      STRATEGY: none\n`;
+      compose += `      MODEL_B64: ${toBase64Utf8(JSON.stringify(model))}\n`;
+      compose += `      AWS_ENDPOINT_URL: http://minio:9000\n`;
+      compose += `      AWS_ACCESS_KEY_ID: minioadmin\n`;
+      compose += `      AWS_SECRET_ACCESS_KEY: minioadmin\n`;
+      compose += `      AWS_DEFAULT_REGION: eu-north-1\n`;
+      if (isPg) {
+        compose += `    env_file: .env\n`;
+      }
+      compose += `    depends_on:\n`;
+      compose += `      minio-init:\n`;
+      compose += `        condition: service_completed_successfully\n`;
+      if (isS3Gpkg) {
+        compose += `      data-fetcher:\n`;
+        compose += `        condition: service_completed_successfully\n`;
+      }
+      compose += `    restart: "no"\n`;
+
+      compose += `
+  # --- STAC sync (downloads the catalog from MinIO to the viewer) ---
+  stac-sync:
+    image: amazon/aws-cli
+    volumes:
+      - viewer_www:/www
+    environment:
+      AWS_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: eu-north-1
+    command: s3 sync s3://waystones-data/stac/ /www/stac/
+    depends_on:
+      worker-stac:
+        condition: service_completed_successfully
+    restart: "no"
+`;
+    }
+
+    compose += `
+  # --- PMTiles map viewer${includeStac ? ' + STAC catalog browser' : ''} ---
+  # Open in a browser: http://localhost:8081
+  viewer:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./viewer/index.html:/usr/share/nginx/html/index.html:ro
+      - viewer_www:/usr/share/nginx/html:ro
+    depends_on:
+      tiles-sync:
+        condition: service_completed_successfully
+`;
+    if (includeStac) {
+      compose += `      stac-sync:\n`;
+      compose += `        condition: service_completed_successfully\n`;
+    }
+    compose += `    restart: unless-stopped
+`;
+  }
+
   // --- volumes ---
   compose += `\nvolumes:\n`;
   compose += `  minio_data:\n`;
@@ -277,6 +443,9 @@ export const generateDockerCompose = (
   }
   if (isS3Gpkg) {
     compose += `  input-data:\n`;
+  }
+  if (includeTiles) {
+    compose += `  viewer_www:\n`;
   }
 
   return compose;

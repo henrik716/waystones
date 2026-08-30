@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import type { Translations } from '../../i18n/index';
 import {
   Check, Github, Layers, RefreshCw, ExternalLink, Info,
-  GitPullRequest, Download, Cloud, Server, AlertTriangle, ShieldAlert
+  GitPullRequest, Download, Cloud, Server, AlertTriangle, ShieldAlert, PlayCircle
 } from 'lucide-react';
 import { DataModel, ModelMetadata, DeployTarget, SourceConnection, LayerSourceMapping } from '../../types';
 import { InferredDataSummary } from '../../utils/importUtils';
@@ -45,6 +45,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
   const [ghToken, setGhToken] = useState('');
   const [ghBasePath, setGhBasePath] = useState('');
   const [includeData, setIncludeData] = useState(false);
+  const [stacEnabled, setStacEnabled] = useState(false);
   const [useOAuth, setUseOAuth] = useState(true); // Default to OAuth
   const [oauthState, setOAuthState] = useState<OAuthState>({
     isAuthenticated: false,
@@ -161,6 +162,10 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     );
   };
 
+  const getCodespacesOptions = () => ({
+    stac: stacEnabled ? { enabled: true } : undefined,
+  });
+
   const handlePublish = async () => {
     setPublishStatus('loading');
     setPublishResult(null);
@@ -168,7 +173,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
       const publishModel = buildPublishModel(model, selectedLayers);
       const layerMappings = buildLayerMappings(publishModel);
       const source = buildSourceForPublish(publishModel, layerMappings);
-      const files = await generateDeployFiles(publishModel, source, lang, deployTarget);
+      const files = await generateDeployFiles(publishModel, source, lang, deployTarget, getCodespacesOptions());
       const commitMsg = `[${publishModel.version}] Publish ${publishModel.name}`;
 
       const binaryFiles: Record<string, Blob> | undefined =
@@ -191,7 +196,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     const layerMappings = buildLayerMappings(publishModel);
     const source = buildSourceForPublish(publishModel, layerMappings);
     const binaryFilesForZip = includeData && dataBlob ? { [`data/${dataBlob.filename}`]: dataBlob.blob } : undefined;
-    await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip);
+    await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip, getCodespacesOptions());
   };
 
   const [cloudHandoffLoading, setCloudHandoffLoading] = useState(false);
@@ -268,11 +273,12 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
       {/* Deploy target selector */}
       <div className="space-y-3">
         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{d.targetTitle}</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {(['docker-compose', 'railway'] as DeployTarget[]).map(tgt => {
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {(['docker-compose', 'railway', 'codespaces'] as DeployTarget[]).map(tgt => {
             const icons: Record<string, React.ReactNode> = {
               'docker-compose': <Server size={20} />,
               'railway': <Cloud size={20} />,
+              'codespaces': <PlayCircle size={20} />,
             };
             const isActive = deployTarget === tgt;
             return (
@@ -341,6 +347,24 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
           })()}
         </div>
       </div>
+
+      {/* Codespaces: optional STAC catalog step */}
+      {deployTarget === 'codespaces' && (
+        <div className="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+          <label className="flex items-start gap-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={stacEnabled}
+              onChange={e => setStacEnabled(e.target.checked)}
+              className="mt-1 w-5 h-5 rounded-lg border-2 border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            />
+            <div className="flex-1">
+              <span className="text-sm font-black text-slate-800 block">{d.stacTitle}</span>
+              <span className="text-xs text-slate-500 font-medium">{d.stacDesc}</span>
+            </div>
+          </label>
+        </div>
+      )}
 
       {/* Waystones Cloud action */}
       {deployTarget === 'waystones-cloud' && (
