@@ -41,7 +41,12 @@ export const generateDeployFiles = async (
   }
 
   if (target === 'docker-compose' || target === 'codespaces') {
-    files['docker-compose.yml'] = generateDockerCompose(model, source, { includeTiles: target === 'codespaces' });
+    files['docker-compose.yml'] = generateDockerCompose(model, source, {
+      includeTiles: target === 'codespaces',
+      // Codespaces' own port forwarding already terminates HTTPS, so the gateway
+      // target's Caddy/TLS layer is redundant there (docker-compose/railway keep it).
+      useMinimalOapifImage: target === 'codespaces',
+    });
   }
 
   if (target === 'codespaces') {

@@ -7,7 +7,7 @@
  */
 
 import { DataModel, SourceConnection } from '../../types';
-import { hasS3Config } from './_helpers';
+import { hasS3Config, getGpkgFilename } from './_helpers';
 
 // ============================================================
 // .devcontainer/devcontainer.json
@@ -16,7 +16,8 @@ export const devcontainerJson = `{
   "name": "Waystones Codespaces Demo",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
   },
   "customizations": {
     "vscode": {
@@ -29,7 +30,7 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "openPreview" },
     "9001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "echo 'Open demo.ipynb and run the cells in order — see README.md for details.'"
+  "postCreateCommand": "pip3 install --user ipykernel && echo 'Open demo.ipynb and run the cells in order — see README.md for details.'"
 }
 `;
 
@@ -181,13 +182,16 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
   ];
 
   if (isLocalGpkg) {
+    // Must match docker-compose.yml's worker volume mount, which uses this same
+    // filename (not a hardcoded "data.gpkg") — see generateDockerCompose().
+    const gpkgFilename = getGpkgFilename(model, source);
     cells.push(
       code(
         'import os',
-        'assert os.path.exists("data.gpkg"), (',
-        '    "Add your GeoPackage as ./data.gpkg in this folder (see README.md), then re-run this cell."',
+        `assert os.path.exists("${gpkgFilename}"), (`,
+        `    "Add your GeoPackage as ./${gpkgFilename} in this folder (see README.md), then re-run this cell."`,
         ')',
-        'print("Found data.gpkg — ready to go.")',
+        `print("Found ${gpkgFilename} — ready to go.")`,
       ),
     );
   }
@@ -216,6 +220,18 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
 
   cells.push(
     md('## 3. Start the OGC API Features service'),
+    code(
+      'import os',
+      '',
+      '# oapif-go bakes SERVER_URL into every link and client-side data fetch on its own',
+      '# HTML pages (landing page, collections browser, item maps, Swagger UI at /api.html)',
+      "# — it must be the forwarded Codespaces URL, not localhost, or those pages' links",
+      '# and data fetches point at the wrong place once opened in a real browser.',
+      'codespace = os.environ.get("CODESPACE_NAME")',
+      'domain = os.environ.get("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")',
+      'if codespace and domain:',
+      '    os.environ["SERVER_URL"] = f"https://{codespace}-5000.{domain}"',
+    ),
     code('!docker compose up -d oapif'),
     code(
       'import json, time, urllib.request',
@@ -229,6 +245,23 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       '        time.sleep(1)',
       'else:',
       '    print("oapif-go did not become ready in time — check `docker compose logs oapif`.")',
+    ),
+    md(
+      '### See it in the browser',
+      '',
+      "oapif-go has its own built-in HTML pages — a landing page, a collections browser, a " +
+        "map + table per collection, and interactive API docs (Swagger/Redoc) at `/api.html`. " +
+        "It refuses to be embedded in an iframe (`X-Frame-Options: DENY`), so open these in " +
+        "their own browser tab rather than viewing them inline here.",
+    ),
+    code(
+      'from IPython.display import Markdown, display',
+      '',
+      'if codespace and domain:',
+      '    api_url = os.environ["SERVER_URL"]',
+      '    display(Markdown(f"**API landing page:** {api_url}  \\n**Interactive API docs:** {api_url}/api.html"))',
+      'else:',
+      '    display(Markdown("Open forwarded port **5000** in the Ports tab to view the API."))',
     ),
     md('## 4. View the PMTiles (and STAC catalog, if you generated one)'),
     code('!docker compose up -d viewer'),

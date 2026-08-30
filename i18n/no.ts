@@ -368,6 +368,7 @@ export const no = {
     githubTokenHint: "Trenger «repo»-rettighet",
     githubBasePath: "Mappesti i repo",
     githubBasePathPlaceholder: "tjenester/mitt-datasett",
+    githubBasePathCodespacesDisabled: "Ikke tilgjengelig for GitHub Codespaces — devcontainer-konfigurasjonen fungerer bare når den pushes til rotmappen i repoet, så denne pakken går alltid dit.",
     githubBasePathHint: "Valgfri undermappe. Tomt = rot i repoet.",
     // OAuth Authentication
     oauth: {
@@ -486,7 +487,7 @@ export const no = {
     back: "Tilbake",
     next: "Neste",
     includeData: "Inkluder data i repo",
-    includeDataDesc: "legges i",
+    includeDataDesc: "legges i rotmappen i repoet (samme filnavn som docker-compose.yml monterer)",
     includeDataUpload: "Last opp GeoPackage-fil for inkludering i repo",
     includeDataFile: "Datafil",
     includeDataWarn50: "Filen er over 50 MB. GitHub har en grense på 100 MB per fil. Vurder ekstern lagring for store datasett.",

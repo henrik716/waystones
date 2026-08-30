@@ -1,7 +1,7 @@
 import {
   DataModel, SourceConnection,
 } from '../../types';
-import { getPgConnectionEnv, hasS3Config } from './_helpers';
+import { getPgConnectionEnv, hasS3Config, getGpkgFilename } from './_helpers';
 import { toTableName } from '../nameSanitizer';
 
 // ============================================================
@@ -80,12 +80,20 @@ const toBase64Utf8 = (value: string): string => btoa(unescape(encodeURIComponent
 export const generateDockerCompose = (
   model: DataModel,
   source: SourceConnection,
-  opts?: { includeTiles?: boolean }
+  opts?: { includeTiles?: boolean; useMinimalOapifImage?: boolean }
 ): string => {
   const isPg = source.type === 'postgis' || source.type === 'supabase';
   const isS3Gpkg = source.type === 'geopackage' && hasS3Config(source);
   const isLocalGpkg = source.type === 'geopackage' && !hasS3Config(source);
+  // Must match the filename used in the README's "add your data" instructions
+  // (getGpkgFilename), not a hardcoded "data.gpkg" — otherwise a user who follows
+  // those instructions exactly still gets a mount that can't find their file.
+  const gpkgFilename = getGpkgFilename(model, source);
   const hasGeomLayers = model.layers.some(l => l.geometryType !== 'None');
+  // The gateway target's /ows/ WMS proxy (DEPLOY_QGIS/QGIS_UPSTREAM_TARGET) is a
+  // Caddy feature — minimal has no Caddy at all, so it can only stand in for gateway
+  // when there's no WMS to proxy. Otherwise silently ignore the request and keep gateway.
+  const useMinimalOapifImage = (opts?.useMinimalOapifImage ?? false) && !hasGeomLayers;
   const includeTiles = opts?.includeTiles ?? false;
   // STAC generation rides along with the tiles/viewer pipeline (same opt-in flag,
   // same viewer container to browse it) — but running it is a runtime choice, not
@@ -187,7 +195,7 @@ export const generateDockerCompose = (
     if (isS3Gpkg) {
       compose += `      - input-data:/input:ro\n`;
     } else if (isLocalGpkg) {
-      compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
+      compose += `      - ./${gpkgFilename}:/input/data.gpkg:ro\n`;
     }
   }
   compose += `    environment:\n`;
@@ -219,14 +227,17 @@ export const generateDockerCompose = (
 
   // --- oapif-go ---
   compose += `
-  # --- OGC API Features + gateway (oapif-go) ---
+  # --- OGC API Features${useMinimalOapifImage ? '' : ' + gateway'} (oapif-go) ---
   # OGC API Features: http://localhost:5000
 `;
   if (hasGeomLayers) {
     compose += `  # WMS (QGIS):       http://localhost:5000/ows/?SERVICE=WMS&REQUEST=GetCapabilities\n`;
   }
+  const oapifImage = useMinimalOapifImage
+    ? 'ghcr.io/waystones-nexus/oapif-go:minimal-latest'
+    : 'ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71';
   compose += `  oapif:
-    image: ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71
+    image: ${oapifImage}
     ports:
       - "5000:5000"
     volumes:
@@ -299,7 +310,7 @@ export const generateDockerCompose = (
       if (isS3Gpkg) {
         compose += `      - input-data:/input:ro\n`;
       } else if (isLocalGpkg) {
-        compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
+        compose += `      - ./${gpkgFilename}:/input/data.gpkg:ro\n`;
       }
     }
     compose += `    environment:\n`;
@@ -363,7 +374,7 @@ export const generateDockerCompose = (
       if (isS3Gpkg) {
         compose += `      - input-data:/input:ro\n`;
       } else if (isLocalGpkg) {
-        compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
+        compose += `      - ./${gpkgFilename}:/input/data.gpkg:ro\n`;
       }
     }
     compose += `    environment:\n`;

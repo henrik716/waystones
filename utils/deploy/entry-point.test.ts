@@ -70,6 +70,17 @@ describe('generateDeployFiles', () => {
     expect(files['docker-compose.yml']).toContain('viewer:');
   });
 
+  it('codespaces target uses the minimal oapif-go image (no WMS layers, no need for gateway/Caddy)', async () => {
+    const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces');
+    expect(files['docker-compose.yml']).toContain('oapif-go:minimal-latest');
+  });
+
+  it('docker-compose target still uses the gateway oapif-go image', async () => {
+    const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'docker-compose');
+    expect(files['docker-compose.yml']).toContain('ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+    expect(files['docker-compose.yml']).not.toContain('oapif-go:minimal-latest');
+  });
+
   it('codespaces target still produces a valid oapif-go-config.json', async () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces');
     const config = JSON.parse(files['oapif-go-config.json']);
