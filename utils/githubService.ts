@@ -206,7 +206,17 @@ export const pushDeployKit = async (
       headers,
       body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems }),
     });
-    if (!treeRes.ok) throw new Error(`Failed to create tree: ${await githubErrorDetail(treeRes)}`);
+    if (!treeRes.ok) {
+      // GitHub returns a plain 404 "Not Found" here (not 403) when the token is missing
+      // the 'workflow' scope needed to write under .github/workflows/ — indistinguishable
+      // from "repo doesn't exist" unless we special-case it, since blob creation for the
+      // same path succeeds fine (only tree/commit writes are scope-checked).
+      const detail = await githubErrorDetail(treeRes);
+      if (treeRes.status === 404 && treeItems.some(item => item.path.startsWith('.github/workflows/'))) {
+        throw new Error(`Failed to create tree: ${detail} — your GitHub token is likely missing the 'workflow' scope required to write .github/workflows/deploy.yml. Disconnect and reconnect your GitHub account to get a token with the right permissions.`);
+      }
+      throw new Error(`Failed to create tree: ${detail}`);
+    }
     const treeData = await treeRes.json();
 
     // 5. Create the commit (root commit — no parents — if this is the first commit ever)
