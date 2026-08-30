@@ -79,6 +79,16 @@ describe('devcontainerJson', () => {
     const parsed = JSON.parse(devcontainerJson);
     expect(parsed.customizations.vscode.extensions).toContain('ms-toolsai.jupyter');
   });
+
+  it('installs a Python interpreter — the base image alone does not guarantee one', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(Object.keys(parsed.features)).toContain('ghcr.io/devcontainers/features/python:1');
+  });
+
+  it('pre-installs ipykernel so the notebook has no kernel-selection prompt to run cells', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.postCreateCommand).toContain('pip3 install --user ipykernel');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -133,6 +143,13 @@ describe('generateNotebook', () => {
     const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
     const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
     expect(code.some((c: string) => c.includes('data.gpkg'))).toBe(true);
+  });
+
+  it('checks for the real filename, not a hardcoded "data.gpkg" — must match the compose mount', () => {
+    const realSource: SourceConnection = { type: 'geopackage', config: { filename: 'Hospitals.gpkg' }, layerMappings: {} };
+    const nb = JSON.parse(generateNotebook(makeModel(), realSource));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    expect(code.some((c: string) => c.includes('os.path.exists("Hospitals.gpkg")'))).toBe(true);
   });
 
   it('does not require a local data.gpkg when the source is remote (S3)', () => {

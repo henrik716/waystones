@@ -40,6 +40,14 @@ const makeGpkgSourceNoS3 = (): SourceConnection => ({
   layerMappings: {},
 });
 
+// A source with a real (non-"data.gpkg") filename — several fixtures above happen to
+// use "data.gpkg" itself, which would silently mask a hardcoded-filename regression.
+const makeGpkgSourceRealFilename = (): SourceConnection => ({
+  type: 'geopackage',
+  config: { filename: 'Hospitals.gpkg' },
+  layerMappings: {},
+});
+
 let _id = 0;
 const uid = () => `infra-${++_id}`;
 
@@ -156,6 +164,41 @@ describe('generateDockerCompose', () => {
     expect(compose).toContain('S3_BUCKET_NAME: waystones-data');
   });
 
+  it('mounts the source GeoPackage under its real filename, not a hardcoded "data.gpkg"', () => {
+    // Must match getGpkgFilename(), which is also what the README's "add your data"
+    // instructions tell the user to name the file — a hardcoded "data.gpkg" mount
+    // would silently fail to find a file the user was correctly told to add.
+    const compose = generateDockerCompose(makeModel(), makeGpkgSourceRealFilename());
+    const workerSection = compose.slice(compose.indexOf('  worker:'), compose.indexOf('  # --- OGC API'));
+    expect(workerSection).toContain('./Hospitals.gpkg:/input/data.gpkg:ro');
+    expect(workerSection).not.toContain('./data.gpkg:/input/data.gpkg:ro');
+  });
+
+  describe('useMinimalOapifImage', () => {
+    const modelNoWms = makeModel({ layers: [makeLayer('Roads', { geometryType: 'None' })] });
+    const modelWithWms = makeModel({ layers: [makeLayer('Roads', { geometryType: 'Polygon' })] });
+
+    it('defaults to the gateway image', () => {
+      const compose = generateDockerCompose(modelNoWms, makeGpkgSourceNoS3());
+      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+      expect(compose).not.toContain('oapif-go:minimal-latest');
+    });
+
+    it('uses the minimal image when requested and there is no WMS to proxy', () => {
+      const compose = generateDockerCompose(modelNoWms, makeGpkgSourceNoS3(), { useMinimalOapifImage: true });
+      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:minimal-latest');
+      expect(compose).not.toContain('27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+    });
+
+    it('falls back to gateway even when requested, if the model has WMS layers', () => {
+      // minimal has no Caddy at all, so it can't serve the /ows/ WMS proxy
+      // (DEPLOY_QGIS/QGIS_UPSTREAM_TARGET) that gateway's Caddyfile provides.
+      const compose = generateDockerCompose(modelWithWms, makeGpkgSourceNoS3(), { useMinimalOapifImage: true });
+      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+      expect(compose).not.toContain('oapif-go:minimal-latest');
+    });
+  });
+
   it('overrides the worker entrypoint so it runs the conversion instead of the idle FastAPI wrapper', () => {
     // docker/worker/Dockerfile's default ENTRYPOINT is server_wrapper.py, which just waits
     // for an HTTP request and never exits — without this override `docker compose up`
@@ -186,6 +229,14 @@ describe('generateDockerCompose', () => {
       const tilesSection = compose.slice(compose.indexOf('worker-tiles:'));
       expect(tilesSection).toContain('./data.gpkg:/input/data.gpkg:ro');
       expect(tilesSection).toContain('TASK_TYPE: tiles');
+    });
+
+    it('mounts the real filename (not a hardcoded "data.gpkg") into worker-tiles and worker-stac too', () => {
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceRealFilename(), { includeTiles: true });
+      const tilesSection = compose.slice(compose.indexOf('worker-tiles:'), compose.indexOf('tiles-sync:'));
+      const stacSection = compose.slice(compose.indexOf('worker-stac:'), compose.indexOf('stac-sync:'));
+      expect(tilesSection).toContain('./Hospitals.gpkg:/input/data.gpkg:ro');
+      expect(stacSection).toContain('./Hospitals.gpkg:/input/data.gpkg:ro');
     });
 
     it('sets PROJECT_NAME from a sanitized model name', () => {

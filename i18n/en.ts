@@ -368,6 +368,7 @@ export const en = {
     githubTokenHint: "Requires 'repo' scope",
     githubBasePath: "Path in repo",
     githubBasePathPlaceholder: "services/my-dataset",
+    githubBasePathCodespacesDisabled: "Not available for GitHub Codespaces — the devcontainer config only works when pushed to the repo root, so this kit always goes there.",
     githubBasePathHint: "Optional subdirectory. Empty = repo root.",
     // OAuth Authentication
     oauth: {
@@ -486,7 +487,7 @@ export const en = {
     back: "Back",
     next: "Next",
     includeData: "Include data in repo",
-    includeDataDesc: "added to",
+    includeDataDesc: "will be added to the repo root (the same filename docker-compose.yml mounts)",
     includeDataUpload: "Upload GeoPackage file to include in repo",
     includeDataFile: "Data file",
     includeDataWarn50: "File exceeds 50 MB. GitHub has a 100 MB per file limit. Consider external storage for large datasets.",

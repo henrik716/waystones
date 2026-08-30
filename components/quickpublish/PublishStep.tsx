@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { Translations } from '../../i18n/index';
 import {
   Check, Github, Layers, RefreshCw, ExternalLink, Info,
@@ -7,6 +7,7 @@ import {
 import { DataModel, ModelMetadata, DeployTarget, SourceConnection, LayerSourceMapping } from '../../types';
 import { InferredDataSummary } from '../../utils/importUtils';
 import { generateDeployFiles, exportDeployKit } from '../../utils/deployUtils';
+import { getGpkgFilename } from '../../utils/deploy/_helpers';
 import { scrubModelForExport } from '../../utils/modelUtils';
 import { pushDeployKit, checkRepoAccess, DeployPushResult } from '../../utils/githubService';
 import GitHubAuth from '../GitHubAuth';
@@ -45,6 +46,15 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
   const [ghToken, setGhToken] = useState('');
   const [ghBasePath, setGhBasePath] = useState('');
   const [includeData, setIncludeData] = useState(false);
+
+  // GitHub Codespaces only auto-detects .devcontainer/devcontainer.json at the repo
+  // root — a base path would silently break the one-click "just works" experience
+  // (no Docker-in-Docker feature, no forwarded ports, nothing pointing at the kit).
+  useEffect(() => {
+    if (deployTarget === 'codespaces' && ghBasePath) {
+      setGhBasePath('');
+    }
+  }, [deployTarget]);
   const [useOAuth, setUseOAuth] = useState(true); // Default to OAuth
   const [oauthState, setOAuthState] = useState<OAuthState>({
     isAuthenticated: false,
@@ -171,8 +181,11 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
       const files = await generateDeployFiles(publishModel, source, lang, deployTarget);
       const commitMsg = `[${publishModel.version}] Publish ${publishModel.name}`;
 
+      // Must land at the repo root under the same filename generateDockerCompose()'s
+      // worker volume mount expects (getGpkgFilename) — not a "data/" subfolder, and
+      // not necessarily dataBlob's own raw filename if that ever diverges.
       const binaryFiles: Record<string, Blob> | undefined =
-        includeData && dataBlob ? { [`data/${dataBlob.filename}`]: dataBlob.blob } : undefined;
+        includeData && dataBlob ? { [getGpkgFilename(publishModel, source)]: dataBlob.blob } : undefined;
 
       const result = await pushDeployKit(
         getEffectiveToken()!, ghRepo, ghBranch, ghBasePath, files, commitMsg,
@@ -190,7 +203,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     const publishModel = buildPublishModel(model, selectedLayers);
     const layerMappings = buildLayerMappings(publishModel);
     const source = buildSourceForPublish(publishModel, layerMappings);
-    const binaryFilesForZip = includeData && dataBlob ? { [`data/${dataBlob.filename}`]: dataBlob.blob } : undefined;
+    const binaryFilesForZip = includeData && dataBlob ? { [getGpkgFilename(publishModel, source)]: dataBlob.blob } : undefined;
     await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip);
   };
 
@@ -446,7 +459,13 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
 
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{d.githubBasePath}</label>
-          <input value={ghBasePath} onChange={e => setGhBasePath(e.target.value)} placeholder={d.githubBasePathPlaceholder} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all" />
+          {deployTarget === 'codespaces' ? (
+            <div className="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-3 text-xs font-medium text-slate-500">
+              {d.githubBasePathCodespacesDisabled}
+            </div>
+          ) : (
+            <input value={ghBasePath} onChange={e => setGhBasePath(e.target.value)} placeholder={d.githubBasePathPlaceholder} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all" />
+          )}
         </div>
       </div>}
 
@@ -512,7 +531,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
             <div className="flex-1">
               <span className="text-sm font-black text-slate-800 block">{d.includeData}</span>
               <span className="text-xs text-slate-500 font-medium">
-                {dataBlob.filename} ({formatBlobSize(dataBlob.blob.size)}) {d.includeDataDesc} <code className="bg-slate-200 px-1.5 py-0.5 rounded text-[10px] font-mono">data/</code>
+                {dataBlob.filename} ({formatBlobSize(dataBlob.blob.size)}) {d.includeDataDesc}
               </span>
               {dataBlob.blob.size > 50 * 1024 * 1024 && includeData && (
                 <div className="flex items-center gap-2 mt-2 text-amber-700 text-xs font-bold">
