@@ -114,6 +114,31 @@ describe('viewerIndexHtml', () => {
   it('registers the pmtiles:// protocol', () => {
     expect(viewerIndexHtml).toContain('addProtocol("pmtiles"');
   });
+
+  it('loads a real basemap instead of a flat background fill', () => {
+    expect(viewerIndexHtml).toContain('tiles.openfreemap.org/styles/positron');
+    expect(viewerIndexHtml).not.toContain('"background-color"');
+  });
+
+  it('fetches model.json and matches layers by the same safe-name scheme the worker and Waystones Cloud use', () => {
+    expect(viewerIndexHtml).toContain('fetch("model.json"');
+    expect(viewerIndexHtml).toContain('function toSafeName(name)');
+  });
+
+  it('translates model layer styles the same way lib/provisioner/style-generator.ts does, with a fallback for unstyled layers', () => {
+    expect(viewerIndexHtml).toContain('function modelLayerToGLLayers(layer, sourceLayer)');
+    expect(viewerIndexHtml).toContain('"fill-color": glColorExpr(style, "simpleColor")');
+    expect(viewerIndexHtml).toContain('function fallbackGLLayers(sourceLayer, color)');
+  });
+
+  it('embeds syntactically valid JavaScript in the inline <script> block', () => {
+    // Only the last (src-less) <script> tag is the inline viewer logic — the earlier
+    // ones load maplibre-gl/pmtiles from CDN via a src attribute.
+    const scripts = [...viewerIndexHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+    expect(scripts.length).toBeGreaterThan(0);
+    const inlineJs = scripts[scripts.length - 1][1];
+    expect(() => new Function(inlineJs)).not.toThrow();
+  });
 });
 
 // ---------------------------------------------------------------------------

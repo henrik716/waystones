@@ -275,6 +275,14 @@ describe('generateDockerCompose', () => {
       expect(compose).toContain('viewer_www:/usr/share/nginx/html:ro');
     });
 
+    it('mounts model.json into the viewer so it can style tiles the same way Waystones Cloud does', () => {
+      // Without this, viewerIndexHtml's fetch("model.json") 404s against nginx (which
+      // only serves index.html + the viewer_www volume) and every layer silently falls
+      // back to flat generic colors instead of the model's real styling.
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
+      expect(compose).toContain('./model.json:/usr/share/nginx/html/model.json:ro');
+    });
+
     it('does not add STAC services when includeTiles is false (default)', () => {
       const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3());
       expect(compose).not.toContain('worker-stac:');
