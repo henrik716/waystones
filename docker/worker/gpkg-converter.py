@@ -93,7 +93,7 @@ def _boto3_client():
         _ensure_ipv4()
     endpoint_url = None
     if endpoint:
-        endpoint_url = endpoint if endpoint.startswith('https://') else f"https://{endpoint}"
+        endpoint_url = endpoint if endpoint.startswith(('http://', 'https://')) else f"https://{endpoint}"
     
     # R2 requires s3v4 signature version. 
     # For signing, R2 prefers 'auto' or 'us-east-1'.
