@@ -10,6 +10,14 @@ const ghHeaders = (token: string): Record<string, string> => ({
   ...(token ? { Authorization: `token ${token}` } : {}),
 });
 
+// GitHub's error body is { message, documentation_url, ... } — surface that instead of
+// a bare "Failed to X", since the same generic failure can mean anything from an
+// expired token to a missing OAuth scope to a real API outage.
+const githubErrorDetail = async (res: Response): Promise<string> => {
+  const body = await res.json().catch(() => null);
+  return `${res.status} ${body?.message || res.statusText}`;
+};
+
 export const fetchModelHistory = async (
   token: string,
   repo: string,
@@ -149,7 +157,7 @@ export const pushDeployKit = async (
         headers,
         body: JSON.stringify({ content: btoa(unescape(encodeURIComponent(content))), encoding: 'base64' }),
       });
-      if (!blobRes.ok) throw new Error(`Failed to create blob for ${filePath}`);
+      if (!blobRes.ok) throw new Error(`Failed to create blob for ${filePath}: ${await githubErrorDetail(blobRes)}`);
       const blobData = await blobRes.json();
 
       treeItems.push({
@@ -180,7 +188,7 @@ export const pushDeployKit = async (
           headers,
           body: JSON.stringify({ content: base64, encoding: 'base64' }),
         });
-        if (!blobRes.ok) throw new Error(`Failed to create blob for ${filePath}`);
+        if (!blobRes.ok) throw new Error(`Failed to create blob for ${filePath}: ${await githubErrorDetail(blobRes)}`);
         const blobData = await blobRes.json();
 
         treeItems.push({
@@ -198,7 +206,7 @@ export const pushDeployKit = async (
       headers,
       body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems }),
     });
-    if (!treeRes.ok) throw new Error('Failed to create tree');
+    if (!treeRes.ok) throw new Error(`Failed to create tree: ${await githubErrorDetail(treeRes)}`);
     const treeData = await treeRes.json();
 
     // 5. Create the commit (root commit — no parents — if this is the first commit ever)
@@ -211,7 +219,7 @@ export const pushDeployKit = async (
         parents: baseCommitSha ? [baseCommitSha] : [],
       }),
     });
-    if (!newCommitRes.ok) throw new Error('Failed to create commit');
+    if (!newCommitRes.ok) throw new Error(`Failed to create commit: ${await githubErrorDetail(newCommitRes)}`);
     const newCommitData = await newCommitRes.json();
 
     // A PR needs an existing base branch to diff against, which an empty repo doesn't
@@ -224,7 +232,7 @@ export const pushDeployKit = async (
         headers,
         body: JSON.stringify({ ref: `refs/heads/${prBranch}`, sha: newCommitData.sha }),
       });
-      if (!branchRes.ok) throw new Error('Failed to create PR branch');
+      if (!branchRes.ok) throw new Error(`Failed to create PR branch: ${await githubErrorDetail(branchRes)}`);
 
       const prRes = await fetch(`${api}/pulls`, {
         method: 'POST',
@@ -236,7 +244,7 @@ export const pushDeployKit = async (
           body: `Autogenerert deploy-konfigurasjon fra Waystones.\n\nMerge denne PR-en for å trigge deployment.`,
         }),
       });
-      if (!prRes.ok) throw new Error('Failed to create pull request');
+      if (!prRes.ok) throw new Error(`Failed to create pull request: ${await githubErrorDetail(prRes)}`);
       const prData = await prRes.json();
 
       return { success: true, commitSha: newCommitData.sha, prUrl: prData.html_url, prNumber: prData.number };
@@ -254,7 +262,7 @@ export const pushDeployKit = async (
             headers,
             body: JSON.stringify({ sha: newCommitData.sha }),
           });
-      if (!updateRes.ok) throw new Error('Failed to update branch');
+      if (!updateRes.ok) throw new Error(`Failed to update branch: ${await githubErrorDetail(updateRes)}`);
 
       return { success: true, commitSha: newCommitData.sha };
     }
