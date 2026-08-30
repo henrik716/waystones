@@ -167,13 +167,8 @@ const code = (...lines: string[]) => ({ cell_type: 'code', execution_count: null
 const toSource = (lines: string[]): string[] =>
   lines.map((line, i) => (i < lines.length - 1 ? line + '\n' : line));
 
-export function generateNotebook(
-  model: DataModel,
-  source: SourceConnection,
-  opts?: { stac?: { enabled: boolean } }
-): string {
+export function generateNotebook(model: DataModel, source: SourceConnection): string {
   const isLocalGpkg = source.type === 'geopackage' && !hasS3Config(source);
-  const includeStac = opts?.stac?.enabled ?? false;
 
   const cells: any[] = [
     md(
@@ -202,25 +197,22 @@ export function generateNotebook(
     code('!docker compose up worker'),
     md('## 2. Create the vector tiles (PMTiles)'),
     code('!docker compose up worker-tiles'),
-  );
-
-  if (includeStac) {
-    cells.push(
-      md(
-        '## 2b. Generate the STAC catalog',
-        '',
+    md(
+      '## 2b. Generate a STAC catalog (optional)',
+      '',
+      "Skip this cell if you don't need it — the map viewer in step 4 works fine without it. " +
         'Run as-is for a single flat catalog, or edit the commented line below to partition the catalog ' +
-          'by a column from your data (any column present on at least one layer) and re-run this cell — ' +
-          'try a few different columns, no need to regenerate this kit.',
-      ),
-      code(
-        '!docker compose up worker-stac',
-        '',
-        '# To partition by a column instead, edit COLUMN and run this line (comment out the line above):',
-        '# !docker compose run --rm -e STRATEGY=custom_column -e COLUMN=your_column_name worker-stac',
-      ),
-    );
-  }
+        'by a column from your data and re-run — try a few different columns, no need to regenerate this kit.',
+    ),
+    code(
+      '!docker compose up worker-stac stac-sync',
+      '',
+      '# To partition by a column instead, edit COLUMN and run these two lines' +
+        ' (comment out the line above):',
+      '# !docker compose run --rm -e STRATEGY=custom_column -e COLUMN=your_column_name worker-stac',
+      '# !docker compose up stac-sync',
+    ),
+  );
 
   cells.push(
     md('## 3. Start the OGC API Features service'),
@@ -238,7 +230,7 @@ export function generateNotebook(
       'else:',
       '    print("oapif-go did not become ready in time — check `docker compose logs oapif`.")',
     ),
-    md('## 4. View the PMTiles' + (includeStac ? ' and STAC catalog' : '')),
+    md('## 4. View the PMTiles (and STAC catalog, if you generated one)'),
     code('!docker compose up -d viewer'),
     code(
       'import os',
@@ -248,8 +240,7 @@ export function generateNotebook(
       'domain = os.environ.get("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")',
       'if codespace and domain:',
       '    url = f"https://{codespace}-8081.{domain}"',
-      '    display(Markdown(f"**Map viewer:** {url}"))',
-      ...(includeStac ? ['    display(Markdown(f"**STAC catalog:** {url}/stac/catalog.json"))'] : []),
+      '    display(Markdown(f"**Map viewer:** {url}  (a STAC catalog link appears on the page if you generated one)"))',
       '    display(IFrame(url, width="100%", height=600))',
       'else:',
       '    display(Markdown("Open forwarded port **8081** in the Ports tab to view the map."))',

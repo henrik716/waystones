@@ -80,16 +80,18 @@ const toBase64Utf8 = (value: string): string => btoa(unescape(encodeURIComponent
 export const generateDockerCompose = (
   model: DataModel,
   source: SourceConnection,
-  opts?: { includeTiles?: boolean; stac?: { enabled: boolean } }
+  opts?: { includeTiles?: boolean }
 ): string => {
   const isPg = source.type === 'postgis' || source.type === 'supabase';
   const isS3Gpkg = source.type === 'geopackage' && hasS3Config(source);
   const isLocalGpkg = source.type === 'geopackage' && !hasS3Config(source);
   const hasGeomLayers = model.layers.some(l => l.geometryType !== 'None');
   const includeTiles = opts?.includeTiles ?? false;
-  // STAC only makes sense alongside the tiles/viewer pipeline — it shares the
-  // same viewer_www volume and viewer container to browse the generated catalog.
-  const includeStac = (opts?.stac?.enabled ?? false) && includeTiles;
+  // STAC generation rides along with the tiles/viewer pipeline (same opt-in flag,
+  // same viewer container to browse it) — but running it is a runtime choice, not
+  // a build-time one: worker-stac/stac-sync exist whenever includeTiles does, and
+  // the viewer works fine whether or not anyone ever invokes them. See demo.ipynb.
+  const includeStac = includeTiles;
   const projectNameSlug = toTableName(model.name);
 
   let compose = `# Docker Compose for ${model.name}
@@ -346,56 +348,63 @@ export const generateDockerCompose = (
     restart: "no"
 `;
 
-    // --- STAC catalog pipeline (opt-in — shares the viewer container with PMTiles) ---
-    if (includeStac) {
-      compose += `
-  # --- Worker (STAC) — generates a STAC catalog, uploads to MinIO ---
+    // --- STAC catalog pipeline (always present alongside tiles, entirely optional to
+    // actually run — see demo.ipynb. Not wired into any depends_on chain below, so
+    // nothing waits on it and a partitioned override run is never silently clobbered
+    // by an automatic re-run with the default settings.) ---
+    compose += `
+  # --- Worker (STAC) — generates a STAC catalog, uploads to MinIO. Optional: run
+  # this (or skip it) from demo.ipynb — nothing else depends on it. ---
   worker-stac:\n`;
-      compose += `    image: ghcr.io/waystones-nexus/waystones-keystone:worker-latest\n`;
-      compose += `    entrypoint: ["python3", "/app/main.py"]\n`;
-      if (isLocalGpkg || isS3Gpkg) {
-        compose += `    volumes:\n`;
-        if (isS3Gpkg) {
-          compose += `      - input-data:/input:ro\n`;
-        } else if (isLocalGpkg) {
-          compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
-        }
-      }
-      compose += `    environment:\n`;
-      if (isPg) {
-        compose += `      INPUT_TYPE: postgis\n`;
-        compose += `      INPUT_URI: postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@\${POSTGRES_HOST}:\${POSTGRES_PORT}/\${POSTGRES_DB}\n`;
-      } else {
-        compose += `      INPUT_TYPE: gpkg\n`;
-        compose += `      INPUT_URI: /input/data.gpkg\n`;
-      }
-      compose += `      TASK_TYPE: stac\n`;
-      compose += `      OUTPUT_TYPE: s3\n`;
-      compose += `      OUTPUT_URI: s3://waystones-data/stac/\n`;
-      // Partitioning is a runtime choice, not a build-time one — this default (no
-      // partitioning) applies to a plain `docker compose up worker-stac`. To try
-      // partitioning, override it per-run, e.g.:
-      //   docker compose run --rm -e STRATEGY=custom_column -e COLUMN=<column> worker-stac
-      compose += `      STRATEGY: none\n`;
-      compose += `      MODEL_B64: ${toBase64Utf8(JSON.stringify(model))}\n`;
-      compose += `      AWS_ENDPOINT_URL: http://minio:9000\n`;
-      compose += `      AWS_ACCESS_KEY_ID: minioadmin\n`;
-      compose += `      AWS_SECRET_ACCESS_KEY: minioadmin\n`;
-      compose += `      AWS_DEFAULT_REGION: eu-north-1\n`;
-      if (isPg) {
-        compose += `    env_file: .env\n`;
-      }
-      compose += `    depends_on:\n`;
-      compose += `      minio-init:\n`;
-      compose += `        condition: service_completed_successfully\n`;
+    compose += `    image: ghcr.io/waystones-nexus/waystones-keystone:worker-latest\n`;
+    compose += `    entrypoint: ["python3", "/app/main.py"]\n`;
+    if (isLocalGpkg || isS3Gpkg) {
+      compose += `    volumes:\n`;
       if (isS3Gpkg) {
-        compose += `      data-fetcher:\n`;
-        compose += `        condition: service_completed_successfully\n`;
+        compose += `      - input-data:/input:ro\n`;
+      } else if (isLocalGpkg) {
+        compose += `      - ./data.gpkg:/input/data.gpkg:ro\n`;
       }
-      compose += `    restart: "no"\n`;
+    }
+    compose += `    environment:\n`;
+    if (isPg) {
+      compose += `      INPUT_TYPE: postgis\n`;
+      compose += `      INPUT_URI: postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@\${POSTGRES_HOST}:\${POSTGRES_PORT}/\${POSTGRES_DB}\n`;
+    } else {
+      compose += `      INPUT_TYPE: gpkg\n`;
+      compose += `      INPUT_URI: /input/data.gpkg\n`;
+    }
+    compose += `      TASK_TYPE: stac\n`;
+    compose += `      OUTPUT_TYPE: s3\n`;
+    compose += `      OUTPUT_URI: s3://waystones-data/stac/\n`;
+    // Partitioning is a runtime choice, not a build-time one — this default (no
+    // partitioning) applies to a plain `docker compose up worker-stac`. To try
+    // partitioning, override it per-run, e.g.:
+    //   docker compose run --rm -e STRATEGY=custom_column -e COLUMN=<column> worker-stac
+    compose += `      STRATEGY: none\n`;
+    compose += `      MODEL_B64: ${toBase64Utf8(JSON.stringify(model))}\n`;
+    compose += `      AWS_ENDPOINT_URL: http://minio:9000\n`;
+    compose += `      AWS_ACCESS_KEY_ID: minioadmin\n`;
+    compose += `      AWS_SECRET_ACCESS_KEY: minioadmin\n`;
+    compose += `      AWS_DEFAULT_REGION: eu-north-1\n`;
+    if (isPg) {
+      compose += `    env_file: .env\n`;
+    }
+    compose += `    depends_on:\n`;
+    compose += `      minio-init:\n`;
+    compose += `        condition: service_completed_successfully\n`;
+    if (isS3Gpkg) {
+      compose += `      data-fetcher:\n`;
+      compose += `        condition: service_completed_successfully\n`;
+    }
+    compose += `    restart: "no"\n`;
 
-      compose += `
-  # --- STAC sync (downloads the catalog from MinIO to the viewer) ---
+    compose += `
+  # --- STAC sync (downloads the catalog from MinIO to the viewer). Optional, same
+  # as worker-stac above — run \`docker compose up worker-stac stac-sync\` together
+  # from demo.ipynb when you want it; nothing else depends on this either, so an
+  # override run of worker-stac (e.g. with a partition column) is never overwritten
+  # by an automatic default re-run. ---
   stac-sync:
     image: amazon/aws-cli
     volumes:
@@ -407,14 +416,14 @@ export const generateDockerCompose = (
       AWS_DEFAULT_REGION: eu-north-1
     command: s3 sync s3://waystones-data/stac/ /www/stac/
     depends_on:
-      worker-stac:
+      minio-init:
         condition: service_completed_successfully
     restart: "no"
 `;
-    }
 
     compose += `
-  # --- PMTiles map viewer${includeStac ? ' + STAC catalog browser' : ''} ---
+  # --- PMTiles map viewer + STAC catalog browser (STAC link only appears once you've
+  # generated one — see demo.ipynb) ---
   # Open in a browser: http://localhost:8081
   viewer:
     image: nginx:alpine
@@ -426,12 +435,7 @@ export const generateDockerCompose = (
     depends_on:
       tiles-sync:
         condition: service_completed_successfully
-`;
-    if (includeStac) {
-      compose += `      stac-sync:\n`;
-      compose += `        condition: service_completed_successfully\n`;
-    }
-    compose += `    restart: unless-stopped
+    restart: unless-stopped
 `;
   }
 

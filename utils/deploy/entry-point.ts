@@ -15,16 +15,11 @@ import { hasS3Config, getGpkgFilename } from './_helpers';
 // Generate deploy file map — target-aware
 // Returns a flat Record<filename, content> for pushing to GitHub
 // ============================================================
-export interface CodespacesOptions {
-  stac?: { enabled: boolean };
-}
-
 export const generateDeployFiles = async (
   model: DataModel,
   source: SourceConnection,
   lang: string = 'en',
-  target: DeployTarget = 'docker-compose',
-  codespacesOptions: CodespacesOptions = {}
+  target: DeployTarget = 'docker-compose'
 ): Promise<Record<string, string>> => {
   const hasWms = model.layers.some(l => l.geometryType !== 'None');
 
@@ -37,7 +32,7 @@ export const generateDeployFiles = async (
     '.env.template': generateEnvFile(source),
     '.gitignore': '.env\n',
     '.dockerignore': 'node_modules\ndist\n.git\n.venv\nvenv\ntmp\n*.local\n.env\n.env.*\n!.env.example\n',
-    'README.md': generateReadmeForTarget(model, source, target, lang, codespacesOptions),
+    'README.md': generateReadmeForTarget(model, source, target, lang),
     '.github/workflows/deploy.yml': generateWorkflowForTarget(model, source, target),
   };
 
@@ -46,16 +41,13 @@ export const generateDeployFiles = async (
   }
 
   if (target === 'docker-compose' || target === 'codespaces') {
-    files['docker-compose.yml'] = generateDockerCompose(model, source, {
-      includeTiles: target === 'codespaces',
-      stac: target === 'codespaces' ? codespacesOptions.stac : undefined,
-    });
+    files['docker-compose.yml'] = generateDockerCompose(model, source, { includeTiles: target === 'codespaces' });
   }
 
   if (target === 'codespaces') {
     files['.devcontainer/devcontainer.json'] = codespacesTemplates.devcontainerJson;
     files['viewer/index.html'] = codespacesTemplates.viewerIndexHtml;
-    files['demo.ipynb'] = codespacesTemplates.generateNotebook(model, source, { stac: codespacesOptions.stac });
+    files['demo.ipynb'] = codespacesTemplates.generateNotebook(model, source);
   }
 
   if (target === 'railway') {
@@ -89,10 +81,9 @@ export const exportDeployKit = async (
   source: SourceConnection,
   lang: string = 'en',
   target: DeployTarget = 'docker-compose',
-  binaryFiles?: Record<string, Blob>,
-  codespacesOptions: CodespacesOptions = {}
+  binaryFiles?: Record<string, Blob>
 ) => {
-  const files = await generateDeployFiles(model, source, lang, target, codespacesOptions);
+  const files = await generateDeployFiles(model, source, lang, target);
 
   try {
     const JSZip = (await import('jszip')).default;

@@ -88,24 +88,14 @@ describe('generateDeployFiles', () => {
     expect(files['.github/workflows/deploy.yml']).toContain('Validate oapif-go config');
   });
 
-  it('does not include STAC by default even for the codespaces target', async () => {
+  it('always includes STAC (worker-stac/stac-sync) for the codespaces target — running it is a notebook-time choice, not a Publish-step toggle', async () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces');
-    expect(files['docker-compose.yml']).not.toContain('worker-stac:');
-    expect(files['demo.ipynb']).not.toContain('worker-stac');
-  });
-
-  it('threads codespacesOptions.stac into both docker-compose.yml and demo.ipynb', async () => {
-    const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces', {
-      stac: { enabled: true },
-    });
     expect(files['docker-compose.yml']).toContain('worker-stac:');
     expect(files['demo.ipynb']).toContain('worker-stac');
   });
 
-  it('ignores stac options for targets other than codespaces', async () => {
-    const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'docker-compose', {
-      stac: { enabled: true },
-    });
+  it('never includes STAC for the docker-compose target', async () => {
+    const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'docker-compose');
     expect(files['docker-compose.yml']).not.toContain('worker-stac:');
   });
 });

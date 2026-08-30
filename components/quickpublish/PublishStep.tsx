@@ -45,7 +45,6 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
   const [ghToken, setGhToken] = useState('');
   const [ghBasePath, setGhBasePath] = useState('');
   const [includeData, setIncludeData] = useState(false);
-  const [stacEnabled, setStacEnabled] = useState(false);
   const [useOAuth, setUseOAuth] = useState(true); // Default to OAuth
   const [oauthState, setOAuthState] = useState<OAuthState>({
     isAuthenticated: false,
@@ -162,10 +161,6 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     );
   };
 
-  const getCodespacesOptions = () => ({
-    stac: stacEnabled ? { enabled: true } : undefined,
-  });
-
   const handlePublish = async () => {
     setPublishStatus('loading');
     setPublishResult(null);
@@ -173,7 +168,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
       const publishModel = buildPublishModel(model, selectedLayers);
       const layerMappings = buildLayerMappings(publishModel);
       const source = buildSourceForPublish(publishModel, layerMappings);
-      const files = await generateDeployFiles(publishModel, source, lang, deployTarget, getCodespacesOptions());
+      const files = await generateDeployFiles(publishModel, source, lang, deployTarget);
       const commitMsg = `[${publishModel.version}] Publish ${publishModel.name}`;
 
       const binaryFiles: Record<string, Blob> | undefined =
@@ -196,7 +191,7 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
     const layerMappings = buildLayerMappings(publishModel);
     const source = buildSourceForPublish(publishModel, layerMappings);
     const binaryFilesForZip = includeData && dataBlob ? { [`data/${dataBlob.filename}`]: dataBlob.blob } : undefined;
-    await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip, getCodespacesOptions());
+    await exportDeployKit(publishModel, source, lang, deployTarget, binaryFilesForZip);
   };
 
   const [cloudHandoffLoading, setCloudHandoffLoading] = useState(false);
@@ -270,17 +265,18 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
         )}
       </div>
 
-      {/* Deploy target selector */}
+      {/* Deploy target selector — 4 equal cards, 2x2 */}
       <div className="space-y-3">
         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{d.targetTitle}</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {(['docker-compose', 'railway', 'codespaces'] as DeployTarget[]).map(tgt => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {(['docker-compose', 'codespaces', 'railway', 'waystones-cloud'] as DeployTarget[]).map(tgt => {
             const icons: Record<string, React.ReactNode> = {
               'docker-compose': <Server size={20} />,
               'railway': <Cloud size={20} />,
               'codespaces': <PlayCircle size={20} />,
             };
             const isActive = deployTarget === tgt;
+            const isManaged = tgt === 'waystones-cloud';
             return (
               <button
                 key={tgt}
@@ -291,13 +287,26 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
                     : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                  isActive ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors overflow-hidden ${
+                  isActive ? (isManaged ? 'bg-indigo-50' : 'bg-indigo-100 text-indigo-600') : 'bg-slate-100 text-slate-400'
                 }`}>
-                  {icons[tgt]}
+                  {isManaged ? (
+                    <img
+                      src="/favicon.svg"
+                      alt=""
+                      className={`w-6 h-6 transition-all ${isActive ? 'grayscale-0 opacity-100' : 'grayscale opacity-40'}`}
+                    />
+                  ) : (
+                    icons[tgt]
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-900">{d.targets?.[tgt]}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-black text-slate-900">{d.targets?.[tgt]}</p>
+                    {isManaged && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[9px] font-black uppercase tracking-widest">Managed</span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-relaxed">{d.targets?.[tgt + 'Desc']}</p>
                 </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -308,63 +317,8 @@ const PublishStep: React.FC<PublishStepProps> = ({ model, summary, selectedLayer
               </button>
             );
           })}
-
-          {/* Waystones Cloud — full-width row */}
-          {(() => {
-            const isActive = deployTarget === 'waystones-cloud';
-            return (
-              <button
-                onClick={() => setDeployTarget('waystones-cloud')}
-                className={`sm:col-span-2 flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${
-                  isActive
-                    ? 'bg-white border-indigo-400 shadow-md shadow-indigo-50'
-                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors overflow-hidden ${
-                  isActive ? 'bg-indigo-50' : 'bg-slate-100'
-                }`}>
-                  <img
-                    src="/favicon.svg"
-                    alt=""
-                    className={`w-6 h-6 transition-all ${isActive ? 'grayscale-0 opacity-100' : 'grayscale opacity-40'}`}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-black text-slate-900">{d.targets?.['waystones-cloud']}</p>
-                    <span className="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[9px] font-black uppercase tracking-widest">Managed</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-relaxed">{d.targets?.['waystones-cloudDesc']}</p>
-                </div>
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                  isActive ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300'
-                }`}>
-                  {isActive && <Check size={12} strokeWidth={3} className="text-white" />}
-                </div>
-              </button>
-            );
-          })()}
         </div>
       </div>
-
-      {/* Codespaces: optional STAC catalog step */}
-      {deployTarget === 'codespaces' && (
-        <div className="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl">
-          <label className="flex items-start gap-4 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={stacEnabled}
-              onChange={e => setStacEnabled(e.target.checked)}
-              className="mt-1 w-5 h-5 rounded-lg border-2 border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-            />
-            <div className="flex-1">
-              <span className="text-sm font-black text-slate-800 block">{d.stacTitle}</span>
-              <span className="text-xs text-slate-500 font-medium">{d.stacDesc}</span>
-            </div>
-          </label>
-        </div>
-      )}
 
       {/* Waystones Cloud action */}
       {deployTarget === 'waystones-cloud' && (

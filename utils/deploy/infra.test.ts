@@ -214,38 +214,32 @@ describe('generateDockerCompose', () => {
       expect(compose).toContain('viewer_www:/usr/share/nginx/html:ro');
     });
 
-    it('does not add STAC services when stac.enabled is not set', () => {
+    it('does not add STAC services when includeTiles is false (default)', () => {
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3());
+      expect(compose).not.toContain('worker-stac:');
+      expect(compose).not.toContain('stac-sync:');
+    });
+
+    it('adds worker-stac and stac-sync alongside the tiles pipeline — always, not opt-in', () => {
+      // STAC generation is available whenever the tiles/viewer pipeline is (i.e. for the
+      // Codespaces target) — whether to actually run it is a runtime choice made by
+      // running (or skipping) the corresponding cell in demo.ipynb, not a build-time flag.
       const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
-      expect(compose).not.toContain('worker-stac:');
-      expect(compose).not.toContain('stac-sync:');
-    });
-  });
-
-  describe('with stac.enabled: true', () => {
-    it('is a no-op without includeTiles (STAC shares the tiles viewer/volume)', () => {
-      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { stac: { enabled: true } });
-      expect(compose).not.toContain('worker-stac:');
-      expect(compose).not.toContain('stac-sync:');
-    });
-
-    it('adds worker-stac and stac-sync alongside the tiles pipeline', () => {
-      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), {
-        includeTiles: true,
-        stac: { enabled: true },
-      });
       expect(compose).toContain('worker-stac:');
       expect(compose).toContain('stac-sync:');
-      expect(compose).toContain('entrypoint: ["python3", "/app/main.py"]');
       expect(compose).toContain('TASK_TYPE: stac');
+    });
+
+    it('overrides the worker-stac entrypoint too', () => {
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
+      const stacSection = compose.slice(compose.indexOf('worker-stac:'), compose.indexOf('stac-sync:'));
+      expect(stacSection).toContain('entrypoint: ["python3", "/app/main.py"]');
     });
 
     it('bakes in STRATEGY: none with no COLUMN — partitioning is a runtime choice, not a build-time one', () => {
       // See demo.ipynb: partitioning is done via `docker compose run --rm -e STRATEGY=custom_column
       // -e COLUMN=<col> worker-stac` so the user can try different columns without regenerating the kit.
-      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), {
-        includeTiles: true,
-        stac: { enabled: true },
-      });
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
       const stacSection = compose.slice(compose.indexOf('worker-stac:'), compose.indexOf('stac-sync:'));
       expect(stacSection).toContain('STRATEGY: none');
       expect(stacSection).not.toContain('COLUMN:');
@@ -253,10 +247,7 @@ describe('generateDockerCompose', () => {
 
     it('embeds a UTF-8-safe base64 MODEL_B64 that decodes back to the model JSON', () => {
       const model = makeModel({ name: 'Kystlinje æøå' });
-      const compose = generateDockerCompose(model, makeGpkgSourceNoS3(), {
-        includeTiles: true,
-        stac: { enabled: true },
-      });
+      const compose = generateDockerCompose(model, makeGpkgSourceNoS3(), { includeTiles: true });
       const match = compose.match(/MODEL_B64: (\S+)/);
       expect(match).not.toBeNull();
       const decoded = decodeURIComponent(escape(atob(match![1])));
@@ -264,14 +255,18 @@ describe('generateDockerCompose', () => {
       expect(parsed.name).toBe('Kystlinje æøå');
     });
 
-    it('makes the viewer wait on stac-sync in addition to tiles-sync', () => {
-      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), {
-        includeTiles: true,
-        stac: { enabled: true },
-      });
+    it('does not make the viewer wait on stac-sync or worker-stac wait on stac-sync — both stay skippable', () => {
+      // Deliberately decoupled: forcing STAC generation just to bring up the viewer would
+      // defeat the point of it being optional, and a compose-level dependency on worker-stac
+      // would risk stac-sync re-running it with default settings after a partitioned
+      // `docker compose run -e STRATEGY=custom_column ...` override, clobbering the result.
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
       const viewerSection = compose.slice(compose.indexOf('  viewer:'));
       expect(viewerSection).toContain('tiles-sync:');
-      expect(viewerSection).toContain('stac-sync:');
+      expect(viewerSection).not.toContain('stac-sync:');
+      const stacSyncSection = compose.slice(compose.indexOf('stac-sync:'), compose.indexOf('  viewer:'));
+      expect(stacSyncSection).not.toContain('worker-stac:');
+      expect(stacSyncSection).toContain('minio-init:');
     });
   });
 });

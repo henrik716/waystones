@@ -53,13 +53,13 @@ export const en = {
     publishGuideTitle: "How does publishing work?",
     publishGuideSteps: [
       "Your files are pushed to a GitHub repository that you choose below.",
-      "If you're publishing to someone else's repo (e.g. The Norwegian Mapping Authority), a pull request is created automatically and must be approved before anything happens.",
+      "If you're publishing to someone else's repo, a pull request is created automatically and must be approved before anything happens.",
       "Once the changes are merged, the service is built and deployed automatically via GitHub Actions.",
       "You need a Personal Access Token (PAT) from your own GitHub account. If publishing to someone else's repo, they must first grant your user write access (collaborator). Create your PAT at github.com → Settings → Developer settings."
     ],
     publishGuideStepsOAuth: [
       "Your files are pushed to a GitHub repository that you choose below.",
-      "If you're publishing to someone else's repo (e.g. The Norwegian Mapping Authority), a pull request is created automatically and must be approved before anything happens.",
+      "If you're publishing to someone else's repo, a pull request is created automatically and must be approved before anything happens.",
       "Once the changes are merged, the service is built and deployed automatically via GitHub Actions.",
       "Connect your GitHub account to authenticate securely. OAuth handles token management automatically - no manual setup required."
     ],
@@ -453,8 +453,6 @@ export const en = {
       'waystones-cloud': "Waystones Cloud",
       'waystones-cloudDesc': "Fully managed. No GitHub, no config, no infrastructure",
     },
-    stacTitle: "Include STAC catalog",
-    stacDesc: "Adds a worker-stac step to the Codespaces kit that generates a browsable STAC catalog. Partitioning (none, or by a column) is a runtime choice made in demo.ipynb, not here — so you can try different options without regenerating this kit.",
     cloudHandoffDesc: "Your model will be sent to Waystones Cloud where you can configure hosting, access controls, and deployment.",
     cloudHandoffBtn: "Open in Waystones Cloud",
     // Shared
@@ -834,9 +832,11 @@ export const en = {
     gettingStartedCodespaces: "🚀 Getting started with GitHub Codespaces",
     codespacesStep1: "Open this repository in a Codespace (the green **Code** button → **Codespaces** → **Create codespace**).",
     codespacesStep2: "Add your data:",
-    codespacesStep2Remote: "No local file needed — your source data is fetched automatically on first run.",
+    codespacesStep2S3: "Copy `.env.template` to `.env` and fill in your real S3/R2 access key, secret key, bucket name, and object key — `.env` is gitignored so it won't be in the pushed repo, and the worker needs it to download your GeoPackage on first run.",
+    codespacesStep2Pg: "Copy `.env.template` to `.env` and fill in your real PostGIS connection details (host, port, database, user, password) — `.env` is gitignored so it won't be in the pushed repo, and the worker needs it to connect to your database.",
     codespacesStep3: "Open `demo.ipynb` and run the cells in order — it runs the snapshot conversion, starts the OGC API Features service, and opens a live map of the generated PMTiles.",
     codespacesNote: "> **Note:** This target is meant for evaluation and demos, not production hosting — it uses a local MinIO instance in place of real S3/R2 storage.",
+    codespacesNotePg: "> **Note:** PostGIS requires an already-running, externally-reachable database — this Codespace does not create one for you. Make sure your database accepts connections from outside your own network (e.g. a hosted Postgres/Supabase instance), not just `localhost`.",
     envVars: "⚙️ Environment Variables",
     railwayEnvDesc: "Set these under **Variables** in the Railway dashboard:",
     variable: "Variable",

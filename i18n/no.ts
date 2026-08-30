@@ -53,13 +53,13 @@ export const no = {
     publishGuideTitle: "Hvordan fungerer publisering?",
     publishGuideSteps: [
       "Filene pushes til et GitHub-repo som du velger nedenfor.",
-      "Hvis du publiserer til et repo som tilhører en annen (f.eks. Kartverket), opprettes det automatisk en pull request som må godkjennes før noe skjer.",
+      "Hvis du publiserer til et repo som tilhører en annen, opprettes det automatisk en pull request som må godkjennes før noe skjer.",
       "Når endringene er merget, bygges og deployes tjenesten automatisk via GitHub Actions.",
       "Du trenger et Personal Access Token (PAT) fra din egen GitHub-bruker. Hvis du skal levere til andre sitt repo, må de først gi din bruker skrivetilgang (collaborator). Opprett PAT under github.com → Settings → Developer settings."
     ],
     publishGuideStepsOAuth: [
       "Filene pushes til et GitHub-repo som du velger nedenfor.",
-      "Hvis du publiserer til et repo som tilhører en annen (f.eks. Kartverket), opprettes det automatisk en pull request som må godkjennes før noe skjer.",
+      "Hvis du publiserer til et repo som tilhører en annen, opprettes det automatisk en pull request som må godkjennes før noe skjer.",
       "Når endringene er merget, bygges og deployes tjenesten automatisk via GitHub Actions.",
       "Koble til din GitHub-konto for sikker autentisering. OAuth håndterer tokens automatisk - ingen manuell oppsett kreves."
     ],
@@ -362,7 +362,7 @@ export const no = {
     publishDesc: "Push tjenestekonfigurasjon til et GitHub-repo. En CI/CD-pipeline tar seg av resten.",
     githubRepo: "Repository",
     githubRepoPlaceholder: "organisasjon/repo",
-    githubRepoHint: "Eget repo for self-hosting, eller Kartverket sitt repo for vertskap",
+    githubRepoHint: "Eget repo for self-hosting, eller noen andre sitt repo for vertskap",
     githubBranch: "Branch",
     githubToken: "Personal Access Token",
     githubTokenHint: "Trenger «repo»-rettighet",
@@ -453,8 +453,6 @@ export const no = {
       'waystones-cloud': "Waystones Cloud",
       'waystones-cloudDesc': "Fullt administrert. Ingen GitHub, ingen konfigurasjon, ingen infrastruktur",
     },
-    stacTitle: "Inkluder STAC-katalog",
-    stacDesc: "Legger til et worker-stac-steg i Codespaces-pakken som genererer en gjennomsøkbar STAC-katalog. Partisjonering (ingen, eller etter en kolonne) er et kjøretidsvalg som gjøres i demo.ipynb, ikke her — slik kan du prøve ulike valg uten å generere pakken på nytt.",
     cloudHandoffDesc: "Modellen din sendes til Waystones Cloud, der du kan konfigurere hosting, tilgangsstyring og publisering.",
     cloudHandoffBtn: "Åpne i Waystones Cloud",
     // Shared
@@ -830,9 +828,11 @@ export const no = {
     gettingStartedCodespaces: "🚀 Kom i gang med GitHub Codespaces",
     codespacesStep1: "Åpne dette repoet i en Codespace (den grønne **Code**-knappen → **Codespaces** → **Create codespace**).",
     codespacesStep2: "Legg til dataene dine:",
-    codespacesStep2Remote: "Ingen lokal fil nødvendig — kildedataene hentes automatisk ved første kjøring.",
+    codespacesStep2S3: "Kopier `.env.template` til `.env` og fyll inn ekte S3/R2-tilgangsnøkkel, hemmelig nøkkel, bucket-navn og objektnøkkel — `.env` er i .gitignore og følger ikke med i det pushede repoet, og worker trenger den for å laste ned GeoPackage-filen din ved første kjøring.",
+    codespacesStep2Pg: "Kopier `.env.template` til `.env` og fyll inn ekte PostGIS-tilkoblingsdetaljer (host, port, database, bruker, passord) — `.env` er i .gitignore og følger ikke med i det pushede repoet, og worker trenger den for å koble til databasen din.",
     codespacesStep3: "Åpne `demo.ipynb` og kjør cellene i rekkefølge — den kjører snapshot-konverteringen, starter OGC API Features-tjenesten, og åpner et live kart over de genererte PMTiles.",
     codespacesNote: "> **Merk:** Dette målet er ment for evaluering og demoer, ikke produksjonsdrift — det bruker en lokal MinIO-instans i stedet for ekte S3/R2-lagring.",
+    codespacesNotePg: "> **Merk:** PostGIS krever en database som allerede kjører og er tilgjengelig utenfra — denne Codespace-en oppretter ikke en for deg. Sørg for at databasen din tar imot tilkoblinger utenfra ditt eget nettverk (f.eks. en hostet Postgres/Supabase-instans), ikke bare `localhost`.",
     envVars: "⚙️ Miljøvariabler",
     railwayEnvDesc: "Sett disse under **Variables** i Railway dashboard:",
     variable: "Variabel",

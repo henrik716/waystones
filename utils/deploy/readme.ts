@@ -13,7 +13,6 @@ interface RenderContext {
   isGpkg: boolean;
   hasWms: boolean;
   useS3: boolean;
-  includeStac: boolean;
 }
 
 // ============================================================
@@ -38,7 +37,7 @@ const renderHeader = (ctx: RenderContext): string => {
 // Section: Architecture (Text Diagram)
 // ============================================================
 const renderArchitecture = (ctx: RenderContext): string => {
-  const { model, source, s, isGpkg, hasWms, target, includeStac } = ctx;
+  const { model, source, s, isGpkg, hasWms, target } = ctx;
 
   const layerNames = model.layers
     .filter(l => l.geometryType !== 'None')
@@ -94,9 +93,7 @@ const renderArchitecture = (ctx: RenderContext): string => {
   }
   if (target === 'codespaces') {
     md += `| **PMTiles Viewer** | \`viewer\` | Renders the generated vector tiles on a live MapLibre map — Codespaces demo only |\n`;
-  }
-  if (includeStac) {
-    md += `| **STAC Catalog** | \`worker-stac\` | Generates a browsable STAC catalog (optional partitioning is chosen at run time in \`demo.ipynb\`) |\n`;
+    md += `| **STAC Catalog** | \`worker-stac\` | Generates a browsable STAC catalog — optional, run (or skip) it and choose partitioning at run time in \`demo.ipynb\` |\n`;
   }
   if (!isGpkg) {
     md += `| **${s.deltaService}** | \`delta-worker\` | ${s.deltaWorkerDesc} |\n`;
@@ -110,7 +107,7 @@ const renderArchitecture = (ctx: RenderContext): string => {
 // Section: ServicesTable
 // ============================================================
 const renderServices = (ctx: RenderContext): string => {
-  const { s, target, hasWms, includeStac } = ctx;
+  const { s, target, hasWms } = ctx;
 
   let md = `## ${s.services}\n\n`;
   md += `Once deployed, the following services will be available:\n\n`;
@@ -120,16 +117,14 @@ const renderServices = (ctx: RenderContext): string => {
   if (hasWms) {
     md += `| **WMS Service** | Styled map layers |\n`;
   }
-  // Vector tiles and STAC are only listed here when the kit actually generates and serves
-  // them automatically (the Codespaces target) — for other targets they're available as a
-  // manual, opt-in step (see "Optional: PMTiles & STAC Catalog" below), not something that
-  // runs on `docker compose up -d` by itself.
+  // Vector tiles and STAC are only listed here for the Codespaces target, which is the
+  // only one that actually wires the pipeline and a viewer to browse the result — for
+  // other targets they're a manual, opt-in step (see "Optional: PMTiles & STAC Catalog"
+  // below), not something `docker compose up -d` produces by itself.
   if (target === 'codespaces') {
     md += `| **${s.vectorTileService}** | ${s.vectorTileDesc} |\n`;
     md += `| **Live Map Viewer** | Browse the vector tiles on a map at http://localhost:8081 |\n`;
-  }
-  if (includeStac) {
-    md += `| **${s.stacService}** | ${s.stacDesc} |\n`;
+    md += `| **${s.stacService}** | ${s.stacDesc} (optional — run it from \`demo.ipynb\`) |\n`;
   }
   md += '\n';
   return md;
@@ -267,7 +262,7 @@ const renderEnvironmentVariables = (ctx: RenderContext): string => {
 // Section: Getting Started
 // ============================================================
 const renderGettingStarted = (ctx: RenderContext): string => {
-  const { model, source, s, target, isGpkg, useS3 } = ctx;
+  const { model, source, s, target, isGpkg, useS3, isPg } = ctx;
   
   if (target === 'railway') {
     let md = `## ${s.gettingStartedRailway}\n\n`;
@@ -287,11 +282,21 @@ const renderGettingStarted = (ctx: RenderContext): string => {
     if (isGpkg && !useS3) {
       const gpkgName = getGpkgFilename(model, source);
       md += `2. **${s.codespacesStep2}** ${s.addDataHint.replace('{filename}', gpkgName)}\n`;
+    } else if (isPg) {
+      // .env is gitignored, so it never lands in the pushed repo/Codespace — the user
+      // must create it and fill in real DB credentials before the pipeline can connect.
+      md += `2. **${s.codespacesStep2Pg}**\n`;
     } else {
-      md += `2. **${s.codespacesStep2Remote}**\n`;
+      // Remote GeoPackage (S3/R2) — same .env problem as PostGIS: real credentials are
+      // required before the worker's data-fetcher step can download the source file.
+      md += `2. **${s.codespacesStep2S3}**\n`;
     }
     md += `3. **${s.codespacesStep3}**\n`;
-    md += `\n${s.codespacesNote}\n\n`;
+    md += `\n${s.codespacesNote}\n`;
+    if (isPg) {
+      md += `\n${s.codespacesNotePg}\n`;
+    }
+    md += '\n';
     return md;
   }
 
@@ -359,8 +364,7 @@ export const generateReadmeForTarget = (
   model: DataModel,
   source: SourceConnection,
   target: DeployTarget,
-  lang: string = 'en',
-  codespacesOptions?: { stac?: { enabled: boolean } }
+  lang: string = 'en'
 ): string => {
   const s = (i18n[lang as keyof typeof i18n] ?? i18n.no).readme;
   const ctx: RenderContext = {
@@ -372,7 +376,6 @@ export const generateReadmeForTarget = (
     isGpkg: source.type === 'geopackage',
     hasWms: model.layers.some(l => l.geometryType !== 'None'),
     useS3: hasS3Config(source),
-    includeStac: target === 'codespaces' && (codespacesOptions?.stac?.enabled ?? false),
   };
 
   let md = '';

@@ -147,36 +147,45 @@ describe('generateNotebook', () => {
     expect(firstCell).toContain('Coastal Survey');
   });
 
-  it('omits the STAC step by default', () => {
+  it('always includes the STAC step, but clearly marked as optional/skippable', () => {
+    // STAC is available whenever this notebook exists (same as tiles) — whether to run
+    // it is left to the reader, not a build-time flag from the Publish step.
     const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const markdown = nb.cells.filter((c: any) => c.cell_type === 'markdown').map((c: any) => c.source.join(''));
     const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
-    expect(code.some((c: string) => c.includes('worker-stac'))).toBe(false);
+    expect(code.some((c: string) => c.includes('worker-stac'))).toBe(true);
+    expect(markdown.some((m: string) => m.includes('optional') && /skip/i.test(m))).toBe(true);
   });
 
-  describe('with stac.enabled: true', () => {
-    it('inserts a worker-stac step between tiles and oapif', () => {
-      const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3(), { stac: { enabled: true } }));
-      const code = nb.cells
-        .filter((c: any) => c.cell_type === 'code')
-        .map((c: any) => c.source.join(''))
-        .join('\n---\n');
-      const iTiles = code.indexOf('docker compose up worker-tiles');
-      const iStac = code.indexOf('docker compose up worker-stac');
-      const iOapif = code.indexOf('docker compose up -d oapif');
-      expect(iStac).toBeGreaterThan(iTiles);
-      expect(iOapif).toBeGreaterThan(iStac);
-    });
+  it('inserts the STAC step between tiles and oapif', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells
+      .filter((c: any) => c.cell_type === 'code')
+      .map((c: any) => c.source.join(''))
+      .join('\n---\n');
+    const iTiles = code.indexOf('docker compose up worker-tiles');
+    const iStac = code.indexOf('docker compose up worker-stac');
+    const iOapif = code.indexOf('docker compose up -d oapif');
+    expect(iStac).toBeGreaterThan(iTiles);
+    expect(iOapif).toBeGreaterThan(iStac);
+  });
 
-    it('offers an editable runtime override for partitioning instead of baking a column in', () => {
-      const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3(), { stac: { enabled: true } }));
-      const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
-      expect(code.some((c: string) => c.includes('STRATEGY=custom_column') && c.includes('COLUMN='))).toBe(true);
-    });
+  it('syncs the STAC catalog in the same cell so it actually lands in the viewer', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    expect(code.some((c: string) => c.includes('docker compose up worker-stac stac-sync'))).toBe(true);
+  });
 
-    it('mentions the STAC catalog URL in the final link cell', () => {
-      const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3(), { stac: { enabled: true } }));
-      const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
-      expect(code.some((c: string) => c.includes('stac/catalog.json'))).toBe(true);
-    });
+  it('offers an editable runtime override for partitioning instead of baking a column in, syncing after', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    expect(code.some((c: string) => c.includes('STRATEGY=custom_column') && c.includes('COLUMN='))).toBe(true);
+    expect(code.some((c: string) => c.includes('docker compose up stac-sync'))).toBe(true);
+  });
+
+  it('mentions the STAC catalog in the final link cell', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    expect(code.some((c: string) => c.toLowerCase().includes('stac catalog'))).toBe(true);
   });
 });
