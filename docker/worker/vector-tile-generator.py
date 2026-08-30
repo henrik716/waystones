@@ -79,7 +79,7 @@ def _boto3_client():
         _ensure_ipv4()
     endpoint_url = None
     if endpoint:
-        endpoint_url = endpoint if endpoint.startswith('https://') else f"https://{endpoint}"
+        endpoint_url = endpoint if endpoint.startswith(('http://', 'https://')) else f"https://{endpoint}"
         
     region = os.environ.get("AWS_DEFAULT_REGION")
     if not region:
