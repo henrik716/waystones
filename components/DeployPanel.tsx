@@ -216,7 +216,7 @@ const DeployPanel: React.FC<DeployPanelProps> = ({ model, t, lang, onUpdateModel
       // gpkgConfig.filename defaults to a sanitized model name (toTableName) before any
       // file is ever selected, and nothing re-syncs it if that default is never
       // overwritten — the actually-uploaded file's real name is the source of truth for
-      // what generateDockerCompose()/demo.ipynb will look for, so it always wins here.
+      // what generateDockerCompose()/quickstart.ipynb will look for, so it always wins here.
       config = localDataFile ? { ...gpkgConfig, filename: localDataFile.filename } : gpkgConfig;
     }
     return { type: sourceType, config, layerMappings, s3: s3Config ?? undefined };

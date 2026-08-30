@@ -835,7 +835,7 @@ export const en = {
     codespacesStep2: "Add your data:",
     codespacesStep2S3: "Copy `.env.template` to `.env` and fill in your real S3/R2 access key, secret key, bucket name, and object key — `.env` is gitignored so it won't be in the pushed repo, and the worker needs it to download your GeoPackage on first run.",
     codespacesStep2Pg: "Copy `.env.template` to `.env` and fill in your real PostGIS connection details (host, port, database, user, password) — `.env` is gitignored so it won't be in the pushed repo, and the worker needs it to connect to your database.",
-    codespacesStep3: "Open `demo.ipynb` and run the cells in order — it runs the snapshot conversion, starts the OGC API Features service, and opens a live map of the generated PMTiles.",
+    codespacesStep3: "Open `quickstart.ipynb` and run the cells in order — it runs the snapshot conversion, starts the OGC API Features service, and opens a live map of the generated PMTiles.",
     codespacesNote: "> **Note:** This target is meant for evaluation and demos, not production hosting — it uses a local MinIO instance in place of real S3/R2 storage.",
     codespacesNotePg: "> **Note:** PostGIS requires an already-running, externally-reachable database — this Codespace does not create one for you. Make sure your database accepts connections from outside your own network (e.g. a hosted Postgres/Supabase instance), not just `localhost`.",
     envVars: "⚙️ Environment Variables",

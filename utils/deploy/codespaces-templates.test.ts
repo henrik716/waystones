@@ -75,7 +75,7 @@ describe('devcontainerJson', () => {
     expect(parsed.forwardPorts).toEqual([5000, 8081, 19001]);
   });
 
-  it('includes the Jupyter extension so demo.ipynb runs out of the box', () => {
+  it('includes the Jupyter extension so quickstart.ipynb runs out of the box', () => {
     const parsed = JSON.parse(devcontainerJson);
     expect(parsed.customizations.vscode.extensions).toContain('ms-toolsai.jupyter');
   });

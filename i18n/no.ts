@@ -831,7 +831,7 @@ export const no = {
     codespacesStep2: "Legg til dataene dine:",
     codespacesStep2S3: "Kopier `.env.template` til `.env` og fyll inn ekte S3/R2-tilgangsnøkkel, hemmelig nøkkel, bucket-navn og objektnøkkel — `.env` er i .gitignore og følger ikke med i det pushede repoet, og worker trenger den for å laste ned GeoPackage-filen din ved første kjøring.",
     codespacesStep2Pg: "Kopier `.env.template` til `.env` og fyll inn ekte PostGIS-tilkoblingsdetaljer (host, port, database, bruker, passord) — `.env` er i .gitignore og følger ikke med i det pushede repoet, og worker trenger den for å koble til databasen din.",
-    codespacesStep3: "Åpne `demo.ipynb` og kjør cellene i rekkefølge — den kjører snapshot-konverteringen, starter OGC API Features-tjenesten, og åpner et live kart over de genererte PMTiles.",
+    codespacesStep3: "Åpne `quickstart.ipynb` og kjør cellene i rekkefølge — den kjører snapshot-konverteringen, starter OGC API Features-tjenesten, og åpner et live kart over de genererte PMTiles.",
     codespacesNote: "> **Merk:** Dette målet er ment for evaluering og demoer, ikke produksjonsdrift — det bruker en lokal MinIO-instans i stedet for ekte S3/R2-lagring.",
     codespacesNotePg: "> **Merk:** PostGIS krever en database som allerede kjører og er tilgjengelig utenfra — denne Codespace-en oppretter ikke en for deg. Sørg for at databasen din tar imot tilkoblinger utenfra ditt eget nettverk (f.eks. en hostet Postgres/Supabase-instans), ikke bare `localhost`.",
     envVars: "⚙️ Miljøvariabler",

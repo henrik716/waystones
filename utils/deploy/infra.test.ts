@@ -190,21 +190,21 @@ describe('generateDockerCompose', () => {
 
     it('defaults to the gateway image', () => {
       const compose = generateDockerCompose(modelNoWms, makeGpkgSourceNoS3());
-      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:latest');
       expect(compose).not.toContain('oapif-go:minimal-latest');
     });
 
     it('uses the minimal image when requested and there is no WMS to proxy', () => {
       const compose = generateDockerCompose(modelNoWms, makeGpkgSourceNoS3(), { useMinimalOapifImage: true });
       expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:minimal-latest');
-      expect(compose).not.toContain('27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+      expect(compose).not.toContain('oapif-go:latest');
     });
 
     it('falls back to gateway even when requested, if the model has WMS layers', () => {
       // minimal has no Caddy at all, so it can't serve the /ows/ WMS proxy
       // (DEPLOY_QGIS/QGIS_UPSTREAM_TARGET) that gateway's Caddyfile provides.
       const compose = generateDockerCompose(modelWithWms, makeGpkgSourceNoS3(), { useMinimalOapifImage: true });
-      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+      expect(compose).toContain('ghcr.io/waystones-nexus/oapif-go:latest');
       expect(compose).not.toContain('oapif-go:minimal-latest');
     });
   });
@@ -272,7 +272,12 @@ describe('generateDockerCompose', () => {
 
     it('mounts the whole viewer_www volume at the nginx docroot (not just a tiles/ subpath)', () => {
       const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
-      expect(compose).toContain('viewer_www:/usr/share/nginx/html:ro');
+      expect(compose).toContain('viewer_www:/usr/share/nginx/html\n');
+    });
+
+    it('does not mount viewer_www read-only — nginx:alpine has no pre-existing model.json to bind-mount over, so creating that new mountpoint needs the parent to be writable', () => {
+      const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
+      expect(compose).not.toContain('viewer_www:/usr/share/nginx/html:ro');
     });
 
     it('mounts model.json into the viewer so it can style tiles the same way Waystones Cloud does', () => {
@@ -292,7 +297,7 @@ describe('generateDockerCompose', () => {
     it('adds worker-stac and stac-sync alongside the tiles pipeline — always, not opt-in', () => {
       // STAC generation is available whenever the tiles/viewer pipeline is (i.e. for the
       // Codespaces target) — whether to actually run it is a runtime choice made by
-      // running (or skipping) the corresponding cell in demo.ipynb, not a build-time flag.
+      // running (or skipping) the corresponding cell in quickstart.ipynb, not a build-time flag.
       const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
       expect(compose).toContain('worker-stac:');
       expect(compose).toContain('stac-sync:');
@@ -306,7 +311,7 @@ describe('generateDockerCompose', () => {
     });
 
     it('bakes in STRATEGY: none with no COLUMN — partitioning is a runtime choice, not a build-time one', () => {
-      // See demo.ipynb: partitioning is done via `docker compose run --rm -e STRATEGY=custom_column
+      // See quickstart.ipynb: partitioning is done via `docker compose run --rm -e STRATEGY=custom_column
       // -e COLUMN=<col> worker-stac` so the user can try different columns without regenerating the kit.
       const compose = generateDockerCompose(makeModel(), makeGpkgSourceNoS3(), { includeTiles: true });
       const stacSection = compose.slice(compose.indexOf('worker-stac:'), compose.indexOf('stac-sync:'));

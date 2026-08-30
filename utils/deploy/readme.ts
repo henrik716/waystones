@@ -93,7 +93,7 @@ const renderArchitecture = (ctx: RenderContext): string => {
   }
   if (target === 'codespaces') {
     md += `| **PMTiles Viewer** | \`viewer\` | Renders the generated vector tiles on a live MapLibre map — Codespaces demo only |\n`;
-    md += `| **STAC Catalog** | \`worker-stac\` | Generates a browsable STAC catalog — optional, run (or skip) it and choose partitioning at run time in \`demo.ipynb\` |\n`;
+    md += `| **STAC Catalog** | \`worker-stac\` | Generates a browsable STAC catalog — optional, run (or skip) it and choose partitioning at run time in \`quickstart.ipynb\` |\n`;
   }
   if (!isGpkg) {
     md += `| **${s.deltaService}** | \`delta-worker\` | ${s.deltaWorkerDesc} |\n`;
@@ -124,7 +124,7 @@ const renderServices = (ctx: RenderContext): string => {
   if (target === 'codespaces') {
     md += `| **${s.vectorTileService}** | ${s.vectorTileDesc} |\n`;
     md += `| **Live Map Viewer** | Browse the vector tiles on a map at http://localhost:8081 |\n`;
-    md += `| **${s.stacService}** | ${s.stacDesc} (optional — run it from \`demo.ipynb\`) |\n`;
+    md += `| **${s.stacService}** | ${s.stacDesc} (optional — run it from \`quickstart.ipynb\`) |\n`;
   }
   md += '\n';
   return md;
@@ -344,7 +344,7 @@ const renderFiles = (ctx: RenderContext): string => {
   }
   if (target === 'codespaces') {
     md += `| \`.devcontainer/devcontainer.json\` | Codespace setup (Docker-in-Docker, forwarded ports) |\n`;
-    md += `| \`demo.ipynb\` | Click-through notebook that runs the whole pipeline |\n`;
+    md += `| \`quickstart.ipynb\` | Click-through notebook that runs the whole pipeline |\n`;
     md += `| \`viewer/index.html\` | Live PMTiles map viewer served on port 8081 |\n`;
   }
   md += `| \`oapif-go-config.json\` | oapif-go collection config (auto-generated) |\n`;
