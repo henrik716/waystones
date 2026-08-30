@@ -13,7 +13,7 @@ import { hasS3Config, getGpkgFilename } from './_helpers';
 // .devcontainer/devcontainer.json
 // ============================================================
 export const devcontainerJson = `{
-  "name": "Waystones Codespaces Demo",
+  "name": "Waystones Codespaces Quickstart",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
@@ -30,7 +30,7 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "openPreview" },
     "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open demo.ipynb and run the cells in order — see README.md for details.'"
+  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
 }
 `;
 
@@ -285,7 +285,7 @@ main();
 `;
 
 // ============================================================
-// demo.ipynb — click-through companion to the written README steps
+// quickstart.ipynb — click-through companion to the written README steps
 // ============================================================
 const md = (...lines: string[]) => ({ cell_type: 'markdown', metadata: {}, source: toSource(lines) });
 const code = (...lines: string[]) => ({ cell_type: 'code', execution_count: null, metadata: {}, outputs: [], source: toSource(lines) });
@@ -297,7 +297,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
 
   const cells: any[] = [
     md(
-      `# ${model.name} — Codespaces Demo`,
+      `# ${model.name} — Codespaces Quickstart`,
       '',
       'This notebook runs the full pipeline — convert your source data into GeoParquet, FlatGeobuf and PMTiles, ' +
         'serve it over OGC API Features, and view the vector tiles on a live map — entirely inside this Codespace. ' +

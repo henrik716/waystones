@@ -50,7 +50,7 @@ describe('generateDeployFiles', () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'docker-compose');
     expect(files['docker-compose.yml']).toBeDefined();
     expect(files['.devcontainer/devcontainer.json']).toBeUndefined();
-    expect(files['demo.ipynb']).toBeUndefined();
+    expect(files['quickstart.ipynb']).toBeUndefined();
     expect(files['viewer/index.html']).toBeUndefined();
     expect(files['docker-compose.yml']).not.toContain('worker-tiles:');
   });
@@ -58,10 +58,10 @@ describe('generateDeployFiles', () => {
   it('codespaces target includes the devcontainer, notebook, and viewer', async () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces');
     expect(files['.devcontainer/devcontainer.json']).toBeDefined();
-    expect(files['demo.ipynb']).toBeDefined();
+    expect(files['quickstart.ipynb']).toBeDefined();
     expect(files['viewer/index.html']).toBeDefined();
     expect(() => JSON.parse(files['.devcontainer/devcontainer.json'])).not.toThrow();
-    expect(() => JSON.parse(files['demo.ipynb'])).not.toThrow();
+    expect(() => JSON.parse(files['quickstart.ipynb'])).not.toThrow();
   });
 
   it('codespaces target enables the tiles pipeline in docker-compose.yml', async () => {
@@ -77,7 +77,7 @@ describe('generateDeployFiles', () => {
 
   it('docker-compose target still uses the gateway oapif-go image', async () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'docker-compose');
-    expect(files['docker-compose.yml']).toContain('ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71');
+    expect(files['docker-compose.yml']).toContain('ghcr.io/waystones-nexus/oapif-go:latest');
     expect(files['docker-compose.yml']).not.toContain('oapif-go:minimal-latest');
   });
 
@@ -89,7 +89,7 @@ describe('generateDeployFiles', () => {
 
   it('codespaces target README documents the notebook-driven getting-started flow', async () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces');
-    expect(files['README.md']).toContain('demo.ipynb');
+    expect(files['README.md']).toContain('quickstart.ipynb');
     expect(files['README.md']).toContain('GitHub Codespaces');
   });
 
@@ -102,7 +102,7 @@ describe('generateDeployFiles', () => {
   it('always includes STAC (worker-stac/stac-sync) for the codespaces target — running it is a notebook-time choice, not a Publish-step toggle', async () => {
     const files = await generateDeployFiles(makeModel(), makeGpkgSourceNoS3(), 'en', 'codespaces');
     expect(files['docker-compose.yml']).toContain('worker-stac:');
-    expect(files['demo.ipynb']).toContain('worker-stac');
+    expect(files['quickstart.ipynb']).toContain('worker-stac');
   });
 
   it('never includes STAC for the docker-compose target', async () => {

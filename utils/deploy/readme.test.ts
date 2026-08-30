@@ -81,7 +81,7 @@ describe('generateReadmeForTarget (codespaces target)', () => {
 
   it('describes the notebook-driven getting-started flow, not a single `docker compose up -d`', () => {
     const readme = generateReadmeForTarget(makeModel(), makeGpkgSourceNoS3(), 'codespaces', 'en');
-    expect(readme).toContain('demo.ipynb');
+    expect(readme).toContain('quickstart.ipynb');
   });
 
   it('lists the STAC catalog component for codespaces — it is always available there, running it is optional', () => {

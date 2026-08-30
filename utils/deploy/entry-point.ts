@@ -52,7 +52,7 @@ export const generateDeployFiles = async (
   if (target === 'codespaces') {
     files['.devcontainer/devcontainer.json'] = codespacesTemplates.devcontainerJson;
     files['viewer/index.html'] = codespacesTemplates.viewerIndexHtml;
-    files['demo.ipynb'] = codespacesTemplates.generateNotebook(model, source);
+    files['quickstart.ipynb'] = codespacesTemplates.generateNotebook(model, source);
   }
 
   if (target === 'railway') {

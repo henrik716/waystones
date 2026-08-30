@@ -98,7 +98,7 @@ export const generateDockerCompose = (
   // STAC generation rides along with the tiles/viewer pipeline (same opt-in flag,
   // same viewer container to browse it) — but running it is a runtime choice, not
   // a build-time one: worker-stac/stac-sync exist whenever includeTiles does, and
-  // the viewer works fine whether or not anyone ever invokes them. See demo.ipynb.
+  // the viewer works fine whether or not anyone ever invokes them. See quickstart.ipynb.
   const includeStac = includeTiles;
   const projectNameSlug = toTableName(model.name);
 
@@ -239,7 +239,7 @@ export const generateDockerCompose = (
   }
   const oapifImage = useMinimalOapifImage
     ? 'ghcr.io/waystones-nexus/oapif-go:minimal-latest'
-    : 'ghcr.io/waystones-nexus/oapif-go:27ac4e67094bd694d902c0df8e8a813c4ed65a71';
+    : 'ghcr.io/waystones-nexus/oapif-go:latest';
   compose += `  oapif:
     image: ${oapifImage}
     ports:
@@ -364,12 +364,12 @@ export const generateDockerCompose = (
 `;
 
     // --- STAC catalog pipeline (always present alongside tiles, entirely optional to
-    // actually run — see demo.ipynb. Not wired into any depends_on chain below, so
+    // actually run — see quickstart.ipynb. Not wired into any depends_on chain below, so
     // nothing waits on it and a partitioned override run is never silently clobbered
     // by an automatic re-run with the default settings.) ---
     compose += `
   # --- Worker (STAC) — generates a STAC catalog, uploads to MinIO. Optional: run
-  # this (or skip it) from demo.ipynb — nothing else depends on it. ---
+  # this (or skip it) from quickstart.ipynb — nothing else depends on it. ---
   worker-stac:\n`;
     compose += `    image: ghcr.io/waystones-nexus/waystones-keystone:worker-latest\n`;
     compose += `    entrypoint: ["python3", "/app/main.py"]\n`;
@@ -417,7 +417,7 @@ export const generateDockerCompose = (
     compose += `
   # --- STAC sync (downloads the catalog from MinIO to the viewer). Optional, same
   # as worker-stac above — run \`docker compose up worker-stac stac-sync\` together
-  # from demo.ipynb when you want it; nothing else depends on this either, so an
+  # from quickstart.ipynb when you want it; nothing else depends on this either, so an
   # override run of worker-stac (e.g. with a partition column) is never overwritten
   # by an automatic default re-run. ---
   stac-sync:
@@ -438,7 +438,7 @@ export const generateDockerCompose = (
 
     compose += `
   # --- PMTiles map viewer + STAC catalog browser (STAC link only appears once you've
-  # generated one — see demo.ipynb) ---
+  # generated one — see quickstart.ipynb) ---
   # Open in a browser: http://localhost:8081
   viewer:
     image: nginx:alpine
@@ -449,7 +449,14 @@ export const generateDockerCompose = (
       # The viewer reads this to style tiles the same way Waystones Cloud does
       # (fill/line/point color, opacity, categorized rules) instead of flat fallback colors.
       - ./model.json:/usr/share/nginx/html/model.json:ro
-      - viewer_www:/usr/share/nginx/html:ro
+      # NOT :ro — nginx:alpine has no pre-existing file at .../html/model.json (unlike
+      # index.html, which the base image already ships), so Docker must create a brand
+      # new mountpoint file there for the bind mount above. Creating any new file under
+      # a directory whose own mount is read-only fails with EROFS ("make mountpoint ...
+      # read-only file system"), even though the file it's creating is itself only ever
+      # bind-mounted over with a read-only file. index.html works because swapping the
+      # content of an already-existing inode needs no new file to be created first.
+      - viewer_www:/usr/share/nginx/html
     depends_on:
       tiles-sync:
         condition: service_completed_successfully
