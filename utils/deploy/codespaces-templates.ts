@@ -12,13 +12,17 @@ import { hasS3Config, getGpkgFilename } from './_helpers';
 // ============================================================
 // .devcontainer/devcontainer.json
 //
-// postAttachCommand (not postCreateCommand) runs the image prefetch: it fires once VS
-// Code actually attaches, without blocking the "Setting up your codespace..." screen the
-// way postCreateCommand does. Warms the image cache (the worker image alone is a few
-// hundred MB — GDAL, tippecanoe, DuckDB) while the user reads the intro and adds their
-// data, so cell 1 doesn't hit a cold pull. Content is genuine JSON (devcontainer.json
-// supports JSONC, but our own tests parse this with strict JSON.parse) — no // comments
-// inside the template literal itself.
+// The image prefetch (docker compose pull) runs inside postCreateCommand itself,
+// synchronously — confirmed live that postAttachCommand does NOT reliably fire in GitHub
+// Codespaces (a real Codespace never even created /tmp/image-pull.log, meaning the hook
+// was never invoked at all, not that it ran and failed silently — bash creates a redirect
+// target file as soon as it parses the command, before the command body runs). Blocking
+// here means the "Setting up your codespace..." screen takes a few extra minutes (the
+// worker image alone is a few hundred MB — GDAL, tippecanoe, DuckDB), but once it says
+// ready, cell 1 genuinely has no cold pull left to do — postCreateCommand is the one hook
+// with actual evidence of running reliably (.env and ipykernel show up every time).
+// Content is genuine JSON (devcontainer.json supports JSONC, but our own tests parse this
+// with strict JSON.parse) — no // comments inside the template literal itself.
 // ============================================================
 export const devcontainerJson = `{
   "name": "Waystones Codespaces Quickstart",
@@ -38,8 +42,7 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "notify" },
     "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'",
-  "postAttachCommand": "docker compose pull > /tmp/image-pull.log 2>&1 || true"
+  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && (docker compose pull || true) && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
 }
 `;
 
@@ -315,14 +318,18 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
     code(
       'import subprocess',
       '',
-      '# --progress plain avoids the fancy Compose TUI, which renders as repeated garbled',
-      '# spinner frames in a notebook cell instead of updating in place like a real terminal.',
+      '# --progress quiet avoids the fancy Compose TUI (garbled repeated spinner frames in a',
+      '# notebook cell instead of updating in place like a real terminal) without replacing it',
+      '# with a wall of per-layer download lines either — --progress plain avoids the spinner',
+      '# but still prints one line per progress tick, which floods the cell output on a large',
+      '# image pull (the worker image alone is GDAL + tippecanoe + DuckDB). quiet suppresses',
+      '# the routine progress stream; real errors still print and still fail the step below.',
       '# Streams output live (no capture_output) and stops the notebook immediately —',
       '# instead of silently continuing to the next cell — if the step actually failed.',
       'def run_compose(*args):',
       '    label = "docker compose " + " ".join(args)',
       '    print(f"\\u2192 {label}")',
-      '    proc = subprocess.run(["docker", "compose", "--progress", "plain", *args])',
+      '    proc = subprocess.run(["docker", "compose", "--progress", "quiet", *args])',
       '    if proc.returncode != 0:',
       '        raise SystemExit(f"\\u2717 {label} failed (exit {proc.returncode}) \\u2014 see output above.")',
       '    print(f"\\u2713 {label}")',

@@ -60,6 +60,17 @@ def force_ipv4_for_endpoint(endpoint_url: str):
         logging.warning(f"Could not override DNS for IPv4: {e}")
 
 
+def s3_join_key(prefix_key: str, name: str) -> str:
+    """Join an (already slash-stripped) S3 key prefix with a filename.
+
+    A bucket-root prefix ("") must produce a bare key with no leading slash, and any
+    other prefix must join with exactly one slash — MinIO rejects a doubled slash outright
+    (XMinioInvalidObjectName: "Object name contains unsupported characters"), and even
+    where a provider tolerates it, catalog.json's own STAC links and stac-sync/the viewer's
+    fetch("stac/catalog.json") all assume the predictable, undoubled key.
+    """
+    return f"{prefix_key}/{name}" if prefix_key else name
+
 _ipv4_patched = False
 
 def _ensure_ipv4():
@@ -1005,11 +1016,11 @@ def main():
         import glob as _glob
         client = _boto3_client()
         p = urlparse(out_dir)
-        pfx = p.path.lstrip("/")
+        pfx = p.path.strip("/")
         for fpath in _glob.glob(os.path.join(staging_dir, "**", "*"), recursive=True):
             if os.path.isfile(fpath):
                 rel = os.path.relpath(fpath, staging_dir).replace("\\", "/")
-                client.upload_file(fpath, p.netloc, f"{pfx}/{rel}" if pfx else rel)
+                client.upload_file(fpath, p.netloc, s3_join_key(pfx, rel))
         logging.info("Bulk upload complete.")
 
     logging.info("STAC generation complete.")
