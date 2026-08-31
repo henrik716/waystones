@@ -27,7 +27,7 @@ export const devcontainerJson = `{
   "forwardPorts": [5000, 8081, 19001],
   "portsAttributes": {
     "5000": { "label": "OGC API Features", "onAutoForward": "notify" },
-    "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "openPreview" },
+    "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "notify" },
     "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
   "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
@@ -341,9 +341,11 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
     md(
       '## 2. Create the vector tiles (PMTiles)',
       '',
-      'Run as-is for tippecanoe defaults (zoom 0–14, no geometry simplification, every ' +
-        'layer and attribute kept). To tune that instead, edit the values in the commented ' +
-        'line below and run it — try a few settings, no need to regenerate this kit.',
+      'Run as-is for this kit\'s default tile detail range (0–14, no geometry simplification, ' +
+        'every layer and attribute kept) — the *initial view* zoom is separate and always ' +
+        'computed from your data\'s actual bounding box, regardless of this setting. To tune ' +
+        'the detail range instead, edit the values in the commented line below and run it — ' +
+        'try a few settings, no need to regenerate this kit.',
     ),
     code(
       'run_compose("up", "worker-tiles")',
@@ -389,33 +391,30 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       '    os.environ["SERVER_URL"] = f"https://{codespace}-5000.{domain}"',
     ),
     code('run_compose("up", "-d", "oapif")'),
+    md(
+      '### See it in the browser',
+      '',
+      "oapif-go has its own built-in HTML pages — a landing page, a collections browser, a " +
+        "map + table per collection, and interactive API docs (Swagger/Redoc) at `/api.html`. " +
+        "It refuses to be embedded in an iframe (`X-Frame-Options: DENY`), so this waits for " +
+        "it to come up, then links to it instead of testing/printing anything here.",
+    ),
     code(
-      'import json, time, urllib.request',
+      'import time, urllib.request',
+      'from IPython.display import Markdown, display',
       '',
       'print("Waiting for oapif-go to become ready", end="", flush=True)',
       'for _ in range(30):',
       '    try:',
-      '        with urllib.request.urlopen("http://localhost:5000/collections") as r:',
-      '            print(" ready.")',
-      '            print(json.dumps(json.load(r), indent=2))',
-      '            break',
+      '        urllib.request.urlopen("http://localhost:5000/collections")',
+      '        print(" ready.")',
+      '        break',
       '    except Exception:',
       '        print(".", end="", flush=True)',
       '        time.sleep(1)',
       'else:',
       '    print()',
       '    print("\\u2717 oapif-go did not become ready in time — check `docker compose logs oapif`.")',
-    ),
-    md(
-      '### See it in the browser',
-      '',
-      "oapif-go has its own built-in HTML pages — a landing page, a collections browser, a " +
-        "map + table per collection, and interactive API docs (Swagger/Redoc) at `/api.html`. " +
-        "It refuses to be embedded in an iframe (`X-Frame-Options: DENY`), so open these in " +
-        "their own browser tab rather than viewing them inline here.",
-    ),
-    code(
-      'from IPython.display import Markdown, display',
       '',
       'if codespace and domain:',
       '    api_url = os.environ["SERVER_URL"]',

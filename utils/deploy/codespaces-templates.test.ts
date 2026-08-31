@@ -75,6 +75,11 @@ describe('devcontainerJson', () => {
     expect(parsed.forwardPorts).toEqual([5000, 8081, 19001]);
   });
 
+  it('does not auto-open a VS Code "Simple Browser" tab for the viewer port — the notebook already displays it inline', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.portsAttributes['8081'].onAutoForward).toBe('notify');
+  });
+
   it('includes the Jupyter extension so quickstart.ipynb runs out of the box', () => {
     const parsed = JSON.parse(devcontainerJson);
     expect(parsed.customizations.vscode.extensions).toContain('ms-toolsai.jupyter');
