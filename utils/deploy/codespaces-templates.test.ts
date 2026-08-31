@@ -99,6 +99,17 @@ describe('devcontainerJson', () => {
     const parsed = JSON.parse(devcontainerJson);
     expect(parsed.postCreateCommand).toContain('cp -n .env.template .env');
   });
+
+  it('prefetches images via postAttachCommand, not postCreateCommand — the latter blocks the "Setting up" screen, the former does not block the editor', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.postAttachCommand).toContain('docker compose pull');
+    expect(parsed.postCreateCommand).not.toContain('docker compose pull');
+  });
+
+  it('does not let a failed prefetch mark codespace setup as failed', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.postAttachCommand).toMatch(/\|\|\s*true\s*$/);
+  });
 });
 
 // ---------------------------------------------------------------------------

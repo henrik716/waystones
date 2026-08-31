@@ -11,6 +11,14 @@ import { hasS3Config, getGpkgFilename } from './_helpers';
 
 // ============================================================
 // .devcontainer/devcontainer.json
+//
+// postAttachCommand (not postCreateCommand) runs the image prefetch: it fires once VS
+// Code actually attaches, without blocking the "Setting up your codespace..." screen the
+// way postCreateCommand does. Warms the image cache (the worker image alone is a few
+// hundred MB — GDAL, tippecanoe, DuckDB) while the user reads the intro and adds their
+// data, so cell 1 doesn't hit a cold pull. Content is genuine JSON (devcontainer.json
+// supports JSONC, but our own tests parse this with strict JSON.parse) — no // comments
+// inside the template literal itself.
 // ============================================================
 export const devcontainerJson = `{
   "name": "Waystones Codespaces Quickstart",
@@ -30,7 +38,8 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "notify" },
     "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
+  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'",
+  "postAttachCommand": "docker compose pull > /tmp/image-pull.log 2>&1 || true"
 }
 `;
 
