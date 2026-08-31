@@ -100,15 +100,23 @@ describe('devcontainerJson', () => {
     expect(parsed.postCreateCommand).toContain('cp -n .env.template .env');
   });
 
-  it('prefetches images via postAttachCommand, not postCreateCommand — the latter blocks the "Setting up" screen, the former does not block the editor', () => {
+  it('prefetches images synchronously in postCreateCommand — postAttachCommand does not reliably fire in GitHub Codespaces (confirmed live: no /tmp log file ever got created)', () => {
     const parsed = JSON.parse(devcontainerJson);
-    expect(parsed.postAttachCommand).toContain('docker compose pull');
-    expect(parsed.postCreateCommand).not.toContain('docker compose pull');
+    expect(parsed.postCreateCommand).toContain('docker compose pull');
+    expect(parsed.postAttachCommand).toBeUndefined();
   });
 
-  it('does not let a failed prefetch mark codespace setup as failed', () => {
+  it('does not let a failed prefetch block codespace setup entirely', () => {
     const parsed = JSON.parse(devcontainerJson);
-    expect(parsed.postAttachCommand).toMatch(/\|\|\s*true\s*$/);
+    expect(parsed.postCreateCommand).toMatch(/docker compose pull \|\| true/);
+  });
+
+  it('still prints the final "open the notebook" message even if the prefetch fails', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    const pullIndex = parsed.postCreateCommand.indexOf('docker compose pull');
+    const echoIndex = parsed.postCreateCommand.indexOf('echo ');
+    expect(pullIndex).toBeGreaterThan(-1);
+    expect(echoIndex).toBeGreaterThan(pullIndex);
   });
 });
 
