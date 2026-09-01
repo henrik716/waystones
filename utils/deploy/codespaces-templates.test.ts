@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { devcontainerJson, viewerIndexHtml, generateNotebook } from './codespaces-templates';
+import { MANUAL_EXTRAS_TILES_CMD, MANUAL_EXTRAS_STAC_CMD } from './readme';
 import type { DataModel, Layer, SourceConnection, S3StorageConfig } from '../../types';
 
 // ---------------------------------------------------------------------------
@@ -302,5 +303,79 @@ describe('generateNotebook', () => {
     const pollCell = code.find((c: string) => c.includes('for _ in range(30):'))!;
     expect(pollCell).toContain('Waiting for oapif-go');
     expect(pollCell).toContain('flush=True');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Waystones vibe: section-header icons, wayfinding phrase, scoped Peon touch
+  // ---------------------------------------------------------------------------
+
+  it('prefixes each pipeline section header with the icon matching readme.ts\'s own convention', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const markdown = nb.cells.filter((c: any) => c.cell_type === 'markdown').map((c: any) => c.source.join(''));
+    expect(markdown.some((m: string) => m.includes('## 📦 1. Create the snapshot'))).toBe(true);
+    expect(markdown.some((m: string) => m.includes('## 🧩 2. Create the vector tiles'))).toBe(true);
+    expect(markdown.some((m: string) => m.includes('## 🧩 2b. Generate a STAC catalog'))).toBe(true);
+    expect(markdown.some((m: string) => m.includes('## 🌐 3. Start the OGC API Features'))).toBe(true);
+    expect(markdown.some((m: string) => m.includes('## 🗺️ 4. View the PMTiles'))).toBe(true);
+    expect(markdown.some((m: string) => m.includes('## 🔄 Reset'))).toBe(true);
+  });
+
+  it('does not put an icon on the H1 title — matches readme.ts, which only icons H2 sections', () => {
+    const nb = JSON.parse(generateNotebook(makeModel({ name: 'Coastal Survey' }), makeGpkgSourceNoS3()));
+    const firstCell = nb.cells[0].source.join('');
+    expect(firstCell).toContain('# Coastal Survey — Codespaces Quickstart');
+    expect(firstCell).not.toMatch(/^# \p{Emoji}/u);
+  });
+
+  it('nods to the "from data to service" tagline exactly once, in the intro', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const allText = JSON.stringify(nb).toLowerCase();
+    const occurrences = allText.split('from data to service').length - 1;
+    expect(occurrences).toBe(1);
+  });
+
+  it('defines a Peon quote pool and picks from it in run_compose, reusing the same pool for the oapif-go wait instead of a second copy', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const helperCell = code.find((c: string) => c.includes('def run_compose('))!;
+    expect(helperCell).toContain('PEON_LINES = [');
+    expect(helperCell).toContain('random.choice(PEON_LINES)');
+    const pollCell = code.find((c: string) => c.includes('for _ in range(30):'))!;
+    expect(pollCell).toContain('random.choice(PEON_LINES)');
+    expect(pollCell).not.toContain('PEON_LINES = [');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Plain docker-compose equivalents (some steps have none, or a differently-shaped one)
+  // ---------------------------------------------------------------------------
+
+  it('shows the direct docker-compose equivalent for worker and oapif — same service names in both targets', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const workerCell = code.find((c: string) => c.includes('run_compose("up", "worker")'))!;
+    expect(workerCell).toContain('# Plain docker-compose equivalent: docker compose up worker');
+    const oapifCell = code.find((c: string) => c.includes('run_compose("up", "-d", "oapif")'))!;
+    expect(oapifCell).toContain('# Plain docker-compose equivalent: docker compose up -d oapif');
+  });
+
+  it('shows the differently-shaped docker-compose equivalent for tiles/STAC, sourced from the same constants readme.ts uses (not a hand-duplicated copy)', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const tilesCell = code.find((c: string) => c.includes('run_compose("up", "worker-tiles")'))!;
+    expect(tilesCell).toContain(MANUAL_EXTRAS_TILES_CMD);
+    expect(tilesCell).toContain('no dedicated worker-tiles service there');
+    const stacCell = code.find((c: string) => c.includes('run_compose("up", "worker-stac", "stac-sync")'))!;
+    expect(stacCell).toContain(MANUAL_EXTRAS_STAC_CMD);
+    expect(stacCell).toContain('no dedicated worker-stac/stac-sync services there');
+    expect(stacCell).toContain('stac-sync has no equivalent there');
+  });
+
+  it('tells the user there is no docker-compose equivalent for the viewer step, and where the data lands instead', () => {
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
+    const viewerCell = code.find((c: string) => c.includes('run_compose("up", "-d", "viewer")'))!;
+    expect(viewerCell).toContain('No plain docker-compose equivalent');
+    expect(viewerCell).toContain('ships no map viewer service');
+    expect(viewerCell).toContain('localhost:19001');
   });
 });

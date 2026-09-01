@@ -4,6 +4,13 @@ import {
 import { i18n } from '../../i18n';
 import { getGpkgFilename, hasS3Config } from './_helpers';
 
+// Shared with codespaces-templates.ts's generateNotebook(), which notes these as the
+// "plain docker-compose equivalent" for its worker-tiles/worker-stac cells — those
+// services don't exist outside Codespaces, so this is the actual command a docker-compose
+// user would run instead. One source of string avoids the two generators drifting apart.
+export const MANUAL_EXTRAS_TILES_CMD = 'docker compose run --rm -e TASK_TYPE=tiles -e OUTPUT_URI=s3://waystones-data/tiles/ worker';
+export const MANUAL_EXTRAS_STAC_CMD = 'docker compose run --rm -e TASK_TYPE=stac -e OUTPUT_URI=s3://waystones-data/stac/ worker';
+
 interface RenderContext {
   model: DataModel;
   source: SourceConnection;
@@ -142,9 +149,9 @@ const renderManualExtras = (ctx: RenderContext): string => {
   md += `${s.manualExtrasDesc}\n\n`;
   md += '```bash\n';
   md += `# ${s.manualExtrasTilesComment}\n`;
-  md += `docker compose run --rm -e TASK_TYPE=tiles -e OUTPUT_URI=s3://waystones-data/tiles/ worker\n\n`;
+  md += `${MANUAL_EXTRAS_TILES_CMD}\n\n`;
   md += `# ${s.manualExtrasStacComment}\n`;
-  md += `docker compose run --rm -e TASK_TYPE=stac -e OUTPUT_URI=s3://waystones-data/stac/ worker\n\n`;
+  md += `${MANUAL_EXTRAS_STAC_CMD}\n\n`;
   md += `# ${s.manualExtrasPartitionComment}\n`;
   md += `docker compose run --rm -e TASK_TYPE=stac -e OUTPUT_URI=s3://waystones-data/stac/ \\\n`;
   md += `  -e STRATEGY=custom_column -e COLUMN=your_column_name worker\n\n`;

@@ -772,7 +772,7 @@ export const no = {
     manualExtrasStacComment: "Generer en STAC-katalog (flat, uten partisjonering):",
     manualExtrasPartitionComment: "...eller partisjoner katalogen etter en kolonne:",
     manualExtrasModelComment: "...eller berik den med modellens tittel/beskrivelse/lisens (fra model.json):",
-    manualExtrasBrowseHint: "Begge havner i samme MinIO-bucket som snapshotet — bla gjennom dem på http://localhost:9001 (innlogging `minioadmin` / `minioadmin`) under `tiles/`- og `stac/`-prefiksene, eller kjør `aws s3 sync` for å hente dem ut og servere andre steder.",
+    manualExtrasBrowseHint: "Begge havner i samme MinIO-bucket som snapshotet — bla gjennom dem på http://localhost:19001 (innlogging `minioadmin` / `minioadmin`) under `tiles/`- og `stac/`-prefiksene, eller kjør `aws s3 sync` for å hente dem ut og servere andre steder.",
     deltaService: "Delta Sync Worker",
     deltaWorkerDesc: "Håndterer inkrementelle oppdateringer og STAC-kataloger.",
     gettingStarted: "🚀 Kom i gang",
