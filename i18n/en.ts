@@ -776,7 +776,7 @@ export const en = {
     manualExtrasStacComment: "Generate a STAC catalog (flat, no partitioning):",
     manualExtrasPartitionComment: "...or partition the catalog by a column:",
     manualExtrasModelComment: "...or enrich it with your model's title/description/license (from model.json):",
-    manualExtrasBrowseHint: "Both land in the same MinIO bucket as the snapshot — browse them at http://localhost:9001 (login `minioadmin` / `minioadmin`) under the `tiles/` and `stac/` prefixes, or `aws s3 sync` them out to serve elsewhere.",
+    manualExtrasBrowseHint: "Both land in the same MinIO bucket as the snapshot — browse them at http://localhost:19001 (login `minioadmin` / `minioadmin`) under the `tiles/` and `stac/` prefixes, or `aws s3 sync` them out to serve elsewhere.",
     deltaService: "Delta Sync Worker",
     deltaWorkerDesc: "Handles incremental updates and STAC catalog generation.",
     gettingStarted: "🚀 Getting started",

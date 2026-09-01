@@ -8,6 +8,7 @@
 
 import { DataModel, SourceConnection } from '../../types';
 import { hasS3Config, getGpkgFilename } from './_helpers';
+import { MANUAL_EXTRAS_TILES_CMD, MANUAL_EXTRAS_STAC_CMD } from './readme';
 
 // ============================================================
 // .devcontainer/devcontainer.json
@@ -312,11 +313,24 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       `# ${model.name} — Codespaces Quickstart`,
       '',
       'This notebook runs the full pipeline — convert your source data into GeoParquet, FlatGeobuf and PMTiles, ' +
-        'serve it over OGC API Features, and view the vector tiles on a live map — entirely inside this Codespace. ' +
-        'Run the cells below in order (▶ on each cell, or **Run All** above).',
+        'serve it over OGC API Features, and view the vector tiles on a live map — entirely inside this Codespace, ' +
+        'from data to service. Run the cells below in order (▶ on each cell, or **Run All** above).',
     ),
     code(
+      'import random',
       'import subprocess',
+      '',
+      `# A few lines borrowed from the Peon — Waystones's own voice for background-job waits —`,
+      `# printed once per step below, same spirit as the Whisper messages you'd see in the`,
+      `# Waystones Cloud dashboard while a job works.`,
+      'PEON_LINES = [',
+      '    "Work work!",',
+      '    "Crunching geometries... this might take a bit.",',
+      '    "Standardizing your data, because anarchy is for pirates.",',
+      '    "Partitioning the universe into manageable chunks.",',
+      `    "Me busy! Can't you see I'm optimizing the R-Tree?",`,
+      '    "Work work... life is just one long buffer operation.",',
+      ']',
       '',
       '# --progress quiet avoids the fancy Compose TUI (garbled repeated spinner frames in a',
       '# notebook cell instead of updating in place like a real terminal) without replacing it',
@@ -328,7 +342,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       '# instead of silently continuing to the next cell — if the step actually failed.',
       'def run_compose(*args):',
       '    label = "docker compose " + " ".join(args)',
-      '    print(f"\\u2192 {label}")',
+      '    print(f"\\u2192 {label}  ({random.choice(PEON_LINES)})")',
       '    proc = subprocess.run(["docker", "compose", "--progress", "quiet", *args])',
       '    if proc.returncode != 0:',
       '        raise SystemExit(f"\\u2717 {label} failed (exit {proc.returncode}) \\u2014 see output above.")',
@@ -352,10 +366,14 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
   }
 
   cells.push(
-    md('## 1. Create the snapshot (GeoParquet + FlatGeobuf)'),
-    code('run_compose("up", "worker")'),
+    md('## 📦 1. Create the snapshot (GeoParquet + FlatGeobuf)'),
+    code(
+      'run_compose("up", "worker")',
+      '',
+      '# Plain docker-compose equivalent: docker compose up worker',
+    ),
     md(
-      '## 2. Create the vector tiles (PMTiles)',
+      '## 🧩 2. Create the vector tiles (PMTiles)',
       '',
       'Run as-is for this kit\'s default tile detail range (0–14, no geometry simplification, ' +
         'every layer and attribute kept) — the *initial view* zoom is separate and always ' +
@@ -365,6 +383,9 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
     ),
     code(
       'run_compose("up", "worker-tiles")',
+      '',
+      `# Plain docker-compose equivalent (no dedicated worker-tiles service there):`,
+      `#   ${MANUAL_EXTRAS_TILES_CMD}`,
       '',
       '# To customize zoom range, simplification, or drop layers/attributes instead,' +
         ' edit and run this (comment out the line above):',
@@ -376,7 +397,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
         ' MAX_ZOOM, add -e AUTO_ZOOM=true and drop -e MAX_ZOOM.',
     ),
     md(
-      '## 2b. Generate a STAC catalog (optional)',
+      '## 🧩 2b. Generate a STAC catalog (optional)',
       '',
       "Skip this cell if you don't need it — the map viewer in step 4 works fine without it. " +
         'Run as-is for a single flat catalog, or edit the commented line below to partition the catalog ' +
@@ -384,6 +405,10 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
     ),
     code(
       'run_compose("up", "worker-stac", "stac-sync")',
+      '',
+      `# Plain docker-compose equivalent (no dedicated worker-stac/stac-sync services there):`,
+      `#   ${MANUAL_EXTRAS_STAC_CMD}`,
+      `# (stac-sync has no equivalent there — output lands directly in MinIO; see step 4 below)`,
       '',
       '# To partition by a column instead, edit COLUMN and run these two lines' +
         ' (comment out the line above):',
@@ -393,7 +418,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
   );
 
   cells.push(
-    md('## 3. Start the OGC API Features service'),
+    md('## 🌐 3. Start the OGC API Features service'),
     code(
       'import os',
       '',
@@ -406,7 +431,11 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       'if codespace and domain:',
       '    os.environ["SERVER_URL"] = f"https://{codespace}-5000.{domain}"',
     ),
-    code('run_compose("up", "-d", "oapif")'),
+    code(
+      'run_compose("up", "-d", "oapif")',
+      '',
+      '# Plain docker-compose equivalent: docker compose up -d oapif',
+    ),
     md(
       '### See it in the browser',
       '',
@@ -419,7 +448,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       'import time, urllib.request',
       'from IPython.display import Markdown, display',
       '',
-      'print("Waiting for oapif-go to become ready", end="", flush=True)',
+      'print(f"Waiting for oapif-go to become ready \\u2014 {random.choice(PEON_LINES)}", end="", flush=True)',
       'for _ in range(30):',
       '    try:',
       '        urllib.request.urlopen("http://localhost:5000/collections")',
@@ -438,8 +467,14 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       'else:',
       '    display(Markdown("Open forwarded port **5000** in the Ports tab to view the API."))',
     ),
-    md('## 4. View the PMTiles (and STAC catalog, if you generated one)'),
-    code('run_compose("up", "-d", "viewer")'),
+    md('## 🗺️ 4. View the PMTiles (and STAC catalog, if you generated one)'),
+    code(
+      'run_compose("up", "-d", "viewer")',
+      '',
+      '# No plain docker-compose equivalent — that target ships no map viewer service.',
+      '# PMTiles/STAC output there lands in MinIO only, browsable at localhost:19001',
+      '# (login minioadmin/minioadmin) under the tiles/ and stac/ prefixes.',
+    ),
     code(
       'import os',
       'from IPython.display import IFrame, Markdown, display',
@@ -454,7 +489,7 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       '    display(Markdown("Open forwarded port **8081** in the Ports tab to view the map."))',
     ),
     md(
-      '## Reset',
+      '## 🔄 Reset',
       '',
       'To tear everything down and try again (e.g. with a different file):',
     ),

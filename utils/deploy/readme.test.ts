@@ -157,7 +157,7 @@ describe('generateReadmeForTarget (docker-compose target)', () => {
     expect(readme).toContain('docker compose run --rm -e TASK_TYPE=tiles');
     expect(readme).toContain('docker compose run --rm -e TASK_TYPE=stac');
     expect(readme).toContain('STRATEGY=custom_column');
-    expect(readme).toContain('localhost:9001');
+    expect(readme).toContain('localhost:19001');
   });
 
   it('still lists Vector Tile Service for codespaces, since it is wired in automatically there', () => {
