@@ -315,6 +315,10 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       'This notebook runs the full pipeline — convert your source data into GeoParquet, FlatGeobuf and PMTiles, ' +
         'serve it over OGC API Features, and view the vector tiles on a live map — entirely inside this Codespace, ' +
         'from data to service. Run the cells below in order (▶ on each cell, or **Run All** above).',
+      '',
+      "> Pushed new data or a changed model to this repo since opening this Codespace? See README.md's " +
+        '"Updating this Codespace after a re-publish" section — a plain `git pull` will refuse if you\'ve ' +
+        'already run any cells here.',
     ),
     code(
       'import random',

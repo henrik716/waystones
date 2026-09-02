@@ -138,6 +138,19 @@ describe('generateReadmeForTarget (codespaces target, non-local sources)', () =>
     expect(pgReadme).not.toContain('fetched automatically');
     expect(s3Readme).not.toContain('fetched automatically');
   });
+
+  it('documents how to update an already-running Codespace after a re-publish, including the notebook checkout gotcha', () => {
+    const readme = generateReadmeForTarget(makeModel(), makeGpkgSourceNoS3(), 'codespaces', 'en');
+    expect(readme).toContain('Updating this Codespace after a re-publish');
+    expect(readme).toContain('git checkout -- quickstart.ipynb');
+    expect(readme).toContain('git pull');
+    expect(readme).toContain('writes outputs/execution counts');
+  });
+
+  it('does not show the Codespaces update section for other targets', () => {
+    const dcReadme = generateReadmeForTarget(makeModel(), makeGpkgSourceNoS3(), 'docker-compose', 'en');
+    expect(dcReadme).not.toContain('Updating this Codespace');
+  });
 });
 
 // ---------------------------------------------------------------------------
