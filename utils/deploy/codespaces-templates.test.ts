@@ -219,6 +219,18 @@ describe('generateNotebook', () => {
     expect(firstCell).toContain('Coastal Survey');
   });
 
+  it('points to README.md for how to update an already-running Codespace after a re-publish, instead of duplicating the git commands here', () => {
+    // The actual git checkout/pull commands live in README.md (readme.ts), not here — this
+    // is a terminal workflow, not something safe to run from inside the very notebook file
+    // git pull is about to overwrite. A short pointer is enough.
+    const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
+    const firstCell = nb.cells[0].source.join('');
+    expect(firstCell.toLowerCase()).toContain('readme.md');
+    // May mention "git pull" in passing prose, but must not duplicate the actual command
+    // sequence (git checkout -- quickstart.ipynb) that lives in README.md instead.
+    expect(firstCell).not.toContain('git checkout');
+  });
+
   it('always includes the STAC step, but clearly marked as optional/skippable', () => {
     // STAC is available whenever this notebook exists (same as tiles) — whether to run
     // it is left to the reader, not a build-time flag from the Publish step.

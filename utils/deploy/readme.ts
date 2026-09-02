@@ -303,7 +303,13 @@ const renderGettingStarted = (ctx: RenderContext): string => {
     if (isPg) {
       md += `\n${s.codespacesNotePg}\n`;
     }
-    md += '\n';
+    md += `\n### ${s.codespacesUpdateTitle}\n\n`;
+    md += `${s.codespacesUpdateDesc}\n\n`;
+    md += '```bash\n';
+    md += 'git checkout -- quickstart.ipynb\n';
+    md += 'git pull\n';
+    md += '```\n\n';
+    md += `${s.codespacesUpdateWhyCheckout}\n\n`;
     return md;
   }
 
