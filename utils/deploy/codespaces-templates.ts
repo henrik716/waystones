@@ -26,13 +26,20 @@ import { MANUAL_EXTRAS_TILES_CMD, MANUAL_EXTRAS_STAC_CMD } from './readme';
 // not a silent hang.
 // Content is genuine JSON (devcontainer.json supports JSONC, but our own tests parse this
 // with strict JSON.parse) — no // comments inside the template literal itself.
+//
+// python feature version is "os-provided", not a pinned "3.12" — confirmed live that
+// requesting an explicit version routes through pyenv, which has no prebuilt binaries and
+// compiles the entire CPython interpreter from source (visible as raw `gcc ... Python/*.c`
+// output in the creation log, taking minutes). "os-provided" just uses whatever Python3 is
+// already on the base image via apt — no compilation. Nothing generated here needs 3.12
+// specifically (subprocess/os/urllib/random/json/time/IPython.display only).
 // ============================================================
 export const devcontainerJson = `{
   "name": "Waystones Codespaces Quickstart",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+    "ghcr.io/devcontainers/features/python:1": { "version": "os-provided" }
   },
   "customizations": {
     "vscode": {

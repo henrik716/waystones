@@ -91,6 +91,11 @@ describe('devcontainerJson', () => {
     expect(Object.keys(parsed.features)).toContain('ghcr.io/devcontainers/features/python:1');
   });
 
+  it('uses the os-provided Python version, not a pinned one — confirmed live that a pinned version (e.g. "3.12") routes through pyenv, which compiles the entire CPython interpreter from source and dominates Codespace boot time', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.features['ghcr.io/devcontainers/features/python:1'].version).toBe('os-provided');
+  });
+
   it('pre-installs ipykernel so the notebook has no kernel-selection prompt to run cells', () => {
     const parsed = JSON.parse(devcontainerJson);
     expect(parsed.postCreateCommand).toContain('pip3 install --user ipykernel');
