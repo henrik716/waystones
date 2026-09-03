@@ -33,6 +33,16 @@ import { MANUAL_EXTRAS_TILES_CMD, MANUAL_EXTRAS_STAC_CMD } from './readme';
 // output in the creation log, taking minutes). "os-provided" just uses whatever Python3 is
 // already on the base image via apt — no compilation. Nothing generated here needs 3.12
 // specifically (subprocess/os/urllib/random/json/time/IPython.display only).
+//
+// That "os-provided" switch has a side effect: pip3 install --user ipykernel then fails
+// with "externally-managed-environment" — confirmed live. Ubuntu 23.04+/24.04's apt-managed
+// Python is marked externally-managed under PEP 668, blocking any plain pip install
+// (even --user) to protect OS-tracked packages; the old pyenv-compiled "3.12" interpreter
+// lived outside the system package manager entirely, so it was never subject to this.
+// --break-system-packages alongside --user is the standard escape hatch for exactly this
+// case — a single-purpose, disposable Codespace, not a persistent machine where clobbering
+// system packages would matter, and --user already keeps the install out of the system
+// site-packages tree regardless.
 // ============================================================
 export const devcontainerJson = `{
   "name": "Waystones Codespaces Quickstart",
@@ -52,7 +62,7 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "notify" },
     "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
+  "postCreateCommand": "cp -n .env.template .env && pip3 install --user --break-system-packages ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
 }
 `;
 

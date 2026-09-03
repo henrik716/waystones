@@ -98,7 +98,12 @@ describe('devcontainerJson', () => {
 
   it('pre-installs ipykernel so the notebook has no kernel-selection prompt to run cells', () => {
     const parsed = JSON.parse(devcontainerJson);
-    expect(parsed.postCreateCommand).toContain('pip3 install --user ipykernel');
+    expect(parsed.postCreateCommand).toContain('pip3 install --user --break-system-packages ipykernel');
+  });
+
+  it('passes --break-system-packages — confirmed live that plain --user pip install fails with "externally-managed-environment" on os-provided Ubuntu Python (PEP 668), which the old pyenv-compiled interpreter was never subject to', () => {
+    const parsed = JSON.parse(devcontainerJson);
+    expect(parsed.postCreateCommand).toContain('--break-system-packages');
   });
 
   it('materializes .env from .env.template on create — docker compose only auto-loads .env, never .env.template', () => {
@@ -116,7 +121,7 @@ describe('devcontainerJson', () => {
   it('postCreateCommand only sets up .env/ipykernel and prints the open-notebook message, in that order', () => {
     const parsed = JSON.parse(devcontainerJson);
     const envIndex = parsed.postCreateCommand.indexOf('cp -n .env.template .env');
-    const kernelIndex = parsed.postCreateCommand.indexOf('pip3 install --user ipykernel');
+    const kernelIndex = parsed.postCreateCommand.indexOf('pip3 install --user --break-system-packages ipykernel');
     const echoIndex = parsed.postCreateCommand.indexOf('echo ');
     expect(envIndex).toBeGreaterThan(-1);
     expect(kernelIndex).toBeGreaterThan(envIndex);
