@@ -101,23 +101,21 @@ describe('devcontainerJson', () => {
     expect(parsed.postCreateCommand).toContain('cp -n .env.template .env');
   });
 
-  it('prefetches images synchronously in postCreateCommand — postAttachCommand does not reliably fire in GitHub Codespaces (confirmed live: no /tmp log file ever got created)', () => {
+  it('does not prefetch images in postCreateCommand — deliberately reverted twice (unreliable postAttachCommand, then a synchronous pull that stacked wait time onto Codespace creation itself); each step pulls its own image when the user actually reaches it', () => {
     const parsed = JSON.parse(devcontainerJson);
-    expect(parsed.postCreateCommand).toContain('docker compose pull');
+    expect(parsed.postCreateCommand).not.toContain('docker compose');
+    expect(parsed.postCreateCommand).not.toContain('pull');
     expect(parsed.postAttachCommand).toBeUndefined();
   });
 
-  it('does not let a failed prefetch block codespace setup entirely', () => {
+  it('postCreateCommand only sets up .env/ipykernel and prints the open-notebook message, in that order', () => {
     const parsed = JSON.parse(devcontainerJson);
-    expect(parsed.postCreateCommand).toMatch(/docker compose pull \|\| true/);
-  });
-
-  it('still prints the final "open the notebook" message even if the prefetch fails', () => {
-    const parsed = JSON.parse(devcontainerJson);
-    const pullIndex = parsed.postCreateCommand.indexOf('docker compose pull');
+    const envIndex = parsed.postCreateCommand.indexOf('cp -n .env.template .env');
+    const kernelIndex = parsed.postCreateCommand.indexOf('pip3 install --user ipykernel');
     const echoIndex = parsed.postCreateCommand.indexOf('echo ');
-    expect(pullIndex).toBeGreaterThan(-1);
-    expect(echoIndex).toBeGreaterThan(pullIndex);
+    expect(envIndex).toBeGreaterThan(-1);
+    expect(kernelIndex).toBeGreaterThan(envIndex);
+    expect(echoIndex).toBeGreaterThan(kernelIndex);
   });
 });
 

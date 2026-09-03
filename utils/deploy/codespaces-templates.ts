@@ -13,15 +13,17 @@ import { MANUAL_EXTRAS_TILES_CMD, MANUAL_EXTRAS_STAC_CMD } from './readme';
 // ============================================================
 // .devcontainer/devcontainer.json
 //
-// The image prefetch (docker compose pull) runs inside postCreateCommand itself,
-// synchronously — confirmed live that postAttachCommand does NOT reliably fire in GitHub
-// Codespaces (a real Codespace never even created /tmp/image-pull.log, meaning the hook
-// was never invoked at all, not that it ran and failed silently — bash creates a redirect
-// target file as soon as it parses the command, before the command body runs). Blocking
-// here means the "Setting up your codespace..." screen takes a few extra minutes (the
-// worker image alone is a few hundred MB — GDAL, tippecanoe, DuckDB), but once it says
-// ready, cell 1 genuinely has no cold pull left to do — postCreateCommand is the one hook
-// with actual evidence of running reliably (.env and ipykernel show up every time).
+// Deliberately no image prefetch in postCreateCommand — tried it twice (postAttachCommand,
+// which doesn't reliably fire in GitHub Codespaces at all; then a synchronous pull here) and
+// backed both out. Prefetching stacks real wait time onto Codespace creation itself, before
+// the user can do anything at all (read the intro, add their data) — worse than the same
+// wait happening once they're actually looking at a usable Codespace. It also saves less
+// than it looks like: worker/worker-tiles/worker-stac all share one image, and
+// tiles-sync/stac-sync/data-fetcher share another (amazon/aws-cli), so there are really only
+// ~4 distinct images total, each pulled once, naturally spread across cells 1/3/4 as the
+// user reaches them — not a separate wait per cell. run_compose() already announces each
+// step immediately on start, so a cold pull inside it reads as "this is doing something,"
+// not a silent hang.
 // Content is genuine JSON (devcontainer.json supports JSONC, but our own tests parse this
 // with strict JSON.parse) — no // comments inside the template literal itself.
 // ============================================================
@@ -43,7 +45,7 @@ export const devcontainerJson = `{
     "8081": { "label": "PMTiles Map Viewer", "onAutoForward": "notify" },
     "19001": { "label": "MinIO Console (optional)", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && (docker compose pull || true) && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
+  "postCreateCommand": "cp -n .env.template .env && pip3 install --user ipykernel && echo 'Open quickstart.ipynb and run the cells in order — see README.md for details.'"
 }
 `;
 
@@ -324,9 +326,6 @@ export function generateNotebook(model: DataModel, source: SourceConnection): st
       'import random',
       'import subprocess',
       '',
-      `# A few lines borrowed from the Peon — Waystones's own voice for background-job waits —`,
-      `# printed once per step below, same spirit as the Whisper messages you'd see in the`,
-      `# Waystones Cloud dashboard while a job works.`,
       'PEON_LINES = [',
       '    "Work work!",',
       '    "Crunching geometries... this might take a bit.",',
