@@ -256,16 +256,19 @@ describe('generateNotebook', () => {
       .map((c: any) => c.source.join(''))
       .join('\n---\n');
     const iTiles = code.indexOf('run_compose("up", "worker-tiles")');
-    const iStac = code.indexOf('run_compose("up", "worker-stac", "stac-sync")');
+    const iStac = code.indexOf('run_compose("up", "worker-stac")');
     const iOapif = code.indexOf('run_compose("up", "-d", "oapif")');
     expect(iStac).toBeGreaterThan(iTiles);
     expect(iOapif).toBeGreaterThan(iStac);
   });
 
-  it('syncs the STAC catalog in the same cell so it actually lands in the viewer', () => {
+  it('runs worker-stac and stac-sync as two separate, sequential run_compose calls, not one combined "up" — confirmed live that combining them races: docker compose starts services with no depends_on between them concurrently, so stac-sync could sync an empty/nonexistent prefix before worker-stac finishes uploading anything, silently producing no catalog.json at all', () => {
     const nb = JSON.parse(generateNotebook(makeModel(), makeGpkgSourceNoS3()));
     const code = nb.cells.filter((c: any) => c.cell_type === 'code').map((c: any) => c.source.join(''));
-    expect(code.some((c: string) => c.includes('run_compose("up", "worker-stac", "stac-sync")'))).toBe(true);
+    const stacCell = code.find((c: string) => c.includes('run_compose("up", "worker-stac")'))!;
+    expect(stacCell).toContain('run_compose("up", "worker-stac")');
+    expect(stacCell).toContain('run_compose("up", "stac-sync")');
+    expect(stacCell.indexOf('run_compose("up", "worker-stac")')).toBeLessThan(stacCell.indexOf('run_compose("up", "stac-sync")'));
   });
 
   it('offers an editable runtime override for partitioning instead of baking a column in, syncing after', () => {
@@ -384,7 +387,7 @@ describe('generateNotebook', () => {
     const tilesCell = code.find((c: string) => c.includes('run_compose("up", "worker-tiles")'))!;
     expect(tilesCell).toContain(MANUAL_EXTRAS_TILES_CMD);
     expect(tilesCell).toContain('no dedicated worker-tiles service there');
-    const stacCell = code.find((c: string) => c.includes('run_compose("up", "worker-stac", "stac-sync")'))!;
+    const stacCell = code.find((c: string) => c.includes('run_compose("up", "worker-stac")'))!;
     expect(stacCell).toContain(MANUAL_EXTRAS_STAC_CMD);
     expect(stacCell).toContain('no dedicated worker-stac/stac-sync services there');
     expect(stacCell).toContain('stac-sync has no equivalent there');
